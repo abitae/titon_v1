@@ -1,100 +1,77 @@
+@props(['title' => null])
+
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="dark">
     <head>
         @include('partials.head')
     </head>
-    <body class="min-h-screen bg-white dark:bg-zinc-800">
-        <flux:sidebar sticky collapsible="mobile" class="border-e border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900">
-            <flux:sidebar.header>
-                <x-app-logo :sidebar="true" href="{{ route('dashboard') }}" wire:navigate />
+    <body class="min-h-screen min-h-[100dvh] bg-white antialiased dark:bg-zinc-900">
+        @php
+            $navigation = app(\App\Services\Navigation\AppNavigation::class)->sidebarGroups();
+        @endphp
+
+        <flux:sidebar
+            sticky
+            collapsible="mobile"
+            class="flex max-h-dvh min-h-0 flex-col overflow-hidden border-e border-slate-200/90 bg-[radial-gradient(circle_at_0%_0%,rgba(14,165,233,0.09),transparent_52%),linear-gradient(180deg,#f8fafc_0%,#eef2ff_55%,#f1f5f9_100%)] shadow-[2px_0_24px_-12px_rgba(15,23,42,0.35)] lg:h-dvh dark:border-slate-800 dark:bg-[radial-gradient(circle_at_0%_0%,rgba(34,211,238,0.12),transparent_42%),linear-gradient(180deg,#020617_0%,#0f172a_50%,#0c1222_100%)] dark:shadow-[2px_0_28px_-14px_rgba(0,0,0,0.65)]"
+        >
+            <flux:sidebar.header class="shrink-0 gap-3 border-b border-slate-200/70 pb-4 dark:border-slate-800/80">
+                <x-app-logo :sidebar="true" href="{{ route('dashboard') }}" wire:navigate class="min-w-0 max-w-full" />
+
                 <flux:sidebar.collapse class="lg:hidden" />
             </flux:sidebar.header>
 
-            <flux:sidebar.nav>
-                <flux:sidebar.group :heading="__('Platform')" class="grid">
-                    <flux:sidebar.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>
-                        {{ __('Dashboard') }}
-                    </flux:sidebar.item>
-                </flux:sidebar.group>
+            <div class="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-y-contain [-ms-overflow-style:none] [scrollbar-gutter:stable] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-300/80 dark:[&::-webkit-scrollbar-thumb]:bg-slate-600/80">
+                <flux:sidebar.nav class="gap-1.5 py-3">
+                    @foreach ($navigation as $group)
+                        <flux:sidebar.group :heading="$group['heading']" class="grid min-w-0 gap-1">
+                            @foreach ($group['items'] as $item)
+                                <flux:sidebar.item
+                                    :icon="$item['icon']"
+                                    :href="$item['href']"
+                                    :current="$item['current']"
+                                    class="min-w-0 rounded-xl"
+                                    wire:navigate
+                                >
+                                    <span class="truncate text-sm font-medium">{{ $item['label'] }}</span>
+                                </flux:sidebar.item>
+                            @endforeach
+                        </flux:sidebar.group>
+                    @endforeach
+                </flux:sidebar.nav>
+            </div>
+
+            <flux:sidebar.nav class="shrink-0 border-t border-slate-200/60 bg-gradient-to-t from-slate-50/90 to-transparent pt-2 dark:border-slate-700/60 dark:from-slate-950/90">
+                <div class="rounded-xl border border-slate-200/80 bg-white/80 px-3 py-2.5 text-xs text-slate-600 backdrop-blur dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-400">
+                    <p class="font-medium text-slate-800 dark:text-slate-200">Atajos</p>
+                    <a
+                        href="{{ route('settings.catalogs') }}"
+                        wire:navigate
+                        class="mt-2 inline-flex items-center gap-1.5 text-[11px] font-medium text-cyan-700 hover:text-cyan-600 hover:underline dark:text-cyan-400 dark:hover:text-cyan-300"
+                    >
+                        <flux:icon.squares-plus variant="outline" class="size-3.5 shrink-0 opacity-90" />
+                        Catalogos maestros
+                    </a>
+                </div>
             </flux:sidebar.nav>
-
-            <flux:spacer />
-
-            <flux:sidebar.nav>
-                <flux:sidebar.item icon="folder-git-2" href="https://github.com/laravel/livewire-starter-kit" target="_blank">
-                    {{ __('Repository') }}
-                </flux:sidebar.item>
-
-                <flux:sidebar.item icon="book-open-text" href="https://laravel.com/docs/starter-kits#livewire" target="_blank">
-                    {{ __('Documentation') }}
-                </flux:sidebar.item>
-            </flux:sidebar.nav>
-
-            <x-desktop-user-menu class="hidden lg:block" :name="auth()->user()->name" />
         </flux:sidebar>
 
-        <!-- Mobile User Menu -->
-        <flux:header class="lg:hidden">
-            <flux:sidebar.toggle class="lg:hidden" icon="bars-2" inset="left" />
-
-            <flux:spacer />
-
-            <flux:dropdown position="top" align="end">
-                <flux:profile
-                    :initials="auth()->user()->initials()"
-                    icon-trailing="chevron-down"
-                />
-
-                <flux:menu>
-                    <flux:menu.radio.group>
-                        <div class="p-0 text-sm font-normal">
-                            <div class="flex items-center gap-2 px-1 py-1.5 text-start text-sm">
-                                <flux:avatar
-                                    :name="auth()->user()->name"
-                                    :initials="auth()->user()->initials()"
-                                />
-
-                                <div class="grid flex-1 text-start text-sm leading-tight">
-                                    <flux:heading class="truncate">{{ auth()->user()->name }}</flux:heading>
-                                    <flux:text class="truncate">{{ auth()->user()->email }}</flux:text>
-                                </div>
-                            </div>
-                        </div>
-                    </flux:menu.radio.group>
-
-                    <flux:menu.separator />
-
-                    <flux:menu.radio.group>
-                        <flux:menu.item :href="route('profile.edit')" icon="cog" wire:navigate>
-                            {{ __('Settings') }}
-                        </flux:menu.item>
-                    </flux:menu.radio.group>
-
-                    <flux:menu.separator />
-
-                    <form method="POST" action="{{ route('logout') }}" class="w-full">
-                        @csrf
-                        <flux:menu.item
-                            as="button"
-                            type="submit"
-                            icon="arrow-right-start-on-rectangle"
-                            class="w-full cursor-pointer"
-                            data-test="logout-button"
-                        >
-                            {{ __('Log out') }}
-                        </flux:menu.item>
-                    </form>
-                </flux:menu>
-            </flux:dropdown>
-        </flux:header>
-
         {{ $slot }}
+
+        @php($sessionToasts = session('toasts', []))
 
         @persist('toast')
             <flux:toast.group>
                 <flux:toast />
             </flux:toast.group>
         @endpersist
+
+        @if ($sessionToasts !== [])
+            <div
+                x-data="{ toasts: @js($sessionToasts) }"
+                x-init="$nextTick(() => toasts.forEach((toast) => document.dispatchEvent(new CustomEvent('toast-show', { detail: toast }))))"
+            ></div>
+        @endif
 
         @fluxScripts
     </body>
