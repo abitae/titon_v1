@@ -38,6 +38,38 @@ enum CatalogType
         };
     }
 
+    public function group(): string
+    {
+        return match ($this) {
+            self::City, self::Area => 'general',
+            self::Bank, self::PaymentMethod, self::OperationType => 'finance',
+            self::DocumentType, self::DocumentStatus => 'documents',
+        };
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public static function groups(): array
+    {
+        return [
+            'general' => 'General',
+            'finance' => 'Finanzas y pagos',
+            'documents' => 'Documentos',
+        ];
+    }
+
+    /**
+     * @return list<self>
+     */
+    public static function forGroup(string $group): array
+    {
+        return array_values(array_filter(
+            self::cases(),
+            fn (self $type): bool => $type->group() === $group,
+        ));
+    }
+
     /**
      * @return array<int, string>
      */

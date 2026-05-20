@@ -105,9 +105,20 @@ test('suppliers module can filter by city and status', function () {
         ->assertDontSee('Proveedor Cusco');
 });
 
+test('catalogs module can switch tab groups and types', function () {
+    Livewire::test(ManageCatalogs::class)
+        ->assertSet('selectedGroup', 'general')
+        ->assertSet('selectedType', CatalogType::City->value())
+        ->call('selectGroup', 'finance')
+        ->assertSet('selectedGroup', 'finance')
+        ->assertSet('selectedType', CatalogType::Bank->value())
+        ->call('selectType', CatalogType::PaymentMethod->value())
+        ->assertSet('selectedType', CatalogType::PaymentMethod->value());
+});
+
 test('catalogs module can create company scoped items', function () {
     Livewire::test(ManageCatalogs::class)
-        ->set('selectedType', CatalogType::Bank->value())
+        ->call('selectType', CatalogType::Bank->value())
         ->call('openCreateModal')
         ->set('name', 'BCP')
         ->set('code', 'BCP')
@@ -126,5 +137,9 @@ test('catalogs module can create company scoped items', function () {
 test('operational module pages render for authorized users', function () {
     $this->get(route('modules.projects'))->assertOk()->assertSee('Obras');
     $this->get(route('modules.suppliers'))->assertOk()->assertSee('Proveedores');
-    $this->get(route('settings.catalogs'))->assertOk()->assertSee('Configuración general');
+    $this->get(route('settings.catalogs'))
+        ->assertOk()
+        ->assertSee('Configuración general')
+        ->assertSee('Finanzas y pagos')
+        ->assertSee('Documentos');
 });

@@ -1,11 +1,11 @@
 @props(['title' => null])
 
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="dark">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     <head>
         @include('partials.head')
     </head>
-    <body class="min-h-screen min-h-[100dvh] bg-white antialiased dark:bg-zinc-900">
+    <body class="min-h-screen min-h-[100dvh] bg-slate-50 antialiased dark:bg-slate-950">
         @php
             $navigation = app(\App\Services\Navigation\AppNavigation::class)->sidebarGroups();
         @endphp

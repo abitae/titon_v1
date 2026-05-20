@@ -19,6 +19,8 @@ class ManageCatalogs extends Component
 
     public string $selectedType = 'cities';
 
+    public string $selectedGroup = 'general';
+
     public string $search = '';
 
     public string $activeFilter = 'all';
@@ -40,6 +42,7 @@ class ManageCatalogs extends Component
     public function mount(): void
     {
         $this->selectedType = CatalogType::City->value();
+        $this->selectedGroup = CatalogType::City->group();
     }
 
     public function render(): View
@@ -60,12 +63,27 @@ class ManageCatalogs extends Component
 
         return view('livewire.settings.manage-catalogs', [
             'items' => $items,
-            'types' => CatalogType::cases(),
+            'groups' => CatalogType::groups(),
+            'activeGroupTypes' => CatalogType::forGroup($this->selectedGroup),
+            'selectedTypeLabel' => CatalogType::fromValue($this->selectedType)->label(),
         ])->layout('layouts.app', ['title' => $this->title]);
     }
 
-    public function updatedSelectedType(): void
+    public function selectGroup(string $group): void
     {
+        if (! array_key_exists($group, CatalogType::groups())) {
+            return;
+        }
+
+        $this->selectedGroup = $group;
+        $this->selectedType = CatalogType::forGroup($group)[0]->value();
+        $this->resetPage();
+    }
+
+    public function selectType(string $type): void
+    {
+        $this->selectedType = CatalogType::fromValue($type)->value();
+        $this->selectedGroup = CatalogType::fromValue($type)->group();
         $this->resetPage();
     }
 

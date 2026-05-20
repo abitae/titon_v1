@@ -35,7 +35,8 @@ class UserSeeder extends Seeder
         );
 
         User::factory(9)->create()->each(function (User $user, int $index) use ($companies, $roles, $syncUserCompanies): void {
-            $assignedCompanies = $companies->shuffle()->take(fake()->numberBetween(1, $companies->count()))->values();
+            $maxCompanies = max(1, $companies->count());
+            $assignedCompanies = $companies->shuffle()->take(random_int(1, $maxCompanies))->values();
             $roleNames = ['Gerencia', 'Administrador', 'Compras', 'Finanzas', 'Responsable de Obra', 'Consulta'];
 
             $roleIds = $assignedCompanies->mapWithKeys(function (Company $company) use ($roleNames, $roles, $index): array {
