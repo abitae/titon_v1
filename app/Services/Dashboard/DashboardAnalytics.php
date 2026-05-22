@@ -2,14 +2,20 @@
 
 namespace App\Services\Dashboard;
 
+use App\Enums\AccountsPayableStatus;
 use App\Enums\DocumentStatus;
+use App\Enums\OrderStatus;
 use App\Enums\ProjectStatus;
-use App\Enums\PurchaseRequestStatus;
+use App\Enums\QuotationStatus;
+use App\Enums\RequirementStatus;
+use App\Models\AccountsPayable;
+use App\Models\AccountsPayablePayment;
 use App\Models\Company;
 use App\Models\ContractPaymentSchedule;
 use App\Models\Document;
+use App\Models\Order;
 use App\Models\Project;
-use App\Models\PurchaseRequest;
+use App\Models\Requirement;
 use App\Models\Scopes\CurrentCompanyScope;
 use App\Models\SupplierContract;
 use App\Models\SupplierPayment;
@@ -79,8 +85,30 @@ class DashboardAnalytics
                 'active_contracts' => $this->baseQuery(SupplierContract::class, $companyIds)
                     ->whereIn('status', ['aprobado', 'firmado', 'en_ejecucion'])
                     ->count(),
-                'pending_requests' => $this->baseQuery(PurchaseRequest::class, $companyIds)
-                    ->whereNotIn('status', [PurchaseRequestStatus::Ordered->value(), PurchaseRequestStatus::Closed->value()])
+                'requirements_draft' => $this->baseQuery(Requirement::class, $companyIds)
+                    ->where('status', RequirementStatus::Draft->value())
+                    ->count(),
+                'requirements_in_process' => $this->baseQuery(Requirement::class, $companyIds)
+                    ->where('status', RequirementStatus::InProcess->value())
+                    ->count(),
+                'quotations_pending_evaluation' => $this->baseQuery(SupplierQuotation::class, $companyIds)
+                    ->where('status', QuotationStatus::Registered->value())
+                    ->count(),
+                'orders_pending_conformity' => $this->baseQuery(Order::class, $companyIds)
+                    ->whereIn('status', [OrderStatus::Issued->value(), OrderStatus::Sent->value(), OrderStatus::InAttention->value(), OrderStatus::Attended->value()])
+                    ->count(),
+                'accounts_payable_pending' => $this->baseQuery(AccountsPayable::class, $companyIds)
+                    ->whereIn('status', [AccountsPayableStatus::PendingDocuments->value(), AccountsPayableStatus::Observed->value()])
+                    ->count(),
+                'accounts_payable_ready' => $this->baseQuery(AccountsPayable::class, $companyIds)
+                    ->where('status', AccountsPayableStatus::ReadyForPayment->value())
+                    ->count(),
+                'payments_month' => $this->baseQuery(AccountsPayablePayment::class, $companyIds)
+                    ->whereMonth('payment_date', now()->month)
+                    ->whereYear('payment_date', now()->year)
+                    ->sum('amount'),
+                'pending_requests' => $this->baseQuery(Requirement::class, $companyIds)
+                    ->whereNotIn('status', [RequirementStatus::Attended->value(), RequirementStatus::Cancelled->value()])
                     ->count(),
                 'expired_documents' => $this->baseQuery(Document::class, $companyIds)
                     ->whereDate('due_date', '<', today())

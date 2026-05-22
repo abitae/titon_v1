@@ -8,36 +8,66 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('audits', function (Blueprint $table) {
-            $table->foreignId('company_id')->nullable()->after('tags')->constrained()->nullOnDelete();
-            $table->string('user_name')->nullable()->after('company_id');
-            $table->string('active_role')->nullable()->after('user_name');
-            $table->string('module')->nullable()->after('active_role');
-            $table->string('action')->nullable()->after('module');
-            $table->string('browser')->nullable()->after('action');
-            $table->string('device')->nullable()->after('browser');
-            $table->text('observation')->nullable()->after('device');
+        $connection = config('audit.drivers.database.connection') ?? config('database.default');
+        $tableName = config('audit.drivers.database.table', 'audits');
+        $schema = Schema::connection($connection);
 
-            $table->index(['company_id', 'created_at']);
-            $table->index(['module', 'action']);
+        if (! $schema->hasTable($tableName)) {
+            return;
+        }
+
+        $schema->table($tableName, function (Blueprint $table) use ($schema, $tableName) {
+            if (! $schema->hasColumn($tableName, 'company_id')) {
+                $table->foreignId('company_id')->nullable()->after('tags')->constrained()->nullOnDelete();
+            }
+
+            foreach (['user_name', 'active_role', 'module', 'action', 'browser', 'device'] as $column) {
+                if (! $schema->hasColumn($tableName, $column)) {
+                    $table->string($column)->nullable();
+                }
+            }
+
+            if (! $schema->hasColumn($tableName, 'observation')) {
+                $table->text('observation')->nullable();
+            }
+
+            if (! $schema->hasIndex($tableName, ['company_id', 'created_at'])) {
+                $table->index(['company_id', 'created_at']);
+            }
+
+            if (! $schema->hasIndex($tableName, ['module', 'action'])) {
+                $table->index(['module', 'action']);
+            }
         });
     }
 
     public function down(): void
     {
-        Schema::table('audits', function (Blueprint $table) {
-            $table->dropIndex(['company_id', 'created_at']);
-            $table->dropIndex(['module', 'action']);
-            $table->dropConstrainedForeignId('company_id');
-            $table->dropColumn([
-                'user_name',
-                'active_role',
-                'module',
-                'action',
-                'browser',
-                'device',
-                'observation',
-            ]);
+        $connection = config('audit.drivers.database.connection') ?? config('database.default');
+        $tableName = config('audit.drivers.database.table', 'audits');
+        $schema = Schema::connection($connection);
+
+        if (! $schema->hasTable($tableName)) {
+            return;
+        }
+
+        $schema->table($tableName, function (Blueprint $table) use ($schema, $tableName) {
+            if ($schema->hasIndex($tableName, ['company_id', 'created_at'])) {
+                $table->dropIndex(['company_id', 'created_at']);
+            }
+
+            if ($schema->hasIndex($tableName, ['module', 'action'])) {
+                $table->dropIndex(['module', 'action']);
+            }
+
+            if ($schema->hasColumn($tableName, 'company_id')) {
+                $table->dropConstrainedForeignId('company_id');
+            }
+
+            $table->dropColumn(array_filter(
+                ['user_name', 'active_role', 'module', 'action', 'browser', 'device', 'observation'],
+                fn (string $column): bool => $schema->hasColumn($tableName, $column),
+            ));
         });
     }
 };

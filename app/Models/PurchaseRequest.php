@@ -2,67 +2,33 @@
 
 namespace App\Models;
 
-use App\Concerns\AuditableWithContext;
-use App\Concerns\BelongsToActiveCompany;
-use Database\Factories\PurchaseRequestFactory;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use OwenIt\Auditing\Contracts\Auditable;
 
-class PurchaseRequest extends Model implements Auditable
+/**
+ * @deprecated Use Requirement
+ */
+class PurchaseRequest extends Requirement
 {
-    /** @use HasFactory<PurchaseRequestFactory> */
-    use AuditableWithContext, BelongsToActiveCompany, HasFactory;
-
-    /**
-     * @var list<string>
-     */
-    protected $fillable = [
-        'company_id',
-        'work_project_id',
-        'requested_by',
-        'code',
-        'priority',
-        'request_date',
-        'description',
-        'status',
-    ];
-
-    /**
-     * @return array<string, string>
-     */
-    protected function casts(): array
-    {
-        return [
-            'request_date' => 'date',
-        ];
-    }
-
-    public function project(): BelongsTo
-    {
-        return $this->belongsTo(Project::class, 'work_project_id');
-    }
-
-    public function requester(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'requested_by');
-    }
+    protected $table = 'requirements';
 
     public function items(): HasMany
     {
-        return $this->hasMany(PurchaseRequestItem::class);
+        return $this->hasMany(RequirementItem::class, 'requirement_id');
     }
 
     public function quotations(): HasMany
     {
-        return $this->hasMany(SupplierQuotation::class);
+        return $this->hasMany(SupplierQuotation::class, 'requirement_id');
     }
 
     public function comparison(): HasOne
     {
-        return $this->hasOne(QuotationComparison::class);
+        return $this->hasOne(QuotationComparison::class, 'requirement_id');
+    }
+
+    public function orders(): HasMany
+    {
+        return $this->hasMany(Order::class, 'requirement_id');
     }
 }

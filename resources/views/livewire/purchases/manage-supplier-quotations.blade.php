@@ -80,11 +80,16 @@
                 </select>
                 @error('supplier_id') <p class="mt-1 text-sm text-rose-600">{{ $message }}</p> @enderror
             </div>
-            <div>
-                <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Codigo</label>
-                <input wire:model="code" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
-                @error('code') <p class="mt-1 text-sm text-rose-600">{{ $message }}</p> @enderror
-            </div>
+            @if ($editingQuotationId)
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Codigo</label>
+                    <input wire:model="code" readonly class="mt-2 block w-full cursor-not-allowed rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300" />
+                </div>
+            @else
+                <div class="rounded-xl border border-dashed border-cyan-300 bg-cyan-50 px-4 py-3 text-sm text-cyan-900 dark:border-cyan-800 dark:bg-cyan-950/40 dark:text-cyan-200 md:col-span-2">
+                    El codigo de cotizacion se generara automaticamente al guardar.
+                </div>
+            @endif
             <div class="grid gap-4 sm:grid-cols-2 md:col-span-2">
                 <div>
                     <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Fecha de cotizacion</label>

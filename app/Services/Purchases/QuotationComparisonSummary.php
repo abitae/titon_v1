@@ -20,7 +20,7 @@ class QuotationComparisonSummary
 
         return [
             'min_total' => $quotations->min(fn (SupplierQuotation $quotation): float => (float) $quotation->total),
-            'min_delivery_time' => $quotations->min(fn (SupplierQuotation $quotation): int => (int) $quotation->delivery_time),
+            'min_delivery_time' => $quotations->min(fn (SupplierQuotation $quotation): int => (int) ($quotation->delivery_time_days ?? 0)),
             'quotations' => $quotations,
         ];
     }

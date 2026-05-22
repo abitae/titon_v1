@@ -4,8 +4,8 @@ namespace Database\Factories;
 
 use App\Models\Company;
 use App\Models\Project;
-use App\Models\PurchaseRequest;
 use App\Models\QuotationComparison;
+use App\Models\Requirement;
 use App\Models\SupplierQuotation;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -25,14 +25,14 @@ class QuotationComparisonFactory extends Factory
         return [
             'company_id' => Company::factory(),
             'work_project_id' => Project::factory(),
-            'purchase_request_id' => PurchaseRequest::factory(),
+            'requirement_id' => Requirement::factory(),
             'selected_supplier_quotation_id' => SupplierQuotation::factory(),
             'selected_by' => User::factory(),
             'compared_at' => now(),
             'selection_reason' => fake()->sentence(),
             'comparison_code' => null,
-            'purchase_order_code' => strtoupper(fake()->bothify('OC-###')),
-            'purchase_order_generated_at' => now(),
+            'order_code' => strtoupper(fake()->bothify('OC-###')),
+            'order_generated_at' => now(),
         ];
     }
 }

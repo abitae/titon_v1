@@ -7,7 +7,7 @@ use App\Actions\Purchases\ApprovePurchaseOrder;
 use App\Actions\Purchases\CancelPurchaseOrder;
 use App\Actions\Purchases\ObservePurchaseOrder;
 use App\Concerns\InteractsWithToast;
-use App\Enums\PurchaseOrderStatus;
+use App\Enums\OrderStatus;
 use App\Models\PurchaseOrder;
 use Illuminate\Contracts\View\View;
 use Illuminate\Validation\Rule;
@@ -50,7 +50,7 @@ class ManagePurchaseOrders extends Component
 
         return view('livewire.purchases.manage-purchase-orders', [
             'orders' => $orders,
-            'statusOptions' => PurchaseOrderStatus::cases(),
+            'statusOptions' => OrderStatus::cases(),
         ])->layout('layouts.app', ['title' => $this->title]);
     }
 
@@ -121,7 +121,7 @@ class ManagePurchaseOrders extends Component
         $validated = $this->validate([
             'selectedOrder.issue_date' => ['required', 'date'],
             'selectedOrder.currency' => ['required', 'string', 'max:10'],
-            'selectedOrder.status' => ['required', Rule::in(PurchaseOrderStatus::values())],
+            'selectedOrder.status' => ['required', Rule::in(OrderStatus::values())],
             'selectedOrder.conditions' => ['nullable', 'string'],
             'selectedOrder.observation' => ['nullable', 'string'],
         ]);

@@ -3,13 +3,13 @@
 namespace App\Livewire\Projects;
 
 use App\Actions\Companies\ResolveCurrentCompany;
+use App\Concerns\AssignsOperationalCode;
 use App\Concerns\InteractsWithToast;
 use App\Enums\CatalogType;
 use App\Enums\CorrelativeSubject;
 use App\Enums\ProjectStatus;
 use App\Models\CatalogItem;
 use App\Models\Project;
-use App\Services\Correlatives\IssueCompanyCorrelativeCode;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -19,7 +19,7 @@ use Livewire\WithPagination;
 
 class ManageProjects extends Component
 {
-    use InteractsWithToast, WithFileUploads, WithPagination;
+    use AssignsOperationalCode, InteractsWithToast, WithFileUploads, WithPagination;
 
     public string $title = 'Obras';
 
@@ -162,17 +162,22 @@ class ManageProjects extends Component
         $isEditing = $this->editingProjectId !== null;
 
         $project = DB::transaction(function () use ($validated, $company, $isEditing): Project {
-            $finalCode = trim((string) ($validated['code'] ?? ''));
+            $existing = $isEditing ? Project::query()->find($this->editingProjectId) : null;
 
-            if (! $isEditing && $finalCode === '') {
-                $finalCode = app(IssueCompanyCorrelativeCode::class)->issue($company, CorrelativeSubject::Project);
-            }
+            $finalCode = $this->assignOperationalCode(
+                $company,
+                CorrelativeSubject::Project,
+                existingCode: $existing?->code,
+                isEditing: $isEditing,
+            );
+
+            unset($validated['code']);
 
             return Project::query()->updateOrCreate(
                 ['id' => $this->editingProjectId],
                 [
                     ...$validated,
-                    'code' => $isEditing ? $validated['code'] : $finalCode,
+                    'code' => $finalCode,
                     'company_id' => $company->id,
                     'estimated_budget' => $validated['estimated_budget'] === '' ? 0 : $validated['estimated_budget'],
                 ],
@@ -207,15 +212,6 @@ class ManageProjects extends Component
     protected function rules(int $companyId): array
     {
         return [
-            'code' => [
-                Rule::requiredIf($this->editingProjectId !== null),
-                'nullable',
-                'string',
-                'max:50',
-                Rule::unique('projects', 'code')
-                    ->where(fn ($query) => $query->where('company_id', $companyId))
-                    ->ignore($this->editingProjectId),
-            ],
             'name' => ['required', 'string', 'max:255'],
             'city' => ['nullable', 'string', 'max:255'],
             'address' => ['nullable', 'string', 'max:255'],

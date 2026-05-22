@@ -25,7 +25,7 @@ class SupplierContract extends Model implements Auditable, HasMedia
         'company_id',
         'work_project_id',
         'supplier_id',
-        'purchase_order_id',
+        'order_id',
         'contract_number',
         'contract_type',
         'start_date',
@@ -69,6 +69,12 @@ class SupplierContract extends Model implements Auditable, HasMedia
         return $this->belongsTo(Supplier::class);
     }
 
+    public function order(): BelongsTo
+    {
+        return $this->belongsTo(Order::class);
+    }
+
+    /** @deprecated */
     public function purchaseOrder(): BelongsTo
     {
         return $this->belongsTo(PurchaseOrder::class);

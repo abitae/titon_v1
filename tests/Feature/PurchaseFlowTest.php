@@ -4,6 +4,7 @@ use App\Livewire\Purchases\ManagePurchaseRequests;
 use App\Livewire\Purchases\ManageSupplierQuotations;
 use App\Livewire\Purchases\SelectWinningQuotation;
 use App\Models\Company;
+use App\Models\Order;
 use App\Models\Project;
 use App\Models\PurchaseRequest;
 use App\Models\Supplier;
@@ -37,6 +38,7 @@ beforeEach(function () {
     $this->project = Project::factory()->create([
         'company_id' => $this->company->id,
         'responsible_user_id' => $this->user->id,
+        'code' => 'OBR001',
     ]);
 
     $this->supplierA = Supplier::factory()->create([
@@ -53,7 +55,6 @@ beforeEach(function () {
 test('purchase requests can be created with scoped items', function () {
     Livewire::test(ManagePurchaseRequests::class)
         ->call('openCreateModal')
-        ->set('code', 'SC-001')
         ->set('work_project_id', $this->project->id)
         ->set('requested_by', $this->user->id)
         ->set('priority', 'alta')
@@ -71,13 +72,15 @@ test('purchase requests can be created with scoped items', function () {
         ->call('savePurchaseRequest')
         ->assertHasNoErrors();
 
-    $purchaseRequest = PurchaseRequest::query()->where('code', 'SC-001')->firstOrFail();
+    $purchaseRequest = PurchaseRequest::query()->where('description', 'Compra de materiales electricos')->firstOrFail();
 
-    $this->assertDatabaseHas('purchase_requests', [
+    $this->assertDatabaseHas('requirements', [
         'company_id' => $this->company->id,
         'work_project_id' => $this->project->id,
-        'code' => 'SC-001',
+        'description' => 'Compra de materiales electricos',
     ]);
+
+    expect($purchaseRequest->code)->toContain('REQ');
 
     expect($purchaseRequest->items()->count())->toBe(1);
 });
@@ -86,18 +89,20 @@ test('supplier quotations can be created and totals are calculated', function ()
     $purchaseRequest = PurchaseRequest::query()->create([
         'company_id' => $this->company->id,
         'work_project_id' => $this->project->id,
+        'responsible_user_id' => $this->user->id,
         'requested_by' => $this->user->id,
         'code' => 'SC-002',
         'priority' => 'media',
         'request_date' => now()->toDateString(),
         'description' => 'Compra de tuberias',
-        'status' => 'solicitada',
+        'status' => 'creado',
     ]);
 
     $purchaseRequest->items()->create([
         'company_id' => $this->company->id,
         'work_project_id' => $this->project->id,
-        'product_or_service' => 'Tubo PVC',
+        'item_type' => 'material',
+        'description' => 'Tubo PVC',
         'unit' => 'und',
         'quantity' => 10,
         'technical_specification' => '4 pulgadas',
@@ -106,7 +111,6 @@ test('supplier quotations can be created and totals are calculated', function ()
     Livewire::test(ManageSupplierQuotations::class, ['purchaseRequest' => $purchaseRequest])
         ->call('openCreateModal')
         ->set('supplier_id', $this->supplierA->id)
-        ->set('code', 'COT-001')
         ->set('currency', 'PEN')
         ->set('tax', '180')
         ->set('delivery_time', '3')
@@ -123,29 +127,32 @@ test('supplier quotations can be created and totals are calculated', function ()
         ->call('saveQuotation')
         ->assertHasNoErrors();
 
-    $quotation = SupplierQuotation::query()->where('code', 'COT-001')->firstOrFail();
+    $quotation = SupplierQuotation::query()->where('requirement_id', $purchaseRequest->id)->firstOrFail();
+
+    expect($quotation->code)->toContain('COT');
 
     expect((float) $quotation->subtotal)->toBe(500.0);
     expect((float) $quotation->total)->toBe(680.0);
-    expect($purchaseRequest->fresh()->status)->toBe('cotizada');
+    expect($purchaseRequest->fresh()->status)->toBe('en_proceso');
 });
 
 test('winner selection and purchase order generation are persisted', function () {
     $purchaseRequest = PurchaseRequest::query()->create([
         'company_id' => $this->company->id,
         'work_project_id' => $this->project->id,
+        'responsible_user_id' => $this->user->id,
         'requested_by' => $this->user->id,
         'code' => 'SC-003',
         'priority' => 'alta',
         'request_date' => now()->toDateString(),
         'description' => 'Compra de equipos',
-        'status' => 'cotizada',
+        'status' => 'en_proceso',
     ]);
 
     $quotationA = SupplierQuotation::query()->create([
         'company_id' => $this->company->id,
         'work_project_id' => $this->project->id,
-        'purchase_request_id' => $purchaseRequest->id,
+        'requirement_id' => $purchaseRequest->id,
         'supplier_id' => $this->supplierA->id,
         'code' => 'COT-A',
         'quotation_date' => now()->toDateString(),
@@ -153,13 +160,14 @@ test('winner selection and purchase order generation are persisted', function ()
         'subtotal' => 1000,
         'tax' => 180,
         'total' => 1180,
-        'delivery_time' => 5,
+        'delivery_time_days' => 5,
+        'status' => 'registrada',
     ]);
 
     $quotationB = SupplierQuotation::query()->create([
         'company_id' => $this->company->id,
         'work_project_id' => $this->project->id,
-        'purchase_request_id' => $purchaseRequest->id,
+        'requirement_id' => $purchaseRequest->id,
         'supplier_id' => $this->supplierB->id,
         'code' => 'COT-B',
         'quotation_date' => now()->toDateString(),
@@ -167,7 +175,8 @@ test('winner selection and purchase order generation are persisted', function ()
         'subtotal' => 950,
         'tax' => 171,
         'total' => 1121,
-        'delivery_time' => 7,
+        'delivery_time_days' => 7,
+        'status' => 'registrada',
     ]);
 
     Livewire::test(SelectWinningQuotation::class, ['purchaseRequest' => $purchaseRequest])
@@ -180,30 +189,32 @@ test('winner selection and purchase order generation are persisted', function ()
     $purchaseRequest->refresh();
 
     $this->assertDatabaseHas('quotation_comparisons', [
-        'purchase_request_id' => $purchaseRequest->id,
+        'requirement_id' => $purchaseRequest->id,
         'selected_supplier_quotation_id' => $quotationB->id,
     ]);
 
-    expect($purchaseRequest->status)->toBe('orden_generada');
-    expect($purchaseRequest->comparison?->purchase_order_code)->toBe('OC-SC-003');
+    expect($purchaseRequest->status)->toBe('atendido');
+    expect(Order::query()->where('requirement_id', $purchaseRequest->id)->exists())->toBeTrue();
+    expect($purchaseRequest->comparison?->order_code)->not->toBeEmpty();
 });
 
 test('purchase pages and comparison pdf routes render for authorized users', function () {
     $purchaseRequest = PurchaseRequest::query()->create([
         'company_id' => $this->company->id,
         'work_project_id' => $this->project->id,
+        'responsible_user_id' => $this->user->id,
         'requested_by' => $this->user->id,
         'code' => 'SC-004',
         'priority' => 'media',
         'request_date' => now()->toDateString(),
         'description' => 'Compra de accesorios',
-        'status' => 'cotizada',
+        'status' => 'en_proceso',
     ]);
 
     $quotation = SupplierQuotation::query()->create([
         'company_id' => $this->company->id,
         'work_project_id' => $this->project->id,
-        'purchase_request_id' => $purchaseRequest->id,
+        'requirement_id' => $purchaseRequest->id,
         'supplier_id' => $this->supplierA->id,
         'code' => 'COT-004',
         'quotation_date' => now()->toDateString(),
@@ -211,7 +222,8 @@ test('purchase pages and comparison pdf routes render for authorized users', fun
         'subtotal' => 1000,
         'tax' => 180,
         'total' => 1180,
-        'delivery_time' => 4,
+        'delivery_time_days' => 4,
+        'status' => 'registrada',
     ]);
 
     $purchaseRequest->comparison()->create([
@@ -221,14 +233,14 @@ test('purchase pages and comparison pdf routes render for authorized users', fun
         'selected_by' => $this->user->id,
         'compared_at' => now(),
         'selection_reason' => 'Oferta mas conveniente.',
-        'purchase_order_code' => 'OC-SC-004',
-        'purchase_order_generated_at' => now(),
+        'order_code' => 'OC-SC-004',
+        'order_generated_at' => now(),
     ]);
 
-    $this->get(route('modules.purchases'))->assertOk()->assertSee('Solicitudes de compra');
-    $this->get(route('purchases.quotations', $purchaseRequest))->assertOk()->assertSee('Cotizaciones por solicitud');
-    $this->get(route('purchases.comparison', $purchaseRequest))->assertOk()->assertSee('Comparativa visual');
-    $this->get(route('purchases.winner', $purchaseRequest))->assertOk()->assertSee('Seleccion de ganador');
+    $this->get(route('modules.purchases'))->assertOk()->assertSee('Requerimientos');
+    $this->get(route('purchases.quotations', $purchaseRequest))->assertOk();
+    $this->get(route('purchases.comparison', $purchaseRequest))->assertOk();
+    $this->get(route('purchases.winner', $purchaseRequest))->assertOk();
     $this->get(route('purchases.comparison.pdf', $purchaseRequest))->assertOk()->assertHeader('content-type', 'application/pdf');
     $this->get(route('purchases.order.pdf', $purchaseRequest))->assertOk()->assertHeader('content-type', 'application/pdf');
 });

@@ -20,7 +20,7 @@ enum PlatformModule
             self::Projects => 'Obras',
             self::Suppliers => 'Proveedores',
             self::Contracts => 'Contratos',
-            self::Payments => 'Pagos',
+            self::Payments => 'Cuentas por pagar',
             self::Mechanics => 'Mecanica',
         };
     }
@@ -33,7 +33,7 @@ enum PlatformModule
             self::Projects => 'Seguimiento operativo y contractual de obras.',
             self::Suppliers => 'Directorio y evaluacion de proveedores.',
             self::Contracts => 'Control de contratos, vigencias y anexos.',
-            self::Payments => 'Programacion y control del flujo de pagos.',
+            self::Payments => 'CxP por orden conforme, documentos y pagos.',
             self::Mechanics => 'Maquinaria, revisiones, mantenimientos y repuestos.',
         };
     }
@@ -59,7 +59,7 @@ enum PlatformModule
             self::Projects => 'modules.projects',
             self::Suppliers => 'modules.suppliers',
             self::Contracts => 'modules.contracts',
-            self::Payments => 'modules.payments',
+            self::Payments => 'accounts-payable.index',
             self::Mechanics => 'modules.mechanics',
         };
     }
@@ -72,7 +72,7 @@ enum PlatformModule
             self::Projects => 'projects',
             self::Suppliers => 'suppliers',
             self::Contracts => 'contracts',
-            self::Payments => 'payments',
+            self::Payments => 'accounts-payable',
             self::Mechanics => 'mecanica',
         };
     }
@@ -81,6 +81,7 @@ enum PlatformModule
     {
         return match ($this) {
             self::Mechanics => request()->routeIs('modules.mechanics') || request()->routeIs('mechanics.*'),
+            self::Payments => request()->routeIs('accounts-payable.*'),
             default => request()->routeIs($this->routeName()),
         };
     }

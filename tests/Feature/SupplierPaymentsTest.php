@@ -51,7 +51,7 @@ beforeEach(function () {
         'company_id' => $this->company->id,
         'work_project_id' => $this->project->id,
         'supplier_id' => $this->supplier->id,
-        'purchase_order_id' => PurchaseOrder::factory()->create([
+        'order_id' => PurchaseOrder::factory()->create([
             'company_id' => $this->company->id,
             'work_project_id' => $this->project->id,
             'supplier_id' => $this->supplier->id,
@@ -194,7 +194,7 @@ test('payments cannot use records from another company', function () {
         'company_id' => $otherCompany->id,
         'work_project_id' => $otherProject->id,
         'supplier_id' => $otherSupplier->id,
-        'purchase_order_id' => PurchaseOrder::factory()->create([
+        'order_id' => PurchaseOrder::factory()->create([
             'company_id' => $otherCompany->id,
             'work_project_id' => $otherProject->id,
             'supplier_id' => $otherSupplier->id,

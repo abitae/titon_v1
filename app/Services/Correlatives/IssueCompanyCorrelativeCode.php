@@ -14,10 +14,10 @@ class IssueCompanyCorrelativeCode
     /**
      * Vista previa del siguiente código (no incrementa la secuencia).
      */
-    public function peek(Company $company, CorrelativeSubject $subject, string $series = '', ?int $year = null): string
+    public function peek(Company $company, CorrelativeSubject $subject, string $series = '', ?int $year = null, ?string $suffixOverride = null): string
     {
         $year = $year ?? (int) now()->year;
-        $format = $this->resolveFormat($company, $subject, $series);
+        $format = $this->resolveFormat($company, $subject, $series, $suffixOverride);
 
         $last = (int) CompanyCorrelativeSequence::query()
             ->where('company_id', $company->id)
@@ -32,12 +32,12 @@ class IssueCompanyCorrelativeCode
     /**
      * Reserva e incrementa correlativo (transacción + bloqueo pesimista).
      */
-    public function issue(Company $company, CorrelativeSubject $subject, string $series = '', ?int $year = null): string
+    public function issue(Company $company, CorrelativeSubject $subject, string $series = '', ?int $year = null, ?string $suffixOverride = null): string
     {
         $year = $year ?? (int) now()->year;
 
-        return DB::transaction(function () use ($company, $subject, $series, $year): string {
-            $format = $this->resolveFormat($company, $subject, $series);
+        return DB::transaction(function () use ($company, $subject, $series, $year, $suffixOverride): string {
+            $format = $this->resolveFormat($company, $subject, $series, $suffixOverride);
 
             $sequence = CompanyCorrelativeSequence::query()
                 ->where('company_id', $company->id)
@@ -72,9 +72,10 @@ class IssueCompanyCorrelativeCode
         });
     }
 
-    protected function resolveFormat(Company $company, CorrelativeSubject $subject, string $series): CompanyCorrelativeFormat
+    protected function resolveFormat(Company $company, CorrelativeSubject $subject, string $series, ?string $suffixOverride = null): CompanyCorrelativeFormat
     {
         $defaults = $subject->defaultFormat();
+        $suffix = $suffixOverride ?? $defaults['suffix'];
 
         return CompanyCorrelativeFormat::query()->firstOrCreate(
             [
@@ -83,7 +84,7 @@ class IssueCompanyCorrelativeCode
                 'series' => $series,
             ],
             [
-                'suffix' => $defaults['suffix'],
+                'suffix' => $suffix,
                 'template' => $defaults['template'],
                 'pad_length' => $defaults['pad_length'],
                 'is_active' => true,

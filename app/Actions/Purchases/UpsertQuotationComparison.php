@@ -3,23 +3,24 @@
 namespace App\Actions\Purchases;
 
 use App\Enums\CorrelativeSubject;
-use App\Enums\PurchaseRequestStatus;
+use App\Enums\QuotationStatus;
+use App\Enums\RequirementStatus;
 use App\Models\Company;
-use App\Models\PurchaseRequest;
 use App\Models\QuotationComparison;
+use App\Models\Requirement;
 use App\Models\SupplierQuotation;
 use App\Models\User;
-use App\Services\Correlatives\IssueCompanyCorrelativeCode;
+use App\Services\Codes\CodeGeneratorService;
 
 class UpsertQuotationComparison
 {
-    public function handle(PurchaseRequest $purchaseRequest, SupplierQuotation $supplierQuotation, User $user, string $selectionReason): QuotationComparison
+    public function handle(Requirement $requirement, SupplierQuotation $supplierQuotation, User $user, string $selectionReason): QuotationComparison
     {
         $comparison = QuotationComparison::query()->updateOrCreate(
-            ['purchase_request_id' => $purchaseRequest->id],
+            ['requirement_id' => $requirement->id],
             [
-                'company_id' => $purchaseRequest->company_id,
-                'work_project_id' => $purchaseRequest->work_project_id,
+                'company_id' => $requirement->company_id,
+                'work_project_id' => $requirement->work_project_id,
                 'selected_supplier_quotation_id' => $supplierQuotation->id,
                 'selected_by' => $user->id,
                 'compared_at' => now(),
@@ -27,15 +28,27 @@ class UpsertQuotationComparison
             ],
         );
 
-        $purchaseRequest->update([
-            'status' => PurchaseRequestStatus::Awarded->value(),
+        $requirement->update([
+            'status' => RequirementStatus::InProcess->value(),
         ]);
+
+        $supplierQuotation->update(['status' => QuotationStatus::Selected->value()]);
+
+        SupplierQuotation::query()
+            ->where('requirement_id', $requirement->id)
+            ->where('id', '!=', $supplierQuotation->id)
+            ->update(['status' => QuotationStatus::NotSelected->value()]);
 
         if ($comparison->comparison_code === null || $comparison->comparison_code === '') {
             $company = Company::query()->findOrFail($comparison->company_id);
+            $project = $requirement->project()->firstOrFail();
 
             $comparison->forceFill([
-                'comparison_code' => app(IssueCompanyCorrelativeCode::class)->issue($company, CorrelativeSubject::QuotationComparison),
+                'comparison_code' => app(CodeGeneratorService::class)->generate(
+                    $company,
+                    $project,
+                    CorrelativeSubject::QuotationComparison,
+                ),
             ])->save();
         }
 

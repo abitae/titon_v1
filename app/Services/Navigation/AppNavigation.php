@@ -72,8 +72,8 @@ class AppNavigation
                 'heading' => 'Operacion',
                 'items' => [
                     [
-                        'label' => 'Compras',
-                        'description' => 'Solicitudes, cotizaciones y comparativas por obra.',
+                        'label' => 'Requerimientos',
+                        'description' => 'Requerimientos, cotizaciones, órdenes y conformidad por obra.',
                         'icon' => 'clipboard-document-list',
                         'route' => 'modules.purchases',
                         'href' => route('modules.purchases'),

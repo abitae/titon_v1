@@ -4,13 +4,13 @@ namespace App\Livewire\Purchases;
 
 use App\Actions\Companies\ResolveCurrentCompany;
 use App\Actions\Purchases\SyncPurchaseRequestItems;
+use App\Concerns\AssignsOperationalCode;
 use App\Concerns\InteractsWithToast;
 use App\Enums\CorrelativeSubject;
 use App\Enums\DocumentPriority;
-use App\Enums\PurchaseRequestStatus;
+use App\Enums\RequirementStatus;
 use App\Models\Project;
 use App\Models\PurchaseRequest;
-use App\Services\Correlatives\IssueCompanyCorrelativeCode;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -19,9 +19,9 @@ use Livewire\WithPagination;
 
 class ManagePurchaseRequests extends Component
 {
-    use InteractsWithToast, WithPagination;
+    use AssignsOperationalCode, InteractsWithToast, WithPagination;
 
-    public string $title = 'Solicitudes de compra';
+    public string $title = 'Requerimientos';
 
     public string $search = '';
 
@@ -80,15 +80,13 @@ class ManagePurchaseRequests extends Component
             'purchaseRequests' => $purchaseRequests,
             'projects' => Project::query()->orderBy('name')->get(),
             'users' => $this->companyUsers(),
-            'statusOptions' => PurchaseRequestStatus::cases(),
+            'statusOptions' => RequirementStatus::cases(),
             'priorityOptions' => DocumentPriority::cases(),
             'summary' => [
                 'total' => PurchaseRequest::query()->count(),
-                'open' => PurchaseRequest::query()->whereNotIn('status', [
-                    PurchaseRequestStatus::Closed->value(),
-                    PurchaseRequestStatus::Ordered->value(),
-                ])->count(),
-                'awarded' => PurchaseRequest::query()->where('status', PurchaseRequestStatus::Awarded->value())->count(),
+                'draft' => PurchaseRequest::query()->where('status', RequirementStatus::Draft->value())->count(),
+                'in_process' => PurchaseRequest::query()->where('status', RequirementStatus::InProcess->value())->count(),
+                'attended' => PurchaseRequest::query()->where('status', RequirementStatus::Attended->value())->count(),
             ],
         ])->layout('layouts.app', ['title' => $this->title]);
     }
@@ -127,7 +125,8 @@ class ManagePurchaseRequests extends Component
         $this->description = $purchaseRequest->description ?? '';
         $this->status = $purchaseRequest->status;
         $this->items = $purchaseRequest->items->map(fn ($item): array => [
-            'product_or_service' => $item->product_or_service,
+            'product_or_service' => $item->description,
+            'description' => $item->description,
             'unit' => $item->unit,
             'quantity' => (string) $item->quantity,
             'technical_specification' => $item->technical_specification ?? '',
@@ -159,21 +158,12 @@ class ManagePurchaseRequests extends Component
         abort_unless(auth()->user()->can($this->editingPurchaseRequestId ? 'purchases.editar' : 'purchases.crear'), 403);
 
         $validated = $this->validate([
-            'code' => [
-                Rule::requiredIf($this->editingPurchaseRequestId !== null),
-                'nullable',
-                'string',
-                'max:50',
-                Rule::unique('purchase_requests', 'code')
-                    ->where(fn ($query) => $query->where('company_id', $company->id))
-                    ->ignore($this->editingPurchaseRequestId),
-            ],
             'work_project_id' => ['required', 'integer', 'exists:projects,id'],
             'requested_by' => ['required', 'integer', 'exists:users,id'],
             'priority' => ['required', Rule::in(DocumentPriority::values())],
             'request_date' => ['required', 'date'],
             'description' => ['nullable', 'string'],
-            'status' => ['required', Rule::in(PurchaseRequestStatus::values())],
+            'status' => ['required', Rule::in(RequirementStatus::values())],
             'items' => ['required', 'array', 'min:1'],
             'items.*.product_or_service' => ['required', 'string', 'max:255'],
             'items.*.unit' => ['required', 'string', 'max:50'],
@@ -184,19 +174,27 @@ class ManagePurchaseRequests extends Component
         $isEditing = $this->editingPurchaseRequestId !== null;
 
         $purchaseRequest = DB::transaction(function () use ($validated, $company, $isEditing): PurchaseRequest {
-            $finalCode = trim((string) ($validated['code'] ?? ''));
+            $project = Project::query()->findOrFail($validated['work_project_id']);
+            $existing = $isEditing
+                ? PurchaseRequest::query()->find($this->editingPurchaseRequestId)
+                : null;
 
-            if (! $isEditing && $finalCode === '') {
-                $finalCode = app(IssueCompanyCorrelativeCode::class)->issue($company, CorrelativeSubject::PurchaseRequest);
-            }
+            $finalCode = $this->assignOperationalCode(
+                $company,
+                CorrelativeSubject::Requirement,
+                $project,
+                existingCode: $existing?->code,
+                isEditing: $isEditing,
+            );
 
             return PurchaseRequest::query()->updateOrCreate(
                 ['id' => $this->editingPurchaseRequestId],
                 [
                     'company_id' => $company->id,
                     'work_project_id' => $validated['work_project_id'],
+                    'responsible_user_id' => $validated['requested_by'],
                     'requested_by' => $validated['requested_by'],
-                    'code' => $isEditing ? $validated['code'] : $finalCode,
+                    'code' => $finalCode,
                     'priority' => $validated['priority'],
                     'request_date' => $validated['request_date'],
                     'description' => $validated['description'] ?? null,
@@ -237,7 +235,7 @@ class ManagePurchaseRequests extends Component
         $this->requested_by = auth()->id();
         $this->priority = DocumentPriority::Medium->value();
         $this->request_date = now()->toDateString();
-        $this->status = PurchaseRequestStatus::Draft->value();
+        $this->status = RequirementStatus::Draft->value();
         $this->items = [$this->emptyItem()];
         $this->showFormModal = false;
     }

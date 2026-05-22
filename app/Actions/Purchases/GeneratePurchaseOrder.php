@@ -3,59 +3,69 @@
 namespace App\Actions\Purchases;
 
 use App\Enums\CorrelativeSubject;
-use App\Enums\PurchaseOrderStatus;
-use App\Enums\PurchaseRequestStatus;
+use App\Enums\OrderStatus;
+use App\Enums\OrderType;
+use App\Enums\RequirementStatus;
 use App\Models\Company;
 use App\Models\PurchaseOrder;
-use App\Models\PurchaseRequest;
-use App\Services\Correlatives\IssueCompanyCorrelativeCode;
+use App\Models\Requirement;
+use App\Services\Codes\CodeGeneratorService;
 
 class GeneratePurchaseOrder
 {
-    public function handle(PurchaseRequest $purchaseRequest): PurchaseOrder
+    public function handle(Requirement $requirement): PurchaseOrder
     {
-        $comparison = $purchaseRequest->comparison()->with('selectedQuotation.items')->firstOrFail();
+        $comparison = $requirement->comparison()->with('selectedQuotation.items')->firstOrFail();
         $quotation = $comparison->selectedQuotation;
+        $project = $requirement->project()->firstOrFail();
+        $company = Company::query()->findOrFail($requirement->company_id);
 
-        $company = Company::query()->findOrFail($purchaseRequest->company_id);
-        $issuer = app(IssueCompanyCorrelativeCode::class);
+        $orderType = $requirement->requirement_type === 'servicio'
+            ? OrderType::Service
+            : OrderType::Purchase;
 
         $existingOrder = PurchaseOrder::query()
             ->where('supplier_quotation_id', $quotation->id)
             ->first();
 
-        $code = $existingOrder?->code
-            ?? ($comparison->purchase_order_code ?: null);
+        $code = $existingOrder?->code ?? ($comparison->order_code ?: null);
 
         if ($code === null || $code === '') {
-            $code = $issuer->issue($company, CorrelativeSubject::PurchaseOrder);
+            $code = app(CodeGeneratorService::class)->generate(
+                $company,
+                $project,
+                CorrelativeSubject::Order,
+                $orderType,
+            );
         }
 
-        $purchaseOrder = PurchaseOrder::query()->updateOrCreate(
+        $order = PurchaseOrder::query()->updateOrCreate(
             ['supplier_quotation_id' => $quotation->id],
             [
-                'company_id' => $purchaseRequest->company_id,
-                'work_project_id' => $purchaseRequest->work_project_id,
+                'company_id' => $requirement->company_id,
+                'work_project_id' => $requirement->work_project_id,
+                'requirement_id' => $requirement->id,
                 'supplier_id' => $quotation->supplier_id,
                 'code' => $code,
+                'order_type' => $orderType->value(),
                 'issue_date' => now()->toDateString(),
                 'currency' => $quotation->currency,
                 'subtotal' => $quotation->subtotal,
                 'tax' => $quotation->tax,
                 'total' => $quotation->total,
-                'status' => PurchaseOrderStatus::Generated->value(),
+                'status' => OrderStatus::Issued->value(),
                 'conditions' => $quotation->payment_conditions,
                 'observation' => $quotation->observation,
             ],
         );
 
-        $purchaseOrder->items()->delete();
+        $order->items()->delete();
 
         foreach ($quotation->items as $item) {
-            $purchaseOrder->items()->create([
-                'company_id' => $purchaseOrder->company_id,
-                'work_project_id' => $purchaseOrder->work_project_id,
-                'product_or_service' => $item->product_or_service,
+            $order->items()->create([
+                'company_id' => $order->company_id,
+                'work_project_id' => $order->work_project_id,
+                'description' => $item->product_or_service ?? $item->description ?? '',
                 'unit' => $item->unit,
                 'quantity' => $item->quantity,
                 'unit_price' => $item->unit_price,
@@ -64,14 +74,14 @@ class GeneratePurchaseOrder
         }
 
         $comparison->update([
-            'purchase_order_code' => $purchaseOrder->code,
-            'purchase_order_generated_at' => now(),
+            'order_code' => $order->code,
+            'order_generated_at' => now(),
         ]);
 
-        $purchaseRequest->update([
-            'status' => PurchaseRequestStatus::Ordered->value(),
+        $requirement->update([
+            'status' => RequirementStatus::Attended->value(),
         ]);
 
-        return $purchaseOrder->refresh();
+        return $order->refresh();
     }
 }

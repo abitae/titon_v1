@@ -2,30 +2,38 @@
 
 namespace App\Actions\Purchases;
 
-use App\Models\PurchaseRequest;
+use App\Models\Requirement;
 
 class SyncPurchaseRequestItems
 {
     /**
      * @param  list<array<string, mixed>>  $items
      */
-    public function handle(PurchaseRequest $purchaseRequest, array $items): void
+    public function handle(Requirement $requirement, array $items): void
     {
-        $purchaseRequest->items()->delete();
+        $requirement->items()->delete();
 
         foreach ($items as $item) {
-            if (($item['product_or_service'] ?? '') === '') {
+            $description = trim((string) ($item['description'] ?? $item['product_or_service'] ?? ''));
+
+            if ($description === '') {
                 continue;
             }
 
-            $purchaseRequest->items()->create([
-                'company_id' => $purchaseRequest->company_id,
-                'work_project_id' => $purchaseRequest->work_project_id,
-                'product_or_service' => $item['product_or_service'],
+            $quantity = (float) ($item['quantity'] ?? 0);
+            $unitPrice = isset($item['estimated_unit_price']) ? (float) $item['estimated_unit_price'] : null;
+
+            $requirement->items()->create([
+                'company_id' => $requirement->company_id,
+                'work_project_id' => $requirement->work_project_id,
+                'item_type' => $item['item_type'] ?? 'material',
+                'description' => $description,
                 'unit' => $item['unit'],
-                'quantity' => $item['quantity'],
-                'technical_specification' => $item['technical_specification'] ?: null,
-                'observation' => $item['observation'] ?: null,
+                'quantity' => $quantity,
+                'technical_specification' => $item['technical_specification'] ?? null,
+                'estimated_unit_price' => $unitPrice,
+                'estimated_total' => $unitPrice !== null ? round($quantity * $unitPrice, 2) : null,
+                'observation' => $item['observation'] ?? null,
             ]);
         }
     }

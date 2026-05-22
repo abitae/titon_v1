@@ -2,18 +2,18 @@
 
 namespace App\Actions\Purchases;
 
-use App\Enums\PurchaseOrderStatus;
-use App\Models\PurchaseOrder;
+use App\Enums\OrderStatus;
+use App\Models\Order;
 
 class ObservePurchaseOrder
 {
-    public function handle(PurchaseOrder $purchaseOrder, string $observation): PurchaseOrder
+    public function handle(Order $order, string $observation): Order
     {
-        $purchaseOrder->update([
-            'status' => PurchaseOrderStatus::Observed->value(),
+        $order->update([
+            'status' => OrderStatus::InAttention->value(),
             'observation' => $observation,
         ]);
 
-        return $purchaseOrder->refresh();
+        return $order->refresh();
     }
 }

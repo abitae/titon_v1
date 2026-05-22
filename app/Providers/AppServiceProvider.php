@@ -4,6 +4,8 @@ namespace App\Providers;
 
 use App\Http\Middleware\EnsureActiveCompany;
 use App\Http\Middleware\SetActiveCompanyContext;
+use App\Models\PurchaseRequest;
+use App\Policies\RequirementPolicy;
 use App\Services\Audit\UserAuditLogger;
 use Carbon\CarbonImmutable;
 use Illuminate\Auth\Events\Login;
@@ -68,9 +70,37 @@ class AppServiceProvider extends ServiceProvider
             : null,
         );
 
+        Gate::policy(PurchaseRequest::class, RequirementPolicy::class);
+
         Gate::before(function ($user, string $ability): ?bool {
             return $user->hasRole('Super Admin') ? true : null;
         });
+
+        $permissionAliases = [
+            'requerimientos.ver' => 'purchases.ver',
+            'requerimientos.crear' => 'purchases.crear',
+            'requerimientos.editar' => 'purchases.editar',
+            'requerimientos.cancelar' => 'purchases.eliminar',
+            'requerimientos.enviar_proveedor' => 'purchases.aprobar',
+            'cotizaciones.ver' => 'purchases.ver',
+            'cotizaciones.crear' => 'purchases.crear',
+            'cotizaciones.evaluar' => 'purchases.aprobar',
+            'cotizaciones.seleccionar' => 'purchases.aprobar',
+            'ordenes.ver' => 'purchases.ver',
+            'ordenes.crear' => 'purchases.aprobar',
+            'ordenes.emitir' => 'purchases.aprobar',
+            'ordenes.anular' => 'purchases.aprobar',
+            'ordenes.conformidad' => 'purchases.aprobar',
+            'ordenes.rechazar' => 'purchases.aprobar',
+            'cuentas_pagar.ver' => 'payments.ver',
+            'cuentas_pagar.subir_documentos' => 'payments.crear',
+            'cuentas_pagar.pagar' => 'payments.crear',
+            'cuentas_pagar.exportar' => 'payments.exportar',
+        ];
+
+        foreach ($permissionAliases as $newPermission => $legacyPermission) {
+            Gate::define($newPermission, fn ($user): bool => $user->can($legacyPermission) || $user->can($newPermission));
+        }
     }
 
     protected function registerAuditEvents(): void

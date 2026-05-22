@@ -57,13 +57,13 @@ beforeEach(function () {
         'priority' => 'alta',
         'request_date' => now()->toDateString(),
         'description' => 'Compra base para pruebas',
-        'status' => 'cotizada',
+        'status' => 'en_proceso',
     ]);
 
     $this->quotation = SupplierQuotation::query()->create([
         'company_id' => $this->company->id,
         'work_project_id' => $this->project->id,
-        'purchase_request_id' => $this->purchaseRequest->id,
+        'requirement_id' => $this->purchaseRequest->id,
         'supplier_id' => $this->supplier->id,
         'code' => 'COT-100',
         'quotation_date' => now()->toDateString(),
@@ -71,7 +71,8 @@ beforeEach(function () {
         'subtotal' => 1000,
         'tax' => 180,
         'total' => 1180,
-        'delivery_time' => 4,
+        'delivery_time_days' => 4,
+        'status' => 'registrada',
         'payment_conditions' => 'Contado',
         'warranty' => '12 meses',
     ]);
@@ -93,8 +94,8 @@ beforeEach(function () {
         'selected_by' => $this->user->id,
         'compared_at' => now(),
         'selection_reason' => 'Mejor oferta',
-        'purchase_order_code' => 'OC-SC-100',
-        'purchase_order_generated_at' => now(),
+        'order_code' => 'OC-SC-100',
+        'order_generated_at' => now(),
     ]);
 });
 
@@ -104,7 +105,7 @@ test('purchase order generation creates real order records and items', function 
     expect($purchaseOrder)->toBeInstanceOf(PurchaseOrder::class);
     expect($purchaseOrder->code)->toBe('OC-SC-100');
     expect($purchaseOrder->items()->count())->toBe(1);
-    expect($this->purchaseRequest->fresh()->status)->toBe('orden_generada');
+    expect($this->purchaseRequest->fresh()->status)->toBe('atendido');
 });
 
 test('purchase orders can be approved observed cancelled and converted to contracts', function () {

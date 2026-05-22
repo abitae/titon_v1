@@ -27,7 +27,7 @@ class SupplierContractFactory extends Factory
             'company_id' => Company::factory(),
             'work_project_id' => Project::factory(),
             'supplier_id' => Supplier::factory(),
-            'purchase_order_id' => PurchaseOrder::factory(),
+            'order_id' => PurchaseOrder::factory(),
             'contract_number' => strtoupper(fake()->bothify('CT-###')),
             'contract_type' => fake()->randomElement(['Suministro', 'Servicio']),
             'start_date' => fake()->dateTimeBetween('-1 week', 'now'),

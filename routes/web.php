@@ -7,6 +7,8 @@ use App\Http\Controllers\MechanicsReportDownloadController;
 use App\Http\Controllers\PurchaseComparisonDownloadController;
 use App\Http\Controllers\ReportDownloadController;
 use App\Http\Controllers\UserController;
+use App\Livewire\AccountsPayable\ManageAccountsPayable;
+use App\Livewire\AccountsPayable\ShowAccountsPayable;
 use App\Livewire\Auditoria\Usuarios\ManageUserAudits;
 use App\Livewire\Contracts\ManageSupplierContracts;
 use App\Livewire\Dashboard\ShowDashboard;
@@ -22,6 +24,7 @@ use App\Livewire\Mechanics\ManageFleetSpareParts;
 use App\Livewire\Mechanics\ManageFleetTechnicalInspections;
 use App\Livewire\Mechanics\ManageFleetWorkOrders;
 use App\Livewire\Mechanics\ShowMechanicalDashboard;
+use App\Livewire\Orders\RecordOrderConformity;
 use App\Livewire\Payments\ManagePaymentSchedules;
 use App\Livewire\Payments\ManageSupplierPayments;
 use App\Livewire\Projects\ManageProjects;
@@ -30,6 +33,7 @@ use App\Livewire\Purchases\ManagePurchaseRequests;
 use App\Livewire\Purchases\ManageSupplierQuotations;
 use App\Livewire\Purchases\SelectWinningQuotation;
 use App\Livewire\Purchases\ShowQuotationComparison;
+use App\Livewire\Requirements\SendRequirementToSuppliers;
 use App\Livewire\Settings\ManageCatalogs;
 use App\Livewire\Settings\ManageCorrelativeFormats;
 use App\Livewire\Suppliers\ManageSuppliers;
@@ -64,6 +68,9 @@ Route::middleware(['auth', 'verified', 'active.company.context'])->group(functio
         Route::get('purchases/requests', ManagePurchaseRequests::class)
             ->middleware('permission:purchases.ver')
             ->name('modules.purchases');
+        Route::get('purchases/requests/{purchaseRequest}/send-suppliers', SendRequirementToSuppliers::class)
+            ->middleware('permission:purchases.aprobar')
+            ->name('purchases.send-suppliers');
         Route::get('purchases/requests/{purchaseRequest}/quotations', ManageSupplierQuotations::class)
             ->middleware('permission:purchases.ver')
             ->name('purchases.quotations');
@@ -85,6 +92,18 @@ Route::middleware(['auth', 'verified', 'active.company.context'])->group(functio
         Route::get('purchase-orders/{purchaseOrder}/pdf', [PurchaseComparisonDownloadController::class, 'order'])
             ->middleware('permission:purchases.exportar')
             ->name('purchases.orders.pdf');
+        Route::get('purchase-orders/{purchaseOrder}/conformity', RecordOrderConformity::class)
+            ->middleware('permission:purchases.aprobar')
+            ->name('purchases.orders.conformity');
+
+        Route::get('accounts-payable', ManageAccountsPayable::class)
+            ->middleware('permission:payments.ver')
+            ->name('accounts-payable.index');
+        Route::get('accounts-payable/{accountsPayable}', ShowAccountsPayable::class)
+            ->middleware('permission:payments.ver')
+            ->name('accounts-payable.show');
+
+        Route::redirect('payments', '/accounts-payable')->name('modules.payments.redirect');
 
         Route::get('suppliers', ManageSuppliers::class)
             ->middleware('permission:suppliers.ver')

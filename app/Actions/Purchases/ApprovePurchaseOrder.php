@@ -2,21 +2,21 @@
 
 namespace App\Actions\Purchases;
 
-use App\Enums\PurchaseOrderStatus;
-use App\Models\PurchaseOrder;
+use App\Enums\OrderStatus;
+use App\Models\Order;
 use App\Models\User;
 
 class ApprovePurchaseOrder
 {
-    public function handle(PurchaseOrder $purchaseOrder, User $user, ?string $notes = null): PurchaseOrder
+    public function handle(Order $order, User $user, ?string $notes = null): Order
     {
-        $purchaseOrder->update([
-            'status' => PurchaseOrderStatus::Approved->value(),
+        $order->update([
+            'status' => OrderStatus::InAttention->value(),
             'approved_by' => $user->id,
             'approved_at' => now(),
             'approval_notes' => $notes,
         ]);
 
-        return $purchaseOrder->refresh();
+        return $order->refresh();
     }
 }

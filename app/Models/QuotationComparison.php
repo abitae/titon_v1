@@ -21,14 +21,14 @@ class QuotationComparison extends Model implements Auditable
     protected $fillable = [
         'company_id',
         'work_project_id',
-        'purchase_request_id',
+        'requirement_id',
         'comparison_code',
         'selected_supplier_quotation_id',
         'selected_by',
         'compared_at',
         'selection_reason',
-        'purchase_order_code',
-        'purchase_order_generated_at',
+        'order_code',
+        'order_generated_at',
     ];
 
     /**
@@ -38,13 +38,19 @@ class QuotationComparison extends Model implements Auditable
     {
         return [
             'compared_at' => 'datetime',
-            'purchase_order_generated_at' => 'datetime',
+            'order_generated_at' => 'datetime',
         ];
     }
 
+    public function requirement(): BelongsTo
+    {
+        return $this->belongsTo(Requirement::class);
+    }
+
+    /** @deprecated */
     public function purchaseRequest(): BelongsTo
     {
-        return $this->belongsTo(PurchaseRequest::class);
+        return $this->requirement();
     }
 
     public function selectedQuotation(): BelongsTo

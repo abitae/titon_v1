@@ -56,6 +56,32 @@ class PermissionSeeder extends Seeder
             Permission::findOrCreate($permissionName, 'web');
         }
 
+        $procurementGranular = [
+            'requerimientos.ver',
+            'requerimientos.crear',
+            'requerimientos.editar',
+            'requerimientos.cancelar',
+            'requerimientos.enviar_proveedor',
+            'cotizaciones.ver',
+            'cotizaciones.crear',
+            'cotizaciones.evaluar',
+            'cotizaciones.seleccionar',
+            'ordenes.ver',
+            'ordenes.crear',
+            'ordenes.emitir',
+            'ordenes.anular',
+            'ordenes.conformidad',
+            'ordenes.rechazar',
+            'cuentas_pagar.ver',
+            'cuentas_pagar.subir_documentos',
+            'cuentas_pagar.pagar',
+            'cuentas_pagar.exportar',
+        ];
+
+        foreach ($procurementGranular as $permissionName) {
+            Permission::findOrCreate($permissionName, 'web');
+        }
+
         $roles = [
             'Super Admin' => Permission::query()->pluck('name')->all(),
             'Gerencia' => [

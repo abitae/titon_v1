@@ -10,36 +10,35 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use OwenIt\Auditing\Contracts\Auditable;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
-class SupplierQuotation extends Model implements Auditable
+class SupplierQuotation extends Model implements Auditable, HasMedia
 {
     /** @use HasFactory<SupplierQuotationFactory> */
-    use AuditableWithContext, BelongsToActiveCompany, HasFactory;
+    use AuditableWithContext, BelongsToActiveCompany, HasFactory, InteractsWithMedia;
 
-    /**
-     * @var list<string>
-     */
     protected $fillable = [
         'company_id',
         'work_project_id',
-        'purchase_request_id',
+        'requirement_id',
         'supplier_id',
         'code',
+        'quotation_number',
         'quotation_date',
         'valid_until',
         'currency',
         'subtotal',
         'tax',
         'total',
-        'delivery_time',
+        'delivery_time_days',
         'payment_conditions',
         'warranty',
+        'status',
         'observation',
+        'total_score',
     ];
 
-    /**
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
@@ -48,12 +47,19 @@ class SupplierQuotation extends Model implements Auditable
             'subtotal' => 'decimal:2',
             'tax' => 'decimal:2',
             'total' => 'decimal:2',
+            'total_score' => 'decimal:2',
         ];
     }
 
+    public function requirement(): BelongsTo
+    {
+        return $this->belongsTo(Requirement::class);
+    }
+
+    /** @deprecated */
     public function purchaseRequest(): BelongsTo
     {
-        return $this->belongsTo(PurchaseRequest::class);
+        return $this->requirement();
     }
 
     public function supplier(): BelongsTo
@@ -64,5 +70,19 @@ class SupplierQuotation extends Model implements Auditable
     public function items(): HasMany
     {
         return $this->hasMany(SupplierQuotationItem::class);
+    }
+
+    public function scores(): HasMany
+    {
+        return $this->hasMany(QuotationScore::class);
+    }
+
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('cotizacion_pdf');
+        $this->addMediaCollection('ficha_tecnica');
+        $this->addMediaCollection('certificados');
+        $this->addMediaCollection('anexos');
+        $this->addMediaCollection('imagenes');
     }
 }

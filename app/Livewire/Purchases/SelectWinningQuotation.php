@@ -5,7 +5,6 @@ namespace App\Livewire\Purchases;
 use App\Actions\Purchases\GeneratePurchaseOrder;
 use App\Actions\Purchases\UpsertQuotationComparison;
 use App\Concerns\InteractsWithToast;
-use App\Enums\PurchaseRequestStatus;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseRequest;
 use App\Models\SupplierQuotation;
@@ -33,7 +32,7 @@ class SelectWinningQuotation extends Component
         $this->selected_supplier_quotation_id = $this->purchaseRequest->comparison?->selected_supplier_quotation_id;
         $this->selection_reason = $this->purchaseRequest->comparison?->selection_reason ?? '';
         $this->generated_purchase_order_id = PurchaseOrder::query()
-            ->whereHas('quotation', fn ($query) => $query->whereBelongsTo($purchaseRequest))
+            ->whereHas('quotation', fn ($query) => $query->where('requirement_id', $purchaseRequest->id))
             ->value('id');
     }
 
@@ -59,10 +58,10 @@ class SelectWinningQuotation extends Component
             ->findOrFail($validated['selected_supplier_quotation_id']);
 
         $upsertQuotationComparison->handle(
-            purchaseRequest: $this->purchaseRequest,
-            supplierQuotation: $quotation,
-            user: auth()->user(),
-            selectionReason: $validated['selection_reason'],
+            $this->purchaseRequest,
+            $quotation,
+            auth()->user(),
+            $validated['selection_reason'],
         );
 
         $this->purchaseRequest->refresh();
@@ -77,12 +76,6 @@ class SelectWinningQuotation extends Component
         $this->generated_purchase_order_id = $purchaseOrder->id;
         $this->purchaseRequest->refresh();
 
-        if ($this->purchaseRequest->status !== PurchaseRequestStatus::Ordered->value()) {
-            $this->purchaseRequest->update([
-                'status' => PurchaseRequestStatus::Ordered->value(),
-            ]);
-        }
-
-        $this->successToast('Orden de compra generada correctamente.');
+        $this->successToast('Orden generada correctamente.');
     }
 }

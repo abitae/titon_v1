@@ -15,6 +15,7 @@ class CompanySeeder extends Seeder
         Company::query()->create([
             'name' => 'Titon Infraestructura',
             'business_name' => 'Titon Infraestructura S.A.C.',
+            'correlative_prefix' => 'TITON',
             'ruc' => '20123456781',
             'address' => 'Av. Primavera 120, Lima',
             'phone' => '014445566',
@@ -28,6 +29,7 @@ class CompanySeeder extends Seeder
         Company::query()->create([
             'name' => 'Titon Proyectos',
             'business_name' => 'Titon Proyectos y Obras S.A.C.',
+            'correlative_prefix' => 'TITON',
             'ruc' => '20123456782',
             'address' => 'Jr. Comercio 450, Arequipa',
             'phone' => '054456789',
@@ -41,6 +43,7 @@ class CompanySeeder extends Seeder
         Company::query()->create([
             'name' => 'Titon Servicios',
             'business_name' => 'Titon Servicios Integrales S.A.C.',
+            'correlative_prefix' => 'TITON',
             'ruc' => '20123456783',
             'address' => 'Calle Los Olivos 780, Trujillo',
             'phone' => '044556677',

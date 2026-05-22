@@ -9,9 +9,15 @@ enum CorrelativeSubject: string
 {
     case Project = 'project';
     case Document = 'document';
-    case PurchaseRequest = 'purchase_request';
+    case Requirement = 'requirement';
     case SupplierQuotation = 'supplier_quotation';
     case QuotationComparison = 'quotation_comparison';
+    case Order = 'order';
+    case AccountsPayable = 'accounts_payable';
+    case AccountsPayablePayment = 'accounts_payable_payment';
+    /** @deprecated Use Requirement */
+    case PurchaseRequest = 'purchase_request';
+    /** @deprecated Use Order */
     case PurchaseOrder = 'purchase_order';
     case SupplierContract = 'supplier_contract';
     case ContractPaymentSchedule = 'contract_payment_schedule';
@@ -30,10 +36,12 @@ enum CorrelativeSubject: string
         return match ($this) {
             self::Project => 'Obras',
             self::Document => 'Documentos',
-            self::PurchaseRequest => 'Solicitudes de compra',
+            self::Requirement, self::PurchaseRequest => 'Requerimientos',
             self::SupplierQuotation => 'Cotizaciones de proveedor',
             self::QuotationComparison => 'Comparativas de cotizaciones',
-            self::PurchaseOrder => 'Órdenes de compra',
+            self::Order, self::PurchaseOrder => 'Órdenes',
+            self::AccountsPayable => 'Cuentas por pagar',
+            self::AccountsPayablePayment => 'Pagos CxP',
             self::SupplierContract => 'Contratos con proveedor',
             self::ContractPaymentSchedule => 'Cronograma de pagos (cuotas)',
             self::SupplierPayment => 'Pagos a proveedor',
@@ -56,10 +64,12 @@ enum CorrelativeSubject: string
         return match ($this) {
             self::Project => ['suffix' => 'OB', 'template' => '{prefix}-{suffix}-{year}-{number}', 'pad_length' => 6],
             self::Document => ['suffix' => 'DOC', 'template' => '{prefix}-{suffix}-{year}-{number}', 'pad_length' => 6],
-            self::PurchaseRequest => ['suffix' => 'SC', 'template' => '{prefix}-{suffix}-{year}-{number}', 'pad_length' => 6],
-            self::SupplierQuotation => ['suffix' => 'COT', 'template' => '{prefix}-{suffix}-{year}-{number}', 'pad_length' => 6],
-            self::QuotationComparison => ['suffix' => 'COMP', 'template' => '{prefix}-{suffix}-{year}-{number}', 'pad_length' => 6],
-            self::PurchaseOrder => ['suffix' => 'OC', 'template' => '{prefix}-{suffix}-{year}-{number}', 'pad_length' => 6],
+            self::Requirement, self::PurchaseRequest => ['suffix' => 'REQ', 'template' => '{prefix}-{series}-{suffix}-{year}-{number}', 'pad_length' => 6],
+            self::SupplierQuotation => ['suffix' => 'COT', 'template' => '{prefix}-{series}-{suffix}-{year}-{number}', 'pad_length' => 6],
+            self::QuotationComparison => ['suffix' => 'COMP', 'template' => '{prefix}-{series}-{suffix}-{year}-{number}', 'pad_length' => 6],
+            self::Order, self::PurchaseOrder => ['suffix' => 'OC', 'template' => '{prefix}-{series}-{suffix}-{year}-{number}', 'pad_length' => 6],
+            self::AccountsPayable => ['suffix' => 'CXP', 'template' => '{prefix}-{series}-{suffix}-{year}-{number}', 'pad_length' => 6],
+            self::AccountsPayablePayment => ['suffix' => 'PAG', 'template' => '{prefix}-{series}-{suffix}-{year}-{number}', 'pad_length' => 6],
             self::SupplierContract => ['suffix' => 'CON', 'template' => '{prefix}-{suffix}-{year}-{number}', 'pad_length' => 6],
             self::ContractPaymentSchedule => ['suffix' => 'CRON', 'template' => '{prefix}-{suffix}-{year}-{number}', 'pad_length' => 6],
             self::SupplierPayment => ['suffix' => 'PAG', 'template' => '{prefix}-{suffix}-{year}-{number}', 'pad_length' => 6],

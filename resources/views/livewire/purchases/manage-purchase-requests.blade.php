@@ -5,18 +5,18 @@
             <p class="mt-2 text-3xl font-semibold text-slate-950 dark:text-white">{{ number_format($summary['total']) }}</p>
         </div>
         <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-            <p class="text-sm text-slate-500 dark:text-slate-400">Abiertas</p>
-            <p class="mt-2 text-3xl font-semibold text-slate-950 dark:text-white">{{ number_format($summary['open']) }}</p>
+            <p class="text-sm text-slate-500 dark:text-slate-400">En borrador</p>
+            <p class="mt-2 text-3xl font-semibold text-slate-950 dark:text-white">{{ number_format($summary['draft']) }}</p>
         </div>
         <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-            <p class="text-sm text-slate-500 dark:text-slate-400">Adjudicadas</p>
-            <p class="mt-2 text-3xl font-semibold text-slate-950 dark:text-white">{{ number_format($summary['awarded']) }}</p>
+            <p class="text-sm text-slate-500 dark:text-slate-400">En proceso</p>
+            <p class="mt-2 text-3xl font-semibold text-slate-950 dark:text-white">{{ number_format($summary['in_process']) }}</p>
         </div>
     </section>
 
     <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-            <h1 class="text-2xl font-semibold text-slate-950 dark:text-white">Solicitudes de compra</h1>
+            <h1 class="text-2xl font-semibold text-slate-950 dark:text-white">Requerimientos</h1>
             <p class="mt-1 text-sm text-slate-600 dark:text-slate-300">Gestiona requerimientos por obra, define prioridad y deja la base lista para cotizar.</p>
         </div>
         <button type="button" wire:click="openCreateModal" class="rounded-xl bg-slate-950 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 dark:bg-cyan-500 dark:text-slate-950">Nueva solicitud</button>
@@ -64,6 +64,7 @@
                 <td class="px-6 py-4">{{ $purchaseRequest->quotations_count }}</td>
                 <td class="px-6 py-4">
                     <div class="flex flex-wrap gap-2 justify-end">
+                        <a href="{{ route('purchases.send-suppliers', $purchaseRequest) }}" class="rounded-lg px-2 py-1 text-sm font-medium text-emerald-700 hover:bg-emerald-50 dark:text-emerald-300">Enviar</a>
                         <a href="{{ route('purchases.quotations', $purchaseRequest) }}" class="rounded-lg px-2 py-1 text-sm font-medium text-cyan-700 hover:bg-cyan-50 dark:text-cyan-300">Cotizar</a>
                         <a href="{{ route('purchases.comparison', $purchaseRequest) }}" class="rounded-lg px-2 py-1 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200">Comparar</a>
                         <button type="button" wire:click="openEditModal({{ $purchaseRequest->id }})" class="rounded-lg px-2 py-1 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200">Editar</button>
@@ -92,11 +93,16 @@
         </div>
 
         <div class="mt-6 grid gap-4 md:grid-cols-2">
-            <div>
-                <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Codigo</label>
-                <input wire:model="code" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
-                @error('code') <p class="mt-1 text-sm text-rose-600">{{ $message }}</p> @enderror
-            </div>
+            @if ($editingPurchaseRequestId)
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Codigo</label>
+                    <input wire:model="code" readonly class="mt-2 block w-full cursor-not-allowed rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300" />
+                </div>
+            @else
+                <div class="rounded-xl border border-dashed border-cyan-300 bg-cyan-50 px-4 py-3 text-sm text-cyan-900 dark:border-cyan-800 dark:bg-cyan-950/40 dark:text-cyan-200">
+                    El codigo del requerimiento se generara automaticamente al guardar.
+                </div>
+            @endif
             <div>
                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Obra</label>
                 <select wire:model="work_project_id" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white">

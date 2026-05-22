@@ -9,7 +9,7 @@
     <div class="page">
         <div class="hero">
             <h1>Orden de compra proyectada</h1>
-            <p>{{ $comparison?->purchase_order_code ?? 'Sin generar' }} | {{ $purchaseRequest->project?->name ?? 'Sin obra' }}</p>
+            <p>{{ $comparison?->order_code ?? 'Sin generar' }} | {{ $purchaseRequest->project?->name ?? 'Sin obra' }}</p>
         </div>
 
         <table class="meta-grid" cellspacing="10">

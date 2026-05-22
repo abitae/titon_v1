@@ -34,6 +34,7 @@
                 <td class="px-6 py-4">
                     <div class="flex flex-wrap gap-2 justify-end">
                         <button type="button" wire:click="openDetailModal({{ $order->id }})" class="rounded-lg px-2 py-1 text-sm font-medium text-cyan-700 hover:bg-cyan-50 dark:text-cyan-300">Ver</button>
+                        <a href="{{ route('purchases.orders.conformity', $order) }}" class="rounded-lg px-2 py-1 text-sm font-medium text-emerald-700 hover:bg-emerald-50 dark:text-emerald-300">Conformidad</a>
                         <a href="{{ route('purchases.orders.pdf', $order) }}" class="rounded-lg px-2 py-1 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200">PDF</a>
                     </div>
                 </td>
