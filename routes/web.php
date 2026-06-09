@@ -36,6 +36,7 @@ use App\Livewire\Purchases\ShowQuotationComparison;
 use App\Livewire\Requirements\SendRequirementToSuppliers;
 use App\Livewire\Settings\ManageCatalogs;
 use App\Livewire\Settings\ManageCorrelativeFormats;
+use App\Livewire\Settings\ManageCostTypes;
 use App\Livewire\Suppliers\ManageSuppliers;
 use Illuminate\Support\Facades\Route;
 
@@ -60,6 +61,9 @@ Route::middleware(['auth', 'verified', 'active.company.context'])->group(functio
         Route::get('settings/correlatives', ManageCorrelativeFormats::class)
             ->middleware('permission:catalogs.ver')
             ->name('settings.correlatives');
+        Route::get('settings/cost-types', ManageCostTypes::class)
+            ->middleware('permission:catalogs.ver')
+            ->name('settings.cost-types');
 
         Route::get('projects', ManageProjects::class)
             ->middleware('permission:projects.ver')

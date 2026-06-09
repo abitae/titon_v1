@@ -9,6 +9,7 @@ use App\Concerns\InteractsWithToast;
 use App\Enums\CorrelativeSubject;
 use App\Enums\DocumentPriority;
 use App\Enums\RequirementStatus;
+use App\Models\CostType;
 use App\Models\Project;
 use App\Models\PurchaseRequest;
 use Illuminate\Contracts\View\View;
@@ -31,7 +32,11 @@ class ManagePurchaseRequests extends Component
 
     public bool $showFormModal = false;
 
+    public bool $showItemModal = false;
+
     public ?int $editingPurchaseRequestId = null;
+
+    public ?int $editingItemIndex = null;
 
     public string $code = '';
 
@@ -47,6 +52,20 @@ class ManagePurchaseRequests extends Component
 
     public string $status = 'borrador';
 
+    public string $cost_type_id = '';
+
+    public string $item_product_or_service = '';
+
+    public string $item_unit = 'und';
+
+    public string $item_quantity = '1';
+
+    public string $item_cost_center_ua = '';
+
+    public string $item_technical_specification = '';
+
+    public string $item_observation = '';
+
     /**
      * @var list<array<string, mixed>>
      */
@@ -56,13 +75,12 @@ class ManagePurchaseRequests extends Component
     {
         $this->request_date = now()->toDateString();
         $this->requested_by = auth()->id();
-        $this->items = [$this->emptyItem()];
     }
 
     public function render(): View
     {
         $purchaseRequests = PurchaseRequest::query()
-            ->with(['project', 'requester', 'comparison.selectedQuotation.supplier'])
+            ->with(['project', 'requester', 'costType', 'comparison.selectedQuotation.supplier'])
             ->withCount(['items', 'quotations'])
             ->when($this->search !== '', function ($query): void {
                 $query->where(function ($nestedQuery): void {
@@ -80,6 +98,7 @@ class ManagePurchaseRequests extends Component
             'purchaseRequests' => $purchaseRequests,
             'projects' => Project::query()->orderBy('name')->get(),
             'users' => $this->companyUsers(),
+            'costTypes' => CostType::query()->where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
             'statusOptions' => RequirementStatus::cases(),
             'priorityOptions' => DocumentPriority::cases(),
             'summary' => [
@@ -124,30 +143,74 @@ class ManagePurchaseRequests extends Component
         $this->request_date = $purchaseRequest->request_date?->format('Y-m-d') ?? '';
         $this->description = $purchaseRequest->description ?? '';
         $this->status = $purchaseRequest->status;
-        $this->items = $purchaseRequest->items->map(fn ($item): array => [
-            'product_or_service' => $item->description,
-            'description' => $item->description,
-            'unit' => $item->unit,
-            'quantity' => (string) $item->quantity,
-            'technical_specification' => $item->technical_specification ?? '',
-            'observation' => $item->observation ?? '',
-        ])->all();
+        $this->cost_type_id = $purchaseRequest->cost_type_id ? (string) $purchaseRequest->cost_type_id : '';
+        $this->items = $purchaseRequest->items->map(fn ($item): array => $this->itemFromModel($item))->all();
         $this->showFormModal = true;
     }
 
-    public function addItem(): void
+    public function openItemModal(?int $index = null): void
     {
-        $this->items[] = $this->emptyItem();
+        $this->resetItemDraft();
+        $this->editingItemIndex = $index;
+
+        if ($index !== null && isset($this->items[$index])) {
+            $item = $this->items[$index];
+            $this->item_product_or_service = $item['product_or_service'];
+            $this->item_unit = $item['unit'];
+            $this->item_quantity = (string) $item['quantity'];
+            $this->item_cost_center_ua = $item['cost_center_ua'] ?? '';
+            $this->item_technical_specification = $item['technical_specification'] ?? '';
+            $this->item_observation = $item['observation'] ?? '';
+        }
+
+        $this->showItemModal = true;
+    }
+
+    public function saveItem(): void
+    {
+        $company = app(ResolveCurrentCompany::class)->handle(auth()->user());
+
+        abort_if($company === null, 403);
+
+        $validated = $this->validate([
+            'item_product_or_service' => ['required', 'string', 'max:255'],
+            'item_unit' => ['required', 'string', 'max:50'],
+            'item_quantity' => ['required', 'numeric', 'min:0.01'],
+            'item_cost_center_ua' => ['nullable', 'string', 'max:150'],
+            'item_technical_specification' => ['nullable', 'string'],
+            'item_observation' => ['nullable', 'string'],
+        ], [], [
+            'item_product_or_service' => 'producto o servicio',
+            'item_unit' => 'unidad',
+            'item_quantity' => 'cantidad',
+            'item_cost_center_ua' => 'centro de costo UA',
+            'item_technical_specification' => 'especificacion tecnica',
+            'item_observation' => 'observacion',
+        ]);
+
+        $item = [
+            'product_or_service' => $validated['item_product_or_service'],
+            'description' => $validated['item_product_or_service'],
+            'unit' => $validated['item_unit'],
+            'quantity' => (string) $validated['item_quantity'],
+            'cost_center_ua' => $validated['item_cost_center_ua'] ?? '',
+            'technical_specification' => $validated['item_technical_specification'] ?? '',
+            'observation' => $validated['item_observation'] ?? '',
+        ];
+
+        if ($this->editingItemIndex !== null) {
+            $this->items[$this->editingItemIndex] = $item;
+        } else {
+            $this->items[] = $item;
+        }
+
+        $this->closeItemModal();
     }
 
     public function removeItem(int $index): void
     {
         unset($this->items[$index]);
         $this->items = array_values($this->items);
-
-        if ($this->items === []) {
-            $this->items[] = $this->emptyItem();
-        }
     }
 
     public function savePurchaseRequest(SyncPurchaseRequestItems $syncPurchaseRequestItems): void
@@ -164,10 +227,15 @@ class ManagePurchaseRequests extends Component
             'request_date' => ['required', 'date'],
             'description' => ['nullable', 'string'],
             'status' => ['required', Rule::in(RequirementStatus::values())],
+            'cost_type_id' => [
+                'nullable',
+                Rule::exists('cost_types', 'id')->where(fn ($query) => $query->where('company_id', $company->id)),
+            ],
             'items' => ['required', 'array', 'min:1'],
             'items.*.product_or_service' => ['required', 'string', 'max:255'],
             'items.*.unit' => ['required', 'string', 'max:50'],
             'items.*.quantity' => ['required', 'numeric', 'min:0.01'],
+            'items.*.cost_center_ua' => ['nullable', 'string', 'max:150'],
             'items.*.technical_specification' => ['nullable', 'string'],
             'items.*.observation' => ['nullable', 'string'],
         ]);
@@ -199,6 +267,7 @@ class ManagePurchaseRequests extends Component
                     'request_date' => $validated['request_date'],
                     'description' => $validated['description'] ?? null,
                     'status' => $validated['status'],
+                    'cost_type_id' => filled($validated['cost_type_id'] ?? null) ? (int) $validated['cost_type_id'] : null,
                 ],
             );
         });
@@ -221,6 +290,14 @@ class ManagePurchaseRequests extends Component
     public function closeModal(): void
     {
         $this->showFormModal = false;
+        $this->closeItemModal();
+    }
+
+    public function closeItemModal(): void
+    {
+        $this->showItemModal = false;
+        $this->editingItemIndex = null;
+        $this->resetItemDraft();
     }
 
     protected function resetForm(): void
@@ -230,27 +307,44 @@ class ManagePurchaseRequests extends Component
             'code',
             'work_project_id',
             'description',
+            'cost_type_id',
+            'items',
         ]);
 
         $this->requested_by = auth()->id();
         $this->priority = DocumentPriority::Medium->value();
         $this->request_date = now()->toDateString();
         $this->status = RequirementStatus::Draft->value();
-        $this->items = [$this->emptyItem()];
         $this->showFormModal = false;
+        $this->closeItemModal();
+    }
+
+    protected function resetItemDraft(): void
+    {
+        $this->reset([
+            'item_product_or_service',
+            'item_cost_center_ua',
+            'item_technical_specification',
+            'item_observation',
+        ]);
+
+        $this->item_unit = 'und';
+        $this->item_quantity = '1';
     }
 
     /**
-     * @return array<string, string>
+     * @return array<string, mixed>
      */
-    protected function emptyItem(): array
+    protected function itemFromModel(object $item): array
     {
         return [
-            'product_or_service' => '',
-            'unit' => 'und',
-            'quantity' => '1',
-            'technical_specification' => '',
-            'observation' => '',
+            'product_or_service' => $item->description,
+            'description' => $item->description,
+            'unit' => $item->unit,
+            'quantity' => (string) $item->quantity,
+            'cost_center_ua' => $item->cost_center_ua ?? '',
+            'technical_specification' => $item->technical_specification ?? '',
+            'observation' => $item->observation ?? '',
         ];
     }
 

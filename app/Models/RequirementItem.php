@@ -20,6 +20,7 @@ class RequirementItem extends Model
         'work_project_id',
         'requirement_id',
         'item_type',
+        'cost_center_ua',
         'description',
         'unit',
         'quantity',

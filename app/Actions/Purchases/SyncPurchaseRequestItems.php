@@ -27,6 +27,7 @@ class SyncPurchaseRequestItems
                 'company_id' => $requirement->company_id,
                 'work_project_id' => $requirement->work_project_id,
                 'item_type' => $item['item_type'] ?? 'material',
+                'cost_center_ua' => $item['cost_center_ua'] ?? null,
                 'description' => $description,
                 'unit' => $item['unit'],
                 'quantity' => $quantity,

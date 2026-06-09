@@ -31,6 +31,7 @@ class Requirement extends Model implements Auditable, HasMedia
         'title',
         'description',
         'requirement_type',
+        'cost_type_id',
         'priority',
         'requested_by_name',
         'request_date',
@@ -61,6 +62,11 @@ class Requirement extends Model implements Auditable, HasMedia
     public function requester(): BelongsTo
     {
         return $this->belongsTo(User::class, 'requested_by');
+    }
+
+    public function costType(): BelongsTo
+    {
+        return $this->belongsTo(CostType::class);
     }
 
     public function items(): HasMany

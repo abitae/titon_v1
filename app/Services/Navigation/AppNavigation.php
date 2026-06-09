@@ -66,6 +66,14 @@ class AppNavigation
                         'href' => route('settings.correlatives'),
                         'current' => request()->routeIs('settings.correlatives'),
                     ],
+                    [
+                        'label' => 'Tipos de costo',
+                        'description' => 'Clasificacion de costos para requerimientos.',
+                        'icon' => 'banknotes',
+                        'route' => 'settings.cost-types',
+                        'href' => route('settings.cost-types'),
+                        'current' => request()->routeIs('settings.cost-types'),
+                    ],
                 ],
             ],
             [
