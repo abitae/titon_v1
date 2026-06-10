@@ -238,7 +238,7 @@ class ManagePurchaseRequests extends Component
             'items.*.cost_center_ua' => ['nullable', 'string', 'max:150'],
             'items.*.technical_specification' => ['nullable', 'string'],
             'items.*.observation' => ['nullable', 'string'],
-        ]);
+        ], [], $this->purchaseRequestValidationAttributes());
         $isEditing = $this->editingPurchaseRequestId !== null;
 
         $purchaseRequest = DB::transaction(function () use ($validated, $company, $isEditing): PurchaseRequest {
@@ -353,5 +353,28 @@ class ManagePurchaseRequests extends Component
         $company = app(ResolveCurrentCompany::class)->handle(auth()->user());
 
         return $company?->users()->wherePivot('active', true)->orderBy('name')->get() ?? collect();
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    protected function purchaseRequestValidationAttributes(): array
+    {
+        return [
+            'work_project_id' => 'obra / proyecto',
+            'requested_by' => 'solicitante',
+            'priority' => 'prioridad',
+            'request_date' => 'fecha de solicitud',
+            'description' => 'descripción',
+            'status' => 'estado',
+            'cost_type_id' => 'tipo de costo',
+            'items' => 'ítems',
+            'items.*.product_or_service' => 'producto o servicio',
+            'items.*.unit' => 'unidad',
+            'items.*.quantity' => 'cantidad',
+            'items.*.cost_center_ua' => 'centro de costo UA',
+            'items.*.technical_specification' => 'especificación técnica',
+            'items.*.observation' => 'observación',
+        ];
     }
 }

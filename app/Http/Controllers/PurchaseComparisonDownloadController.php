@@ -6,16 +6,45 @@ use App\Concerns\AppliesExportCorrelationStamp;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseRequest;
 use App\Models\SupplierContract;
+use App\Models\SupplierQuotation;
 use App\Reports\Contracts\SupplierContractPdfReport;
 use App\Reports\Purchases\PurchaseOrderEntityPdfReport;
 use App\Reports\Purchases\PurchaseOrderPdfReport;
 use App\Reports\Purchases\QuotationComparisonPdfReport;
+use App\Reports\Purchases\SupplierQuotationPdfReport;
 use App\Services\Audit\UserAuditLogger;
+use Illuminate\Http\Response;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class PurchaseComparisonDownloadController extends Controller
 {
     use AppliesExportCorrelationStamp;
+
+    public function quotationPreview(
+        SupplierQuotation $supplierQuotation,
+        SupplierQuotationPdfReport $supplierQuotationPdfReport,
+    ): BinaryFileResponse|Response {
+        abort_unless(auth()->user()->can('purchases.ver'), 403);
+
+        $media = $supplierQuotation->getFirstMedia('cotizacion_pdf');
+
+        if ($media !== null) {
+            return response()->file($media->getPath(), [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="'.$media->file_name.'"',
+                'X-Frame-Options' => 'SAMEORIGIN',
+            ]);
+        }
+
+        $pdf = $supplierQuotationPdfReport->build($supplierQuotation);
+
+        return response($pdf, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="cotizacion-'.$supplierQuotation->code.'.pdf"',
+            'X-Frame-Options' => 'SAMEORIGIN',
+        ]);
+    }
 
     public function comparison(PurchaseRequest $purchaseRequest, QuotationComparisonPdfReport $quotationComparisonPdfReport, UserAuditLogger $userAuditLogger): StreamedResponse
     {

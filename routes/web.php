@@ -78,6 +78,9 @@ Route::middleware(['auth', 'verified', 'active.company.context'])->group(functio
         Route::get('purchases/requests/{purchaseRequest}/quotations', ManageSupplierQuotations::class)
             ->middleware('permission:purchases.ver')
             ->name('purchases.quotations');
+        Route::get('purchases/quotations/{supplierQuotation}/pdf', [PurchaseComparisonDownloadController::class, 'quotationPreview'])
+            ->middleware('permission:purchases.ver')
+            ->name('purchases.quotations.pdf');
         Route::get('purchases/requests/{purchaseRequest}/comparison', ShowQuotationComparison::class)
             ->middleware('permission:purchases.ver')
             ->name('purchases.comparison');

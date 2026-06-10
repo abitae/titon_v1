@@ -1,4 +1,4 @@
-@props(['value'])
+@props(['value', 'size' => 'default'])
 
 @php
     $theme = match ($value) {
@@ -38,8 +38,13 @@
     };
 
     $label = str($value)->replace('_', ' ')->headline();
+
+    $sizeClass = match ($size) {
+        'xs' => 'px-1.5 py-0.5 text-[10px] leading-tight',
+        default => 'px-2.5 py-1 text-xs',
+    };
 @endphp
 
-<span class="inline-flex rounded-full px-2.5 py-1 text-xs font-medium {{ $theme }}">
+<span class="inline-flex rounded-full font-medium {{ $sizeClass }} {{ $theme }}">
     {{ $label }}
 </span>

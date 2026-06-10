@@ -19,6 +19,17 @@ class AppNavigation
                 ],
             ],
             [
+                'heading' => 'Compras',
+                'items' => $this->procurementItems(),
+            ],
+            [
+                'heading' => 'Operacion',
+                'items' => array_map(
+                    fn (PlatformModule $module): array => $this->item($module),
+                    PlatformModule::businessModules(),
+                ),
+            ],
+            [
                 'heading' => 'Seguridad',
                 'items' => [
                     [
@@ -76,22 +87,50 @@ class AppNavigation
                     ],
                 ],
             ],
+        ];
+    }
+
+    /**
+     * @return array<int, array<string, string|bool>>
+     */
+    protected function procurementItems(): array
+    {
+        return [
             [
-                'heading' => 'Operacion',
-                'items' => [
-                    [
-                        'label' => 'Requerimientos',
-                        'description' => 'Requerimientos, cotizaciones, órdenes y conformidad por obra.',
-                        'icon' => 'clipboard-document-list',
-                        'route' => 'modules.purchases',
-                        'href' => route('modules.purchases'),
-                        'current' => request()->routeIs('modules.purchases') || request()->routeIs('purchases.*'),
-                    ],
-                    ...array_map(
-                        fn (PlatformModule $module): array => $this->item($module),
-                        PlatformModule::businessModules(),
-                    ),
-                ],
+                'label' => 'Requerimientos',
+                'description' => 'Solicitudes, cotizaciones y comparacion por obra.',
+                'icon' => 'clipboard-document-list',
+                'route' => 'modules.purchases',
+                'href' => route('modules.purchases'),
+                'current' => request()->routeIs([
+                    'modules.purchases',
+                    'purchases.send-suppliers',
+                    'purchases.quotations',
+                    'purchases.comparison',
+                    'purchases.winner',
+                    'purchases.comparison.pdf',
+                    'purchases.order.pdf',
+                ]),
+            ],
+            [
+                'label' => 'Ordenes de compra',
+                'description' => 'Emision, conformidad y anulacion de OC.',
+                'icon' => 'shopping-cart',
+                'route' => 'purchases.orders',
+                'href' => route('purchases.orders'),
+                'current' => request()->routeIs([
+                    'purchases.orders',
+                    'purchases.orders.pdf',
+                    'purchases.orders.conformity',
+                ]),
+            ],
+            [
+                'label' => 'Cuentas por pagar',
+                'description' => 'Pago de ordenes conformes y documentos CxP.',
+                'icon' => 'credit-card',
+                'route' => 'accounts-payable.index',
+                'href' => route('accounts-payable.index'),
+                'current' => request()->routeIs('accounts-payable.*'),
             ],
         ];
     }

@@ -6,7 +6,9 @@
         </div>
         <div class="flex flex-wrap gap-3">
             <a href="{{ route('purchases.quotations', $purchaseRequest) }}" class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 dark:border-slate-700 dark:text-slate-200">Cotizaciones</a>
-            <a href="{{ route('purchases.winner', $purchaseRequest) }}" class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 dark:border-slate-700 dark:text-slate-200">Seleccionar ganador</a>
+            @can('purchases.aprobar')
+                <flux:button type="button" variant="outline" wire:click="openWinnerModal">Seleccionar ganador</flux:button>
+            @endcan
             <a href="{{ route('purchases.comparison.pdf', $purchaseRequest) }}" class="rounded-xl bg-slate-950 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 dark:bg-cyan-500 dark:text-slate-950">PDF comparativa</a>
         </div>
     </div>
@@ -50,8 +52,8 @@
                                 </span>
                             </td>
                             <td class="px-4 py-4">
-                                <span class="{{ (int) $quotation->delivery_time === (int) ($summary['min_delivery_time'] ?? 0) ? 'rounded-full bg-sky-100 px-3 py-1 font-medium text-sky-700 dark:bg-sky-950/40 dark:text-sky-300' : '' }}">
-                                    {{ $quotation->delivery_time }} dias
+                                <span class="{{ (int) $quotation->delivery_time_days === (int) ($summary['min_delivery_time'] ?? 0) ? 'rounded-full bg-sky-100 px-3 py-1 font-medium text-sky-700 dark:bg-sky-950/40 dark:text-sky-300' : '' }}">
+                                    {{ $quotation->delivery_time_days }} días
                                 </span>
                             </td>
                             <td class="px-4 py-4">{{ $quotation->payment_conditions ?: 'Sin condicion' }}</td>
@@ -74,4 +76,9 @@
             <p class="mt-3 text-sm text-emerald-700 dark:text-emerald-300">{{ $comparison->selection_reason ?: 'Sin motivo registrado.' }}</p>
         </div>
     @endif
+
+    @include('livewire.purchases.partials.select-winner-modal', [
+        'summary' => $summary,
+        'comparison' => $comparison,
+    ])
 </div>

@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Enums\CurrencyCode;
+use App\Enums\QuotationCaptureMode;
 use App\Enums\QuotationStatus;
 use App\Models\Company;
 use App\Models\Project;
@@ -40,6 +41,7 @@ class SupplierQuotationFactory extends Factory
             'warranty' => fake()->sentence(),
             'status' => QuotationStatus::Registered->value(),
             'observation' => fake()->optional()->sentence(),
+            'capture_mode' => QuotationCaptureMode::Form->value(),
         ];
     }
 }

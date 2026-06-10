@@ -96,7 +96,6 @@ enum PlatformModule
             self::Projects,
             self::Suppliers,
             self::Contracts,
-            self::Payments,
             self::Mechanics,
         ];
     }

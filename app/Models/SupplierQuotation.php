@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Concerns\AuditableWithContext;
 use App\Concerns\BelongsToActiveCompany;
+use App\Enums\QuotationCaptureMode;
 use Database\Factories\SupplierQuotationFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -36,6 +37,7 @@ class SupplierQuotation extends Model implements Auditable, HasMedia
         'warranty',
         'status',
         'observation',
+        'capture_mode',
         'total_score',
     ];
 
@@ -79,10 +81,25 @@ class SupplierQuotation extends Model implements Auditable, HasMedia
 
     public function registerMediaCollections(): void
     {
-        $this->addMediaCollection('cotizacion_pdf');
+        $this->addMediaCollection('cotizacion_pdf')->singleFile();
         $this->addMediaCollection('ficha_tecnica');
         $this->addMediaCollection('certificados');
         $this->addMediaCollection('anexos');
         $this->addMediaCollection('imagenes');
+    }
+
+    public function isPdfCapture(): bool
+    {
+        return $this->capture_mode === QuotationCaptureMode::Pdf->value();
+    }
+
+    public function quotationPdfUrl(): ?string
+    {
+        return $this->getFirstMediaUrl('cotizacion_pdf') ?: null;
+    }
+
+    public function quotationPdfPreviewUrl(): string
+    {
+        return route('purchases.quotations.pdf', $this, absolute: false);
     }
 }

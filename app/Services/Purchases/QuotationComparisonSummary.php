@@ -14,7 +14,7 @@ class QuotationComparisonSummary
     public function build(PurchaseRequest $purchaseRequest): array
     {
         $quotations = $purchaseRequest->quotations()
-            ->with(['supplier', 'items'])
+            ->with(['supplier', 'items', 'media'])
             ->orderBy('total')
             ->get();
 

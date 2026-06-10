@@ -1,8 +1,9 @@
 <?php
 
+use App\Enums\QuotationCaptureMode;
 use App\Livewire\Purchases\ManagePurchaseRequests;
 use App\Livewire\Purchases\ManageSupplierQuotations;
-use App\Livewire\Purchases\SelectWinningQuotation;
+use App\Livewire\Purchases\ShowQuotationComparison;
 use App\Models\Company;
 use App\Models\Order;
 use App\Models\Project;
@@ -12,6 +13,7 @@ use App\Models\SupplierQuotation;
 use App\Models\User;
 use App\Services\Companies\CompanyContext;
 use Database\Seeders\PermissionSeeder;
+use Illuminate\Http\UploadedFile;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Role;
 
@@ -136,6 +138,157 @@ test('supplier quotations can be created and totals are calculated', function ()
     expect($purchaseRequest->fresh()->status)->toBe('en_proceso');
 });
 
+test('supplier quotations validate required fields in form mode', function () {
+    $purchaseRequest = PurchaseRequest::query()->create([
+        'company_id' => $this->company->id,
+        'work_project_id' => $this->project->id,
+        'responsible_user_id' => $this->user->id,
+        'requested_by' => $this->user->id,
+        'code' => 'SC-VAL',
+        'priority' => 'media',
+        'request_date' => now()->toDateString(),
+        'description' => 'Validación cotización',
+        'status' => 'creado',
+    ]);
+
+    $component = Livewire::test(ManageSupplierQuotations::class, ['purchaseRequest' => $purchaseRequest])
+        ->call('openCreateModal')
+        ->set('items', [])
+        ->call('saveQuotation')
+        ->assertHasErrors(['supplier_id', 'items']);
+
+    expect($component->errors()->first('supplier_id'))->toBe('El campo proveedor es obligatorio.');
+    expect($component->errors()->first('items'))->toBe('El campo ítems cotizados es obligatorio.');
+});
+
+test('supplier quotations can be registered from uploaded pdf', function () {
+    $purchaseRequest = PurchaseRequest::query()->create([
+        'company_id' => $this->company->id,
+        'work_project_id' => $this->project->id,
+        'responsible_user_id' => $this->user->id,
+        'requested_by' => $this->user->id,
+        'code' => 'SC-PDF',
+        'priority' => 'media',
+        'request_date' => now()->toDateString(),
+        'description' => 'Compra con cotización PDF',
+        'status' => 'creado',
+    ]);
+
+    Livewire::test(ManageSupplierQuotations::class, ['purchaseRequest' => $purchaseRequest])
+        ->call('openCreateModal')
+        ->set('capture_mode', QuotationCaptureMode::Pdf->value())
+        ->set('supplier_id', $this->supplierA->id)
+        ->set('currency', 'PEN')
+        ->set('subtotal', '500')
+        ->set('tax', '90')
+        ->set('delivery_time', '4')
+        ->set('quotation_pdf', UploadedFile::fake()->create('cotizacion-proveedor.pdf', 200, 'application/pdf'))
+        ->call('saveQuotation')
+        ->assertHasNoErrors();
+
+    $quotation = SupplierQuotation::query()->where('requirement_id', $purchaseRequest->id)->firstOrFail();
+
+    expect($quotation->capture_mode)->toBe(QuotationCaptureMode::Pdf->value());
+    expect((float) $quotation->subtotal)->toBe(500.0);
+    expect((float) $quotation->total)->toBe(590.0);
+    expect($quotation->items)->toHaveCount(0);
+    expect($quotation->getFirstMedia('cotizacion_pdf'))->not->toBeNull();
+
+    $previewResponse = $this->get(route('purchases.quotations.pdf', $quotation));
+
+    $previewResponse->assertOk();
+    $previewResponse->assertHeader('content-type', 'application/pdf');
+    expect(str_contains(strtolower((string) $previewResponse->headers->get('content-disposition')), 'inline'))->toBeTrue();
+
+    Livewire::test(ManageSupplierQuotations::class, ['purchaseRequest' => $purchaseRequest])
+        ->call('openPdfModal', $quotation->id)
+        ->assertSet('showPdfModal', true)
+        ->assertSet('pdfViewerUrl', route('purchases.quotations.pdf', $quotation, absolute: false));
+});
+
+test('form quotation preview generates inline pdf for comparison', function () {
+    $purchaseRequest = PurchaseRequest::query()->create([
+        'company_id' => $this->company->id,
+        'work_project_id' => $this->project->id,
+        'responsible_user_id' => $this->user->id,
+        'requested_by' => $this->user->id,
+        'code' => 'SC-FRM',
+        'priority' => 'media',
+        'request_date' => now()->toDateString(),
+        'description' => 'Cotización formulario',
+        'status' => 'creado',
+    ]);
+
+    Livewire::test(ManageSupplierQuotations::class, ['purchaseRequest' => $purchaseRequest])
+        ->call('openCreateModal')
+        ->set('supplier_id', $this->supplierA->id)
+        ->set('currency', 'PEN')
+        ->set('tax', '90')
+        ->set('delivery_time', '4')
+        ->set('items', [
+            [
+                'product_or_service' => 'Cable THW',
+                'unit' => 'rollo',
+                'quantity' => '5',
+                'unit_price' => '100',
+            ],
+        ])
+        ->call('saveQuotation')
+        ->assertHasNoErrors();
+
+    $quotation = SupplierQuotation::query()->where('requirement_id', $purchaseRequest->id)->firstOrFail();
+
+    expect($quotation->capture_mode)->toBe(QuotationCaptureMode::Form->value());
+    expect($quotation->getFirstMedia('cotizacion_pdf'))->toBeNull();
+
+    $previewResponse = $this->get(route('purchases.quotations.pdf', $quotation));
+
+    $previewResponse->assertOk();
+    $previewResponse->assertHeader('content-type', 'application/pdf');
+    expect(str_starts_with($previewResponse->getContent(), '%PDF'))->toBeTrue();
+
+    Livewire::test(ManageSupplierQuotations::class, ['purchaseRequest' => $purchaseRequest->fresh()])
+        ->call('openComparisonModal')
+        ->assertSet('showComparisonModal', true)
+        ->assertSeeHtml('iframe');
+});
+
+test('comparison modal opens fullscreen with quotation pdf previews', function () {
+    $purchaseRequest = PurchaseRequest::query()->create([
+        'company_id' => $this->company->id,
+        'work_project_id' => $this->project->id,
+        'responsible_user_id' => $this->user->id,
+        'requested_by' => $this->user->id,
+        'code' => 'SC-CMP',
+        'priority' => 'media',
+        'request_date' => now()->toDateString(),
+        'description' => 'Comparativa PDF',
+        'status' => 'en_proceso',
+    ]);
+
+    foreach ([$this->supplierA, $this->supplierB] as $index => $supplier) {
+        Livewire::test(ManageSupplierQuotations::class, ['purchaseRequest' => $purchaseRequest])
+            ->call('openCreateModal')
+            ->set('capture_mode', QuotationCaptureMode::Pdf->value())
+            ->set('supplier_id', $supplier->id)
+            ->set('currency', 'PEN')
+            ->set('subtotal', $index === 0 ? '500' : '450')
+            ->set('tax', $index === 0 ? '90' : '81')
+            ->set('delivery_time', $index === 0 ? '5' : '3')
+            ->set('quotation_pdf', UploadedFile::fake()->create("cotizacion-{$index}.pdf", 200, 'application/pdf'))
+            ->call('saveQuotation')
+            ->assertHasNoErrors();
+    }
+
+    Livewire::test(ManageSupplierQuotations::class, ['purchaseRequest' => $purchaseRequest->fresh()])
+        ->call('openComparisonModal')
+        ->assertSet('showComparisonModal', true)
+        ->assertSee('Comparativa de cotizaciones')
+        ->assertSee($this->supplierA->business_name)
+        ->assertSee($this->supplierB->business_name)
+        ->assertSeeHtml('iframe');
+});
+
 test('winner selection and purchase order generation are persisted', function () {
     $purchaseRequest = PurchaseRequest::query()->create([
         'company_id' => $this->company->id,
@@ -179,10 +332,12 @@ test('winner selection and purchase order generation are persisted', function ()
         'status' => 'registrada',
     ]);
 
-    Livewire::test(SelectWinningQuotation::class, ['purchaseRequest' => $purchaseRequest])
+    Livewire::test(ShowQuotationComparison::class, ['purchaseRequest' => $purchaseRequest])
+        ->call('openWinnerModal')
         ->set('selected_supplier_quotation_id', $quotationB->id)
         ->set('selection_reason', 'Mejor precio global para la obra.')
         ->call('saveSelection')
+        ->call('openWinnerModal')
         ->call('generateOrder')
         ->assertHasNoErrors();
 
@@ -240,7 +395,8 @@ test('purchase pages and comparison pdf routes render for authorized users', fun
     $this->get(route('modules.purchases'))->assertOk()->assertSee('Requerimientos');
     $this->get(route('purchases.quotations', $purchaseRequest))->assertOk();
     $this->get(route('purchases.comparison', $purchaseRequest))->assertOk();
-    $this->get(route('purchases.winner', $purchaseRequest))->assertOk();
+    $this->get(route('purchases.winner', $purchaseRequest))
+        ->assertRedirect(route('purchases.comparison', $purchaseRequest).'?selectWinner=1');
     $this->get(route('purchases.comparison.pdf', $purchaseRequest))->assertOk()->assertHeader('content-type', 'application/pdf');
     $this->get(route('purchases.order.pdf', $purchaseRequest))->assertOk()->assertHeader('content-type', 'application/pdf');
 });
