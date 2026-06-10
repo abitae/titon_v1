@@ -3,6 +3,7 @@
 use App\Enums\CatalogType;
 use App\Livewire\Payments\ManagePaymentSchedules;
 use App\Livewire\Payments\ManageSupplierPayments;
+use App\Models\BankAccount;
 use App\Models\CatalogItem;
 use App\Models\Company;
 use App\Models\ContractPaymentSchedule;
@@ -82,6 +83,12 @@ beforeEach(function () {
         'type' => CatalogType::Bank->value(),
         'name' => 'BCP',
     ]);
+
+    $this->bankAccount = BankAccount::factory()->create([
+        'company_id' => $this->company->id,
+        'catalog_bank_id' => $this->bank->id,
+        'balance' => 10000,
+    ]);
 });
 
 test('payment schedules can be created for a contract', function () {
@@ -127,7 +134,7 @@ test('supplier payments update schedule balance and status automatically', funct
         ->set('currency', 'PEN')
         ->set('operation_type_id', $this->operationType->id)
         ->set('payment_method_id', $this->paymentMethod->id)
-        ->set('bank_id', $this->bank->id)
+        ->set('bank_account_id', $this->bankAccount->id)
         ->set('operation_number', 'OP-001')
         ->set('responsible_user_id', $this->user->id)
         ->set('concept', 'Pago del primer hito')
@@ -165,6 +172,7 @@ test('payments cannot exceed pending schedule balance', function () {
         ->set('payment_date', now()->toDateString())
         ->set('amount', '1500')
         ->set('currency', 'PEN')
+        ->set('bank_account_id', $this->bankAccount->id)
         ->set('responsible_user_id', $this->user->id)
         ->set('concept', 'Pago excedido')
         ->call('savePayment')
@@ -231,7 +239,7 @@ test('payments cannot use records from another company', function () {
         ->set('currency', 'PEN')
         ->set('operation_type_id', $this->operationType->id)
         ->set('payment_method_id', $this->paymentMethod->id)
-        ->set('bank_id', $this->bank->id)
+        ->set('bank_account_id', $this->bankAccount->id)
         ->set('responsible_user_id', $this->user->id)
         ->set('concept', 'Pago cruzado')
         ->call('savePayment')

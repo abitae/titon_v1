@@ -9,6 +9,18 @@ test('login screen can be rendered', function () {
     $response->assertOk();
 });
 
+test('login screen is displayed in spanish', function () {
+    $response = $this->get(route('login'));
+
+    $response->assertOk();
+    $response->assertSee('Iniciar sesión', false);
+    $response->assertSee('Inicie sesión en su cuenta', false);
+    $response->assertSee('Correo electrónico', false);
+    $response->assertSee('Contraseña', false);
+    $response->assertSee('¿Olvidó su contraseña?', false);
+    $response->assertSee('Recordarme', false);
+});
+
 test('users can authenticate using the login screen', function () {
     $user = User::factory()->create();
 
@@ -33,6 +45,9 @@ test('users can not authenticate with invalid password', function () {
     ]);
 
     $response->assertSessionHasErrorsIn('email');
+    $response->assertSessionHasErrors([
+        'email' => 'Estas credenciales no coinciden con nuestros registros.',
+    ]);
 
     $this->assertGuest();
 });

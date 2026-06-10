@@ -4,9 +4,12 @@ use App\Actions\AccountsPayable\InitializePayableDocuments;
 use App\Actions\AccountsPayable\RegisterAccountsPayablePayment;
 use App\Actions\Orders\RecordOrderConformity;
 use App\Enums\AccountsPayableStatus;
+use App\Enums\CatalogType;
 use App\Enums\ConformityResult;
 use App\Enums\OrderStatus;
 use App\Models\AccountsPayable;
+use App\Models\BankAccount;
+use App\Models\CatalogItem;
 use App\Models\Company;
 use App\Models\Order;
 use App\Models\PayableDocument;
@@ -14,6 +17,7 @@ use App\Models\Project;
 use App\Models\Supplier;
 use App\Models\User;
 use App\Services\Companies\CompanyContext;
+use Database\Seeders\CatalogSeeder;
 use Database\Seeders\PermissionSeeder;
 use Spatie\Permission\Models\Role;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -22,6 +26,7 @@ beforeEach(function () {
     $this->seed(PermissionSeeder::class);
 
     $this->company = Company::factory()->create();
+    $this->seed(CatalogSeeder::class);
     $this->user = User::factory()->create();
     $this->role = Role::findByName('Super Admin', 'web');
 
@@ -88,9 +93,26 @@ test('payment is blocked until required documents are uploaded', function () {
 
     app(InitializePayableDocuments::class)->handle($accountsPayable);
 
+    $cashPaymentMethod = CatalogItem::query()
+        ->where('company_id', $this->company->id)
+        ->where('type', CatalogType::PaymentMethod->value())
+        ->where('code', 'EFE')
+        ->firstOrFail();
+
+    $cashAccount = BankAccount::factory()->cash()->create([
+        'company_id' => $this->company->id,
+        'balance' => 5000,
+    ]);
+
     expect(fn () => app(RegisterAccountsPayablePayment::class)->handle(
         $accountsPayable,
-        ['amount' => 1000, 'payment_date' => now()->toDateString(), 'concept' => 'Pago test'],
+        [
+            'amount' => 1000,
+            'payment_date' => now()->toDateString(),
+            'concept' => 'Pago test',
+            'payment_method_id' => $cashPaymentMethod->id,
+            'bank_account_id' => $cashAccount->id,
+        ],
         $this->user,
     ))->toThrow(HttpException::class);
 });

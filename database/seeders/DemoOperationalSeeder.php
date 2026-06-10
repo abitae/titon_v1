@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Actions\AccountsPayable\RegisterAccountsPayablePayment;
+use App\Actions\Banks\RecordBankMovement;
 use App\Actions\Orders\RecordOrderConformity;
 use App\Actions\Purchases\GeneratePurchaseOrder;
 use App\Actions\Purchases\SyncPurchaseRequestItems;
@@ -11,15 +12,17 @@ use App\Actions\Purchases\UpsertQuotationComparison;
 use App\Actions\Quotations\EvaluateQuotationScores;
 use App\Actions\Requirements\SendRequirementToSuppliers;
 use App\Enums\AccountsPayableStatus;
+use App\Enums\BankMovementType;
+use App\Enums\CatalogType;
 use App\Enums\ConformityResult;
 use App\Enums\CorrelativeSubject;
 use App\Enums\InvitationStatus;
 use App\Enums\OrderStatus;
-use App\Enums\PayableDocumentType;
 use App\Enums\ProjectStatus;
 use App\Enums\QuotationStatus;
 use App\Enums\RequirementStatus;
 use App\Models\AccountsPayable;
+use App\Models\BankAccount;
 use App\Models\CatalogItem;
 use App\Models\Company;
 use App\Models\PayableDocument;
@@ -244,37 +247,61 @@ class DemoOperationalSeeder extends Seeder
             }
 
             $accountsPayable->documents()
-                ->whereIn('document_type', [
-                    PayableDocumentType::Invoice->value(),
-                    PayableDocumentType::BankTransfer->value(),
-                ])
+                ->where('required', true)
                 ->get()
-                ->each(function (PayableDocument $document) use ($responsible): void {
-                    $document->update([
-                        'uploaded' => true,
-                        'uploaded_by' => $responsible->id,
-                        'uploaded_at' => now(),
-                        'status' => 'cargado',
-                    ]);
-                });
+                ->each(fn (PayableDocument $document): PayableDocument => $this->attachDemoPayableDocument($document, $responsible));
 
-            $accountsPayable->update(['status' => AccountsPayableStatus::ReadyForPayment->value()]);
+            $accountsPayable->refresh();
 
-            $bank = CatalogItem::query()->where('company_id', $company->id)->where('type', 'banks')->first();
-            $paymentMethod = CatalogItem::query()->where('company_id', $company->id)->where('type', 'payment_methods')->first();
+            if ($accountsPayable->requiredDocumentsUploaded()) {
+                $accountsPayable->update(['status' => AccountsPayableStatus::ReadyForPayment->value()]);
+            }
 
-            app(RegisterAccountsPayablePayment::class)->handle(
-                $accountsPayable,
+            $cashAccount = BankAccount::query()->firstOrCreate(
                 [
-                    'amount' => (float) $accountsPayable->balance,
-                    'payment_date' => now()->toDateString(),
-                    'concept' => 'Pago demo '.$accountsPayable->code,
-                    'bank_id' => $bank?->id,
-                    'payment_method_id' => $paymentMethod?->id,
-                    'currency' => $accountsPayable->currency,
+                    'company_id' => $company->id,
+                    'is_cash' => true,
+                    'name' => 'Caja demo',
                 ],
-                $responsible,
+                [
+                    'currency' => 'PEN',
+                    'balance' => 0,
+                    'is_active' => true,
+                ],
             );
+
+            $paymentAmount = (float) $accountsPayable->balance;
+
+            if ($paymentAmount > 0 && (float) $cashAccount->balance < $paymentAmount) {
+                app(RecordBankMovement::class)->handle($cashAccount, $responsible, [
+                    'type' => BankMovementType::Deposit->value(),
+                    'amount' => $paymentAmount * 2,
+                    'movement_date' => now()->toDateString(),
+                    'concept' => 'Saldo inicial demo caja',
+                    'reference' => 'DemoOperationalSeeder',
+                ]);
+            }
+
+            $paymentMethod = CatalogItem::query()
+                ->where('company_id', $company->id)
+                ->where('type', CatalogType::PaymentMethod->value())
+                ->where('code', 'EFE')
+                ->first();
+
+            if ($paymentMethod !== null && $paymentAmount > 0) {
+                app(RegisterAccountsPayablePayment::class)->handle(
+                    $accountsPayable->fresh(),
+                    [
+                        'amount' => $paymentAmount,
+                        'payment_date' => now()->toDateString(),
+                        'concept' => 'Pago demo '.$accountsPayable->code,
+                        'payment_method_id' => $paymentMethod->id,
+                        'bank_account_id' => $cashAccount->id,
+                        'currency' => $accountsPayable->currency,
+                    ],
+                    $responsible,
+                );
+            }
 
             Requirement::query()->create([
                 'company_id' => $company->id,
@@ -290,5 +317,38 @@ class DemoOperationalSeeder extends Seeder
                 'description' => 'Orden de servicio pendiente de cierre.',
             ]);
         });
+    }
+
+    protected function attachDemoPayableDocument(PayableDocument $document, User $responsible): PayableDocument
+    {
+        $demoDirectory = storage_path('app/demo-seed');
+
+        if (! is_dir($demoDirectory)) {
+            mkdir($demoDirectory, 0755, true);
+        }
+
+        $fileName = $document->document_type.'.pdf';
+        $filePath = $demoDirectory.DIRECTORY_SEPARATOR.$fileName;
+
+        if (! is_file($filePath)) {
+            file_put_contents($filePath, '%PDF-1.4 demo document');
+        }
+
+        $document->clearMediaCollection('archivo');
+
+        $document
+            ->addMedia($filePath)
+            ->usingFileName($fileName)
+            ->usingName($document->typeLabel())
+            ->toMediaCollection('archivo', 'public');
+
+        $document->update([
+            'uploaded' => true,
+            'uploaded_by' => $responsible->id,
+            'uploaded_at' => now(),
+            'status' => 'cargado',
+        ]);
+
+        return $document->refresh();
     }
 }

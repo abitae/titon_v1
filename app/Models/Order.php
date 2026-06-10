@@ -89,7 +89,7 @@ class Order extends Model implements Auditable, HasMedia
 
     public function items(): HasMany
     {
-        return $this->hasMany(OrderItem::class);
+        return $this->hasMany(OrderItem::class, 'order_id');
     }
 
     public function conformity(): HasOne
@@ -99,7 +99,7 @@ class Order extends Model implements Auditable, HasMedia
 
     public function accountsPayable(): HasOne
     {
-        return $this->hasOne(AccountsPayable::class);
+        return $this->hasOne(AccountsPayable::class, 'order_id');
     }
 
     public function contract(): HasOne
@@ -110,7 +110,13 @@ class Order extends Model implements Auditable, HasMedia
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('attachments');
+        $this->addMediaCollection('cotizacion_adjunta')->singleFile();
         $this->addMediaCollection('evidencias');
+    }
+
+    public function hasAttachedQuotationPdf(): bool
+    {
+        return $this->getFirstMedia('cotizacion_adjunta') !== null;
     }
 
     public function orderPdfPreviewUrl(): string

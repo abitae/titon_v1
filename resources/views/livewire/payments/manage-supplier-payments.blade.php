@@ -214,13 +214,14 @@
                 </select>
             </div>
             <div>
-                <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Banco</label>
-                <select wire:model="bank_id" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white">
+                <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Cuenta de origen</label>
+                <select wire:model="bank_account_id" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white">
                     <option value="">Seleccionar</option>
-                    @foreach ($banks as $bank)
-                        <option value="{{ $bank->id }}">{{ $bank->name }}</option>
+                    @foreach ($bankAccounts as $bankAccount)
+                        <option value="{{ $bankAccount->id }}">{{ $bankAccount->displayLabel() }} ({{ number_format((float) $bankAccount->balance, 2) }})</option>
                     @endforeach
                 </select>
+                @error('bank_account_id') <p class="mt-1 text-sm text-rose-600">{{ $message }}</p> @enderror
             </div>
             <div>
                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Numero de operacion</label>

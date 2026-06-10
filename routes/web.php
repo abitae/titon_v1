@@ -10,6 +10,7 @@ use App\Http\Controllers\UserController;
 use App\Livewire\AccountsPayable\ManageAccountsPayable;
 use App\Livewire\AccountsPayable\ShowAccountsPayable;
 use App\Livewire\Auditoria\Usuarios\ManageUserAudits;
+use App\Livewire\Banks\ManageBanks;
 use App\Livewire\Contracts\ManageSupplierContracts;
 use App\Livewire\Dashboard\ShowDashboard;
 use App\Livewire\Documents\DocumentTimeline;
@@ -108,7 +109,7 @@ Route::middleware(['auth', 'verified', 'active.company.context'])->group(functio
             ->middleware('permission:payments.ver')
             ->name('accounts-payable.show');
 
-        Route::redirect('payments', '/accounts-payable')->name('modules.payments.redirect');
+        Route::redirect('payments', '/supplier-payments')->name('modules.payments.redirect');
 
         Route::get('suppliers', ManageSuppliers::class)
             ->middleware('permission:suppliers.ver')
@@ -140,6 +141,9 @@ Route::middleware(['auth', 'verified', 'active.company.context'])->group(functio
         Route::get(PlatformModule::Payments->slug(), ManageSupplierPayments::class)
             ->middleware('permission:payments.ver')
             ->name(PlatformModule::Payments->routeName());
+        Route::get(PlatformModule::Banks->slug(), ManageBanks::class)
+            ->middleware('permission:bancos.ver')
+            ->name(PlatformModule::Banks->routeName());
         Route::get('contracts/{supplierContract}/payment-schedules', ManagePaymentSchedules::class)
             ->middleware('permission:payments.ver')
             ->name('payments.schedules');

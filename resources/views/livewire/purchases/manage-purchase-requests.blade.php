@@ -93,7 +93,7 @@
                                 variant="ghost"
                                 size="sm"
                                 icon="scale"
-                                href="{{ route('purchases.comparison', $purchaseRequest) }}"
+                                href="{{ route('purchases.quotations', $purchaseRequest) }}"
                                 wire:navigate
                                 class="!size-7 !min-h-0 !p-0"
                                 aria-label="Comparar cotizaciones"

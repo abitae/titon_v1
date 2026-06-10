@@ -53,7 +53,7 @@ class ManagePurchaseOrders extends Component
     public function render(): View
     {
         $orders = PurchaseOrder::query()
-            ->with(['project', 'supplier', 'quotation', 'contract'])
+            ->with(['project', 'supplier', 'quotation', 'contract', 'accountsPayable', 'conformity', 'media'])
             ->when($this->search !== '', function ($query): void {
                 $query->where(function ($nestedQuery): void {
                     $nestedQuery
@@ -224,6 +224,9 @@ class ManagePurchaseOrders extends Component
             'conformity_confirmation' => 'confirmación',
         ]);
 
+        $orderId = $this->conformityOrder->id;
+        $isConform = $validated['conformity_result'] === ConformityResult::Conform->value();
+
         $recordOrderConformity->handle(
             $this->conformityOrder,
             auth()->user(),
@@ -233,6 +236,22 @@ class ManagePurchaseOrders extends Component
         );
 
         $this->closeConformityModal();
+
+        if ($isConform) {
+            $accountsPayable = PurchaseOrder::query()
+                ->with('accountsPayable')
+                ->find($orderId)
+                ?->accountsPayable;
+
+            if ($accountsPayable !== null) {
+                $this->successToast('Conformidad registrada. La orden pasó a cuentas por pagar.');
+
+                $this->redirect(route('accounts-payable.show', $accountsPayable), navigate: true);
+
+                return;
+            }
+        }
+
         $this->successToast('Conformidad registrada correctamente.');
     }
 

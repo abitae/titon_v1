@@ -41,6 +41,15 @@
             </div>
         </div>
 
+        @if ($purchaseOrder->hasAttachedQuotationPdf())
+            <div class="section">
+                <h2>Cotizaci&oacute;n adjudicada</h2>
+                <div class="summary-note">
+                    <div>Se adjunta el PDF de la cotizaci&oacute;n del proveedor a continuaci&oacute;n de esta orden.</div>
+                </div>
+            </div>
+        @endif
+
         <div class="section">
             <h2>Detalle de items</h2>
             <table class="table">
@@ -55,7 +64,7 @@
                 <tbody>
                     @foreach ($purchaseOrder->items as $item)
                         <tr>
-                            <td>{{ $item->product_or_service }}</td>
+                            <td>{{ $item->description ?: $item->product_or_service }}</td>
                             <td>{{ $item->unit }}</td>
                             <td>{{ number_format((float) $item->quantity, 2) }}</td>
                             <td>{{ $purchaseOrder->currency }} {{ number_format((float) $item->total, 2) }}</td>

@@ -43,4 +43,9 @@ class CatalogItem extends Model
 
         return $query->where('type', $typeValue);
     }
+
+    public function requiresBankingDetails(): bool
+    {
+        return strtoupper($this->code) !== 'EFE';
+    }
 }

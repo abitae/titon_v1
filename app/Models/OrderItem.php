@@ -40,4 +40,14 @@ class OrderItem extends Model
     {
         return $this->belongsTo(Order::class);
     }
+
+    public function getProductOrServiceAttribute(): ?string
+    {
+        return $this->description;
+    }
+
+    public function setProductOrServiceAttribute(?string $value): void
+    {
+        $this->attributes['description'] = $value;
+    }
 }

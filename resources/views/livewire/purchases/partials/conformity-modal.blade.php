@@ -6,19 +6,20 @@
     @if ($conformityOrder)
         <div class="flex items-start justify-between gap-2">
             <div class="min-w-0">
-                <h2 class="text-base font-semibold text-slate-950 dark:text-white">Conformidad en obra</h2>
+                <h2 class="text-sm font-semibold text-slate-950 dark:text-white">Conformidad en obra</h2>
                 <p class="mt-0.5 truncate text-[11px] text-slate-500 dark:text-slate-400">
                     {{ $conformityOrder->code }}
                     · {{ $conformityOrder->project?->name ?? 'Sin obra' }}
                     · {{ $conformityOrder->supplier?->business_name ?? 'Sin proveedor' }}
                 </p>
+                <p class="mt-1 text-[11px] text-violet-700 dark:text-violet-300">Al registrar conformidad, la orden generará una cuenta por pagar.</p>
             </div>
             <flux:tooltip content="Cerrar">
                 <flux:button type="button" variant="ghost" size="sm" icon="x-mark" wire:click="closeConformityModal" class="!size-7 !min-h-0 !p-0" aria-label="Cerrar" />
             </flux:tooltip>
         </div>
 
-        <form wire:submit="saveConformity" class="mt-3 space-y-2">
+        <form wire:submit="saveConformity" class="mt-2 space-y-2">
             <div class="grid gap-2 sm:grid-cols-2">
                 <div>
                     <label class="block text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Resultado</label>
@@ -45,7 +46,7 @@
                 </label>
                 <textarea
                     wire:model="conformity_observation"
-                    rows="3"
+                    rows="2"
                     class="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950 dark:text-white @error('conformity_observation') border-rose-500 @enderror"
                     placeholder="{{ $conformity_result === 'rechazado' ? 'Indique el motivo del rechazo' : 'Observaciones opcionales' }}"
                 ></textarea>

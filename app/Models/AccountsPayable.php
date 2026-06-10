@@ -72,9 +72,16 @@ class AccountsPayable extends Model implements Auditable
 
     public function requiredDocumentsUploaded(): bool
     {
-        return ! $this->documents()
-            ->where('required', true)
-            ->where('uploaded', false)
-            ->exists();
+        $this->loadMissing('documents.media');
+
+        $requiredDocuments = $this->documents->where('required', true);
+
+        if ($requiredDocuments->isEmpty()) {
+            return true;
+        }
+
+        return $requiredDocuments->every(
+            fn (PayableDocument $document): bool => $document->hasUploadedFile(),
+        );
     }
 }

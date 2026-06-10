@@ -7,6 +7,7 @@ use App\Livewire\Purchases\ShowQuotationComparison;
 use App\Models\Company;
 use App\Models\Order;
 use App\Models\Project;
+use App\Models\PurchaseOrder;
 use App\Models\PurchaseRequest;
 use App\Models\Supplier;
 use App\Models\SupplierQuotation;
@@ -379,6 +380,157 @@ test('comparison modal opens fullscreen with quotation pdf previews', function (
         ->assertSee($this->supplierA->business_name)
         ->assertSee($this->supplierB->business_name)
         ->assertSeeHtml('iframe');
+});
+
+test('purchase order attaches pdf quotation when winner was captured as pdf', function () {
+    $purchaseRequest = PurchaseRequest::query()->create([
+        'company_id' => $this->company->id,
+        'work_project_id' => $this->project->id,
+        'responsible_user_id' => $this->user->id,
+        'requested_by' => $this->user->id,
+        'code' => 'SC-PDF-OC',
+        'priority' => 'media',
+        'request_date' => now()->toDateString(),
+        'description' => 'OC con cotización PDF adjunta',
+        'status' => 'en_proceso',
+    ]);
+
+    Livewire::test(ManageSupplierQuotations::class, ['purchaseRequest' => $purchaseRequest])
+        ->call('openCreateModal')
+        ->set('capture_mode', QuotationCaptureMode::Pdf->value())
+        ->set('supplier_id', $this->supplierA->id)
+        ->set('currency', 'PEN')
+        ->set('subtotal', '1200')
+        ->set('tax', '216')
+        ->set('delivery_time', '5')
+        ->set('quotation_pdf', UploadedFile::fake()->create('cotizacion-proveedor.pdf', 200, 'application/pdf'))
+        ->call('saveQuotation')
+        ->assertHasNoErrors();
+
+    $quotation = SupplierQuotation::query()->where('requirement_id', $purchaseRequest->id)->firstOrFail();
+
+    $quotationPdf = $quotation->getFirstMedia('cotizacion_pdf');
+
+    expect($quotationPdf)->not->toBeNull();
+    expect(is_file($quotationPdf->getPath()))->toBeTrue();
+
+    Livewire::test(ManageSupplierQuotations::class, ['purchaseRequest' => $purchaseRequest->fresh()])
+        ->call('openWinnerModal')
+        ->set('selected_supplier_quotation_id', $quotation->id)
+        ->set('selection_reason', 'Cotización PDF adjudicada.')
+        ->call('generateOrder')
+        ->assertHasNoErrors();
+
+    $order = PurchaseOrder::query()->where('requirement_id', $purchaseRequest->id)->firstOrFail();
+
+    expect($order->getFirstMedia('cotizacion_adjunta'))->not->toBeNull();
+    expect($order->hasAttachedQuotationPdf())->toBeTrue();
+
+    $orderPdfHtml = view('reports.pdf.purchases.purchase-order-entity', [
+        'purchaseOrder' => $order->load(['project', 'supplier', 'items', 'media']),
+    ])->render();
+
+    expect($orderPdfHtml)->toContain('Cotizaci&oacute;n adjudicada');
+});
+
+test('purchase order pdf includes requirement items when quotation has no line items', function () {
+    $purchaseRequest = PurchaseRequest::query()->create([
+        'company_id' => $this->company->id,
+        'work_project_id' => $this->project->id,
+        'responsible_user_id' => $this->user->id,
+        'requested_by' => $this->user->id,
+        'code' => 'SC-003A',
+        'priority' => 'alta',
+        'request_date' => now()->toDateString(),
+        'description' => 'Compra con cotización PDF',
+        'status' => 'en_proceso',
+    ]);
+
+    $purchaseRequest->items()->create([
+        'company_id' => $this->company->id,
+        'work_project_id' => $this->project->id,
+        'item_type' => 'material',
+        'description' => 'Cemento Portland',
+        'unit' => 'bol',
+        'quantity' => 100,
+    ]);
+
+    $quotation = SupplierQuotation::query()->create([
+        'company_id' => $this->company->id,
+        'work_project_id' => $this->project->id,
+        'requirement_id' => $purchaseRequest->id,
+        'supplier_id' => $this->supplierA->id,
+        'code' => 'COT-PDF',
+        'quotation_date' => now()->toDateString(),
+        'currency' => 'PEN',
+        'subtotal' => 5000,
+        'tax' => 900,
+        'total' => 5900,
+        'delivery_time_days' => 3,
+        'status' => 'registrada',
+        'capture_mode' => QuotationCaptureMode::Pdf->value(),
+    ]);
+
+    Livewire::test(ManageSupplierQuotations::class, ['purchaseRequest' => $purchaseRequest])
+        ->call('openWinnerModal')
+        ->set('selected_supplier_quotation_id', $quotation->id)
+        ->set('selection_reason', 'Cotización PDF con mejor precio.')
+        ->call('generateOrder')
+        ->assertHasNoErrors();
+
+    $order = Order::query()->where('requirement_id', $purchaseRequest->id)->firstOrFail();
+
+    expect($order->items)->toHaveCount(1);
+    expect($order->items->first()->description)->toBe('Cemento Portland');
+
+    $orderPdfHtml = view('reports.pdf.purchases.purchase-order-entity', [
+        'purchaseOrder' => $order->load(['project', 'supplier', 'items']),
+    ])->render();
+
+    expect($orderPdfHtml)->toContain('Cemento Portland');
+});
+
+test('purchase order can be generated from quotations page without saving winner separately', function () {
+    $purchaseRequest = PurchaseRequest::query()->create([
+        'company_id' => $this->company->id,
+        'work_project_id' => $this->project->id,
+        'responsible_user_id' => $this->user->id,
+        'requested_by' => $this->user->id,
+        'code' => 'SC-003B',
+        'priority' => 'alta',
+        'request_date' => now()->toDateString(),
+        'description' => 'Compra directa',
+        'status' => 'en_proceso',
+    ]);
+
+    $quotation = SupplierQuotation::query()->create([
+        'company_id' => $this->company->id,
+        'work_project_id' => $this->project->id,
+        'requirement_id' => $purchaseRequest->id,
+        'supplier_id' => $this->supplierA->id,
+        'code' => 'COT-DIRECT',
+        'quotation_date' => now()->toDateString(),
+        'currency' => 'PEN',
+        'subtotal' => 1000,
+        'tax' => 180,
+        'total' => 1180,
+        'delivery_time_days' => 5,
+        'status' => 'registrada',
+    ]);
+
+    Livewire::test(ManageSupplierQuotations::class, ['purchaseRequest' => $purchaseRequest])
+        ->call('openWinnerModal')
+        ->set('selected_supplier_quotation_id', $quotation->id)
+        ->set('selection_reason', 'Mejor propuesta técnica y económica.')
+        ->call('generateOrder')
+        ->assertHasNoErrors();
+
+    expect(Order::query()->where('requirement_id', $purchaseRequest->id)->exists())->toBeTrue();
+
+    $purchaseRequest->refresh();
+
+    expect($purchaseRequest->comparison?->selected_supplier_quotation_id)->toBe($quotation->id);
+    expect($purchaseRequest->comparison?->order_code)->not->toBeNull();
 });
 
 test('winner selection and purchase order generation are persisted', function () {

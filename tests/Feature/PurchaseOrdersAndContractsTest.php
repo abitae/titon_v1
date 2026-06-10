@@ -5,6 +5,7 @@ use App\Actions\Purchases\GeneratePurchaseOrder;
 use App\Enums\ConformityResult;
 use App\Livewire\Contracts\ManageSupplierContracts;
 use App\Livewire\Purchases\ManagePurchaseOrders;
+use App\Models\AccountsPayable;
 use App\Models\Company;
 use App\Models\Project;
 use App\Models\PurchaseOrder;
@@ -106,6 +107,8 @@ test('purchase order generation creates real order records and items', function 
     expect($purchaseOrder)->toBeInstanceOf(PurchaseOrder::class);
     expect($purchaseOrder->code)->toBe('OC-SC-100');
     expect($purchaseOrder->items()->count())->toBe(1);
+    expect($purchaseOrder->items->first()->description)->toBe('Material A');
+    expect($purchaseOrder->items->first()->product_or_service)->toBe('Material A');
     expect($this->purchaseRequest->fresh()->status)->toBe('atendido');
 });
 
@@ -154,7 +157,7 @@ test('contracts support signed file upload and approval lifecycle', function () 
 test('purchase order conformity can be recorded from modal', function () {
     $purchaseOrder = app(GeneratePurchaseOrder::class)->handle($this->purchaseRequest);
 
-    Livewire::test(ManagePurchaseOrders::class)
+    $component = Livewire::test(ManagePurchaseOrders::class)
         ->call('openConformityModal', $purchaseOrder->id)
         ->assertSet('showConformityModal', true)
         ->set('conformity_result', ConformityResult::Conform->value())
@@ -166,8 +169,14 @@ test('purchase order conformity can be recorded from modal', function () {
         ->assertHasNoErrors()
         ->assertSet('showConformityModal', false);
 
+    $accountsPayable = AccountsPayable::query()->where('order_id', $purchaseOrder->id)->firstOrFail();
+
+    $component->assertRedirect(route('accounts-payable.show', $accountsPayable));
+
     expect($purchaseOrder->fresh()->status)->toBe('conforme');
     expect($purchaseOrder->fresh()->conformity)->not->toBeNull();
+    expect($purchaseOrder->fresh()->accountsPayable?->id)->toBe($accountsPayable->id);
+    expect($accountsPayable->status)->toBe('pendiente_documentos');
 
     $this->assertDatabaseHas('audits', [
         'company_id' => $this->company->id,
@@ -189,6 +198,12 @@ test('orders and contracts pages plus pdf routes render for authorized users', f
     $previewResponse->assertOk();
     $previewResponse->assertHeader('content-type', 'application/pdf');
     expect(str_starts_with($previewResponse->getContent(), '%PDF'))->toBeTrue();
+
+    $orderPdfHtml = view('reports.pdf.purchases.purchase-order-entity', [
+        'purchaseOrder' => $purchaseOrder->load(['project', 'supplier', 'items']),
+    ])->render();
+
+    expect($orderPdfHtml)->toContain('Material A');
 
     Livewire::test(ManagePurchaseOrders::class)
         ->call('openPdfModal', $purchaseOrder->id)

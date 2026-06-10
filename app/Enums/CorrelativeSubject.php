@@ -29,6 +29,7 @@ enum CorrelativeSubject: string
     case FleetCorrectiveMaintenance = 'fleet_corrective_maintenance';
     case FleetSparePart = 'fleet_spare_part';
     case FleetSparePartMovement = 'fleet_spare_part_movement';
+    case BankMovement = 'bank_movement';
     case ExportedReport = 'exported_report';
 
     public function label(): string
@@ -52,6 +53,7 @@ enum CorrelativeSubject: string
             self::FleetCorrectiveMaintenance => 'Mantenimientos correctivos',
             self::FleetSparePart => 'Repuestos (catálogo)',
             self::FleetSparePartMovement => 'Movimientos de inventario (kardex)',
+            self::BankMovement => 'Movimientos bancarios',
             self::ExportedReport => 'Reportes exportados',
         };
     }
@@ -80,6 +82,7 @@ enum CorrelativeSubject: string
             self::FleetCorrectiveMaintenance => ['suffix' => 'MC', 'template' => '{prefix}-{suffix}-{year}-{number}', 'pad_length' => 6],
             self::FleetSparePart => ['suffix' => 'REP', 'template' => '{prefix}-{suffix}-{year}-{number}', 'pad_length' => 6],
             self::FleetSparePartMovement => ['suffix' => 'MOV', 'template' => '{prefix}-{suffix}-{year}-{number}', 'pad_length' => 6],
+            self::BankMovement => ['suffix' => 'MB', 'template' => '{prefix}-{suffix}-{year}-{number}', 'pad_length' => 6],
             self::ExportedReport => ['suffix' => 'RPT', 'template' => '{prefix}-{suffix}-{year}-{number}', 'pad_length' => 6],
         };
     }

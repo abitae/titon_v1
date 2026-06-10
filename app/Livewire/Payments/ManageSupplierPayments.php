@@ -6,6 +6,7 @@ use App\Actions\Companies\ResolveCurrentCompany;
 use App\Actions\Payments\RegisterSupplierPayment;
 use App\Concerns\InteractsWithToast;
 use App\Enums\CatalogType;
+use App\Models\BankAccount;
 use App\Models\CatalogItem;
 use App\Models\ContractPaymentSchedule;
 use App\Models\Project;
@@ -55,7 +56,7 @@ class ManageSupplierPayments extends Component
 
     public ?int $payment_method_id = null;
 
-    public ?int $bank_id = null;
+    public ?int $bank_account_id = null;
 
     public string $operation_number = '';
 
@@ -107,7 +108,7 @@ class ManageSupplierPayments extends Component
             'contracts' => $contractsWithTotals,
             'schedules' => $this->availableSchedules(),
             'companyUsers' => $this->companyUsers(),
-            'banks' => CatalogItem::query()->ofType(CatalogType::Bank)->where('is_active', true)->orderBy('name')->get(),
+            'bankAccounts' => BankAccount::query()->with('institution')->where('is_active', true)->orderBy('is_cash')->orderBy('name')->get(),
             'paymentMethods' => CatalogItem::query()->ofType(CatalogType::PaymentMethod)->where('is_active', true)->orderBy('name')->get(),
             'operationTypes' => CatalogItem::query()->ofType(CatalogType::OperationType)->where('is_active', true)->orderBy('name')->get(),
             'summary' => [
@@ -158,7 +159,7 @@ class ManageSupplierPayments extends Component
             'currency' => ['required', 'string', 'max:10'],
             'operation_type_id' => ['nullable', 'integer', Rule::exists('catalog_items', 'id')->where(fn ($query) => $query->where('company_id', $company->id)->where('type', CatalogType::OperationType->value()))],
             'payment_method_id' => ['nullable', 'integer', Rule::exists('catalog_items', 'id')->where(fn ($query) => $query->where('company_id', $company->id)->where('type', CatalogType::PaymentMethod->value()))],
-            'bank_id' => ['nullable', 'integer', Rule::exists('catalog_items', 'id')->where(fn ($query) => $query->where('company_id', $company->id)->where('type', CatalogType::Bank->value()))],
+            'bank_account_id' => ['required', 'integer', Rule::exists('bank_accounts', 'id')->where(fn ($query) => $query->where('company_id', $company->id)->where('is_active', true))],
             'operation_number' => ['nullable', 'string', 'max:100'],
             'responsible_user_id' => ['required', 'integer', Rule::in($activeCompanyUserIds)],
             'concept' => ['required', 'string', 'max:255'],
@@ -207,7 +208,7 @@ class ManageSupplierPayments extends Component
         $payment = $registerSupplierPayment->handle([
             ...$validated,
             'company_id' => $company->id,
-        ]);
+        ], auth()->user());
 
         foreach ($this->voucher as $uploadedFile) {
             $payment
@@ -246,7 +247,7 @@ class ManageSupplierPayments extends Component
             'amount',
             'operation_type_id',
             'payment_method_id',
-            'bank_id',
+            'bank_account_id',
             'operation_number',
             'concept',
             'observation',

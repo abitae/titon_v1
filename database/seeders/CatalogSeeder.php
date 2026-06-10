@@ -19,6 +19,7 @@ class CatalogSeeder extends Seeder
             ],
             CatalogType::PaymentMethod->value() => [
                 ['name' => 'Transferencia', 'code' => 'TRF'],
+                ['name' => 'Depósito', 'code' => 'DEP'],
                 ['name' => 'Cheque', 'code' => 'CHQ'],
                 ['name' => 'Efectivo', 'code' => 'EFE'],
             ],

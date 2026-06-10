@@ -55,4 +55,49 @@ class MpdfBuilder
 
         return $mpdf->Output(Str::slug($title).'.pdf', Destination::STRING_RETURN);
     }
+
+    public function mergePdfStringWithFile(string $primaryPdf, string $appendPdfPath): string
+    {
+        if (! is_readable($appendPdfPath)) {
+            return $primaryPdf;
+        }
+
+        $tempDir = storage_path('app/mpdf-temp');
+
+        if (! is_dir($tempDir)) {
+            mkdir($tempDir, 0755, true);
+        }
+
+        $primaryPath = $tempDir.'/merge-primary-'.uniqid('', true).'.pdf';
+        file_put_contents($primaryPath, $primaryPdf);
+
+        try {
+            $mpdf = new Mpdf([
+                'mode' => 'utf-8',
+                'format' => 'A4',
+                'tempDir' => $tempDir,
+            ]);
+
+            $this->importPdfPages($mpdf, $primaryPath);
+            $this->importPdfPages($mpdf, $appendPdfPath);
+
+            return $mpdf->Output('merged.pdf', Destination::STRING_RETURN);
+        } finally {
+            if (is_file($primaryPath)) {
+                unlink($primaryPath);
+            }
+        }
+    }
+
+    protected function importPdfPages(Mpdf $mpdf, string $path): void
+    {
+        $pageCount = $mpdf->SetSourceFile($path);
+
+        for ($page = 1; $page <= $pageCount; $page++) {
+            $templateId = $mpdf->ImportPage($page);
+            $size = $mpdf->getTemplateSize($templateId);
+            $mpdf->AddPage($size['orientation'], [$size['width'], $size['height']]);
+            $mpdf->UseTemplate($templateId);
+        }
+    }
 }

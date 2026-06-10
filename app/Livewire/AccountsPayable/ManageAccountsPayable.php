@@ -3,6 +3,7 @@
 namespace App\Livewire\AccountsPayable;
 
 use App\Concerns\InteractsWithToast;
+use App\Enums\AccountsPayableStatus;
 use App\Models\AccountsPayable;
 use Illuminate\Contracts\View\View;
 use Livewire\Component;
@@ -17,6 +18,16 @@ class ManageAccountsPayable extends Component
     public string $search = '';
 
     public string $statusFilter = '';
+
+    public function updatingSearch(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingStatusFilter(): void
+    {
+        $this->resetPage();
+    }
 
     public function render(): View
     {
@@ -34,6 +45,7 @@ class ManageAccountsPayable extends Component
 
         return view('livewire.accounts-payable.manage-accounts-payable', [
             'accounts' => $accounts,
+            'statusOptions' => AccountsPayableStatus::cases(),
         ])->layout('layouts.app', ['title' => $this->title]);
     }
 }

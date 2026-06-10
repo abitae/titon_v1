@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Concerns\BelongsToActiveCompany;
+use App\Enums\PayableDocumentType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Spatie\MediaLibrary\HasMedia;
@@ -45,6 +46,24 @@ class PayableDocument extends Model implements HasMedia
 
     public function registerMediaCollections(): void
     {
-        $this->addMediaCollection('archivo');
+        $this->addMediaCollection('archivo')->singleFile();
+    }
+
+    public function typeLabel(): string
+    {
+        foreach (PayableDocumentType::cases() as $type) {
+            if ($type->value() === $this->document_type) {
+                return $type->label();
+            }
+        }
+
+        return str($this->document_type)->replace('_', ' ')->title()->toString();
+    }
+
+    public function hasUploadedFile(): bool
+    {
+        $media = $this->getFirstMedia('archivo');
+
+        return $media !== null && is_file($media->getPath());
     }
 }

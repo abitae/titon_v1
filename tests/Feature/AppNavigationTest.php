@@ -22,3 +22,11 @@ test('sidebar keeps accounts payable out of general operation modules', function
 
     expect(collect($operacion['items'])->pluck('label')->all())->not->toContain('Cuentas por pagar');
 });
+
+test('sidebar exposes banks module under operation', function () {
+    $groups = app(AppNavigation::class)->sidebarGroups();
+
+    $operacion = collect($groups)->firstWhere('heading', 'Operacion');
+
+    expect(collect($operacion['items'])->pluck('label')->all())->toContain('Bancos');
+});

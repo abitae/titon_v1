@@ -32,6 +32,7 @@ class SupplierPayment extends Model implements Auditable, HasMedia
         'currency',
         'operation_type_id',
         'payment_method_id',
+        'bank_account_id',
         'bank_id',
         'operation_number',
         'responsible_user_id',
@@ -78,6 +79,14 @@ class SupplierPayment extends Model implements Auditable, HasMedia
     public function bank(): BelongsTo
     {
         return $this->belongsTo(CatalogItem::class, 'bank_id');
+    }
+
+    /**
+     * @return BelongsTo<BankAccount, $this>
+     */
+    public function bankAccount(): BelongsTo
+    {
+        return $this->belongsTo(BankAccount::class);
     }
 
     public function responsibleUser(): BelongsTo

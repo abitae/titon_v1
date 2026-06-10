@@ -9,14 +9,35 @@ use App\Enums\RequirementStatus;
 use App\Models\Company;
 use App\Models\PurchaseOrder;
 use App\Models\Requirement;
+use App\Models\RequirementItem;
+use App\Models\SupplierQuotation;
+use App\Models\SupplierQuotationItem;
 use App\Services\Codes\CodeGeneratorService;
+use Illuminate\Support\Collection;
 
 class GeneratePurchaseOrder
 {
+    public function __construct(
+        protected AttachQuotationPdfToOrder $attachQuotationPdfToOrder,
+    ) {}
+
     public function handle(Requirement $requirement): PurchaseOrder
     {
-        $comparison = $requirement->comparison()->with('selectedQuotation.items')->firstOrFail();
+        $requirement->load(['items', 'comparison.selectedQuotation.items']);
+
+        $comparison = $requirement->comparison;
+
+        if ($comparison === null) {
+            abort(404, 'No existe una comparativa para generar la orden.');
+        }
+
         $quotation = $comparison->selectedQuotation;
+
+        if ($quotation === null) {
+            abort(404, 'No hay una cotización ganadora seleccionada.');
+        }
+
+        $quotation->loadMissing('media');
         $project = $requirement->project()->firstOrFail();
         $company = Company::query()->findOrFail($requirement->company_id);
 
@@ -74,19 +95,8 @@ class GeneratePurchaseOrder
             ],
         );
 
-        $order->items()->delete();
-
-        foreach ($quotation->items as $item) {
-            $order->items()->create([
-                'company_id' => $order->company_id,
-                'work_project_id' => $order->work_project_id,
-                'description' => $item->product_or_service ?? $item->description ?? '',
-                'unit' => $item->unit,
-                'quantity' => $item->quantity,
-                'unit_price' => $item->unit_price,
-                'total' => $item->total,
-            ]);
-        }
+        $this->syncOrderItems($order, $requirement, $quotation);
+        $this->attachQuotationPdfToOrder->handle($order, $quotation);
 
         $comparison->update([
             'order_code' => $order->code,
@@ -97,6 +107,60 @@ class GeneratePurchaseOrder
             'status' => RequirementStatus::Attended->value(),
         ]);
 
-        return $order->refresh();
+        return $order->load('items')->refresh();
+    }
+
+    protected function syncOrderItems(PurchaseOrder $order, Requirement $requirement, SupplierQuotation $quotation): void
+    {
+        $order->items()->delete();
+
+        if ($quotation->items->isNotEmpty()) {
+            foreach ($quotation->items as $item) {
+                $this->createOrderItemFromQuotationItem($order, $item);
+            }
+
+            return;
+        }
+
+        /** @var Collection<int, RequirementItem> $requirementItems */
+        $requirementItems = $requirement->items;
+
+        foreach ($requirementItems as $item) {
+            $quantity = (float) $item->quantity;
+            $unitPrice = (float) ($item->estimated_unit_price ?? 0);
+            $total = (float) ($item->estimated_total ?? 0);
+
+            if ($total <= 0 && $unitPrice > 0) {
+                $total = $unitPrice * $quantity;
+            }
+
+            if ($total <= 0 && $unitPrice <= 0 && $requirementItems->count() === 1) {
+                $total = (float) $quotation->subtotal;
+                $unitPrice = $quantity > 0 ? $total / $quantity : $total;
+            }
+
+            $order->items()->create([
+                'company_id' => $order->company_id,
+                'work_project_id' => $order->work_project_id,
+                'description' => trim((string) $item->description),
+                'unit' => $item->unit,
+                'quantity' => $quantity,
+                'unit_price' => $unitPrice,
+                'total' => $total > 0 ? $total : $unitPrice * $quantity,
+            ]);
+        }
+    }
+
+    protected function createOrderItemFromQuotationItem(PurchaseOrder $order, SupplierQuotationItem $item): void
+    {
+        $order->items()->create([
+            'company_id' => $order->company_id,
+            'work_project_id' => $order->work_project_id,
+            'description' => trim((string) ($item->product_or_service ?? '')),
+            'unit' => $item->unit,
+            'quantity' => $item->quantity,
+            'unit_price' => $item->unit_price,
+            'total' => $item->total,
+        ]);
     }
 }

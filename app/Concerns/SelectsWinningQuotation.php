@@ -71,9 +71,39 @@ trait SelectsWinningQuotation
         $this->successToast('Proveedor ganador seleccionado correctamente.');
     }
 
-    public function generateOrder(GeneratePurchaseOrder $generatePurchaseOrder): void
-    {
+    public function generateOrder(
+        GeneratePurchaseOrder $generatePurchaseOrder,
+        UpsertQuotationComparison $upsertQuotationComparison,
+    ): void {
         abort_unless(auth()->user()->can('purchases.aprobar'), 403);
+
+        $validated = $this->validate([
+            'selected_supplier_quotation_id' => ['required', 'integer', 'exists:supplier_quotations,id'],
+            'selection_reason' => ['required', 'string'],
+        ], [], [
+            'selected_supplier_quotation_id' => 'cotización ganadora',
+            'selection_reason' => 'motivo de selección',
+        ]);
+
+        $quotation = SupplierQuotation::query()
+            ->whereBelongsTo($this->purchaseRequest)
+            ->findOrFail($validated['selected_supplier_quotation_id']);
+
+        $comparison = $this->purchaseRequest->comparison;
+
+        if (
+            $comparison === null
+            || (int) $comparison->selected_supplier_quotation_id !== $quotation->id
+        ) {
+            $upsertQuotationComparison->handle(
+                $this->purchaseRequest,
+                $quotation,
+                auth()->user(),
+                $validated['selection_reason'],
+            );
+
+            $this->purchaseRequest->refresh();
+        }
 
         $purchaseOrder = $generatePurchaseOrder->handle($this->purchaseRequest);
         $this->generated_purchase_order_id = $purchaseOrder->id;

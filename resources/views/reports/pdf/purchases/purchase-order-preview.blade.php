@@ -54,14 +54,26 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach ($quotation?->items ?? [] as $item)
+                    @php
+                        $previewItems = ($quotation?->items?->isNotEmpty() ?? false)
+                            ? $quotation->items
+                            : ($purchaseRequest->items ?? collect());
+                    @endphp
+                    @forelse ($previewItems as $item)
                         <tr>
-                            <td>{{ $item->product_or_service }}</td>
+                            <td>{{ $item->product_or_service ?? $item->description }}</td>
                             <td>{{ $item->unit }}</td>
                             <td>{{ number_format((float) $item->quantity, 2) }}</td>
-                            <td>{{ $quotation?->currency ?? 'PEN' }} {{ number_format((float) $item->total, 2) }}</td>
+                            <td>
+                                {{ $quotation?->currency ?? 'PEN' }}
+                                {{ number_format((float) ($item->total ?? (($item->estimated_unit_price ?? 0) * $item->quantity)), 2) }}
+                            </td>
                         </tr>
-                    @endforeach
+                    @empty
+                        <tr>
+                            <td colspan="4">Sin ítems registrados.</td>
+                        </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>

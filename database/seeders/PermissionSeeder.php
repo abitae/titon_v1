@@ -27,6 +27,7 @@ class PermissionSeeder extends Seeder
             'suppliers',
             'contracts',
             'payments',
+            'bancos',
             'audits',
             'mecanica',
         ];
