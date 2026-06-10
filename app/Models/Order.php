@@ -94,7 +94,7 @@ class Order extends Model implements Auditable, HasMedia
 
     public function conformity(): HasOne
     {
-        return $this->hasOne(OrderConformity::class);
+        return $this->hasOne(OrderConformity::class, 'order_id');
     }
 
     public function accountsPayable(): HasOne
@@ -111,5 +111,10 @@ class Order extends Model implements Auditable, HasMedia
     {
         $this->addMediaCollection('attachments');
         $this->addMediaCollection('evidencias');
+    }
+
+    public function orderPdfPreviewUrl(): string
+    {
+        return route('purchases.orders.pdf.preview', $this, absolute: false);
     }
 }

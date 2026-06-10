@@ -2,6 +2,7 @@
 
 use App\Actions\Contracts\CreateSupplierContractFromOrder;
 use App\Actions\Purchases\GeneratePurchaseOrder;
+use App\Enums\ConformityResult;
 use App\Livewire\Contracts\ManageSupplierContracts;
 use App\Livewire\Purchases\ManagePurchaseOrders;
 use App\Models\Company;
@@ -150,12 +151,51 @@ test('contracts support signed file upload and approval lifecycle', function () 
     expect($contract->status)->toBe('anulado');
 });
 
+test('purchase order conformity can be recorded from modal', function () {
+    $purchaseOrder = app(GeneratePurchaseOrder::class)->handle($this->purchaseRequest);
+
+    Livewire::test(ManagePurchaseOrders::class)
+        ->call('openConformityModal', $purchaseOrder->id)
+        ->assertSet('showConformityModal', true)
+        ->set('conformity_result', ConformityResult::Conform->value())
+        ->set('conformity_date', now()->toDateString())
+        ->call('saveConformity')
+        ->assertHasErrors(['conformity_confirmation'])
+        ->set('conformity_confirmation', 'conforme')
+        ->call('saveConformity')
+        ->assertHasNoErrors()
+        ->assertSet('showConformityModal', false);
+
+    expect($purchaseOrder->fresh()->status)->toBe('conforme');
+    expect($purchaseOrder->fresh()->conformity)->not->toBeNull();
+
+    $this->assertDatabaseHas('audits', [
+        'company_id' => $this->company->id,
+        'user_id' => $this->user->id,
+        'action' => 'conformidad_registrada',
+        'module' => 'Ordenes de compra',
+        'auditable_type' => PurchaseOrder::class,
+        'auditable_id' => $purchaseOrder->id,
+    ]);
+});
+
 test('orders and contracts pages plus pdf routes render for authorized users', function () {
     $purchaseOrder = app(GeneratePurchaseOrder::class)->handle($this->purchaseRequest);
     $contract = app(CreateSupplierContractFromOrder::class)->handle($purchaseOrder);
 
     $this->get(route('purchases.orders'))->assertOk()->assertSee('Ordenes de compra');
     $this->get(route('modules.contracts'))->assertOk()->assertSee('Contratos con proveedores');
+    $previewResponse = $this->get(route('purchases.orders.pdf.preview', $purchaseOrder));
+    $previewResponse->assertOk();
+    $previewResponse->assertHeader('content-type', 'application/pdf');
+    expect(str_starts_with($previewResponse->getContent(), '%PDF'))->toBeTrue();
+
+    Livewire::test(ManagePurchaseOrders::class)
+        ->call('openPdfModal', $purchaseOrder->id)
+        ->assertSet('showPdfModal', true)
+        ->assertSet('pdfViewerUrl', route('purchases.orders.pdf.preview', $purchaseOrder, absolute: false))
+        ->assertSeeHtml('iframe');
+
     $this->get(route('purchases.orders.pdf', $purchaseOrder))->assertOk()->assertHeader('content-type', 'application/pdf');
     $this->get(route('contracts.pdf', $contract))->assertOk()->assertHeader('content-type', 'application/pdf');
 });

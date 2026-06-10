@@ -6,7 +6,12 @@
         </div>
         <div class="flex flex-wrap gap-3">
             <a href="{{ route('modules.purchases') }}" class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 dark:border-slate-700 dark:text-slate-200">Solicitudes</a>
-            <flux:button type="button" variant="outline" wire:click="openComparisonModal">Comparativa</flux:button>
+            <flux:button type="button" variant="outline" wire:click="openComparisonModal">
+                Comparativa
+                @if (count($comparison_quotation_ids) > 0)
+                    <span class="ms-1 tabular-nums">({{ count($comparison_quotation_ids) }})</span>
+                @endif
+            </flux:button>
             @can('purchases.aprobar')
                 <flux:button type="button" variant="outline" wire:click="openWinnerModal">Seleccionar ganador</flux:button>
             @endcan
@@ -56,9 +61,20 @@
         </div>
     </div>
 
-    <x-platform.compact-table dense :headers="['Proveedor', 'Código', 'Origen', 'Vigencia', 'Total', 'Entrega', '']">
+    <p class="text-[11px] text-slate-500 dark:text-slate-400">Marque al menos 2 cotizaciones para abrir la comparativa lado a lado.</p>
+
+    <x-platform.compact-table dense :headers="['', 'Proveedor', 'Código', 'Origen', 'Vigencia', 'Total', 'Entrega', '']">
         @forelse ($quotations as $quotation)
             <tr class="text-xs text-slate-700 dark:text-slate-200" wire:key="quotation-row-{{ $quotation->id }}">
+                <td class="w-8 px-2 py-1.5">
+                    <input
+                        type="checkbox"
+                        wire:model.live="comparison_quotation_ids"
+                        value="{{ $quotation->id }}"
+                        class="size-3.5 rounded border-slate-300 text-cyan-600 focus:ring-cyan-500 dark:border-slate-600 dark:bg-slate-950"
+                        aria-label="Incluir {{ $quotation->supplier?->business_name ?? 'cotización' }} en la comparativa"
+                    />
+                </td>
                 <td class="px-2.5 py-1.5">
                     <p class="font-medium text-slate-950 dark:text-white">{{ $quotation->supplier?->business_name ?? 'Sin proveedor' }}</p>
                     <p class="text-[10px] text-slate-500 dark:text-slate-400">{{ $quotation->currency }}</p>
@@ -109,7 +125,7 @@
             </tr>
         @empty
             <tr>
-                <td colspan="7" class="px-3 py-6 text-center text-xs text-slate-500 dark:text-slate-400">Todavía no hay cotizaciones registradas para esta solicitud.</td>
+                <td colspan="8" class="px-3 py-6 text-center text-xs text-slate-500 dark:text-slate-400">Todavía no hay cotizaciones registradas para esta solicitud.</td>
             </tr>
         @endforelse
     </x-platform.compact-table>
@@ -155,14 +171,17 @@
 
         <div class="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
             <div class="sm:col-span-2">
-                <label class="block text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Proveedor</label>
-                <select wire:model="supplier_id" class="mt-1 block h-8 w-full rounded-lg border border-slate-300 bg-white px-2 text-xs dark:border-slate-700 dark:bg-slate-950 dark:text-white @error('supplier_id') border-rose-500 @enderror">
-                    <option value="">Seleccionar</option>
-                    @foreach ($suppliers as $supplier)
-                        <option value="{{ $supplier->id }}">{{ $supplier->business_name }}</option>
-                    @endforeach
-                </select>
-                @error('supplier_id') <p class="mt-0.5 text-[11px] text-rose-600">{{ $message }}</p> @enderror
+                <x-platform.searchable-select
+                    label="Proveedor"
+                    :options="$supplierOptions"
+                    option-label="business_name"
+                    option-secondary="ruc"
+                    search-model="supplier_search"
+                    :selected-value="$supplier_id"
+                    select-method="selectSupplier"
+                    placeholder="Buscar por razón social o RUC..."
+                    :error="$errors->first('supplier_id')"
+                />
             </div>
             @if ($editingQuotationId)
                 <div>
@@ -372,6 +391,7 @@
         :show="$showPdfModal"
         :url="$pdfViewerUrl"
         :title="$pdfViewerTitle"
+        subtitle="Vista previa del PDF de cotización"
     />
 
     @include('livewire.purchases.partials.select-winner-modal', [
@@ -380,6 +400,6 @@
     ])
 
     @include('livewire.purchases.partials.quotation-comparison-fullscreen-modal', [
-        'summary' => $summary,
+        'summary' => $comparisonSummary,
     ])
 </div>

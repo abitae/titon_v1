@@ -16,16 +16,27 @@ class UpsertQuotationComparison
 {
     public function handle(Requirement $requirement, SupplierQuotation $supplierQuotation, User $user, string $selectionReason): QuotationComparison
     {
+        $previousQuotationId = QuotationComparison::query()
+            ->where('requirement_id', $requirement->id)
+            ->value('selected_supplier_quotation_id');
+
+        $attributes = [
+            'company_id' => $requirement->company_id,
+            'work_project_id' => $requirement->work_project_id,
+            'selected_supplier_quotation_id' => $supplierQuotation->id,
+            'selected_by' => $user->id,
+            'compared_at' => now(),
+            'selection_reason' => $selectionReason,
+        ];
+
+        if ($previousQuotationId !== null && (int) $previousQuotationId !== $supplierQuotation->id) {
+            $attributes['order_code'] = null;
+            $attributes['order_generated_at'] = null;
+        }
+
         $comparison = QuotationComparison::query()->updateOrCreate(
             ['requirement_id' => $requirement->id],
-            [
-                'company_id' => $requirement->company_id,
-                'work_project_id' => $requirement->work_project_id,
-                'selected_supplier_quotation_id' => $supplierQuotation->id,
-                'selected_by' => $user->id,
-                'compared_at' => now(),
-                'selection_reason' => $selectionReason,
-            ],
+            $attributes,
         );
 
         $requirement->update([

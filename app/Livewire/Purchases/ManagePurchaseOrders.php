@@ -3,10 +3,13 @@
 namespace App\Livewire\Purchases;
 
 use App\Actions\Contracts\CreateSupplierContractFromOrder;
+use App\Actions\Orders\RecordOrderConformity as RecordOrderConformityAction;
 use App\Actions\Purchases\ApprovePurchaseOrder;
 use App\Actions\Purchases\CancelPurchaseOrder;
 use App\Actions\Purchases\ObservePurchaseOrder;
 use App\Concerns\InteractsWithToast;
+use App\Concerns\ViewsPurchaseOrderPdf;
+use App\Enums\ConformityResult;
 use App\Enums\OrderStatus;
 use App\Models\PurchaseOrder;
 use Illuminate\Contracts\View\View;
@@ -15,7 +18,7 @@ use Livewire\Component;
 
 class ManagePurchaseOrders extends Component
 {
-    use InteractsWithToast;
+    use InteractsWithToast, ViewsPurchaseOrderPdf;
 
     public string $title = 'Ordenes de compra';
 
@@ -27,11 +30,25 @@ class ManagePurchaseOrders extends Component
 
     public bool $showDetailModal = false;
 
+    public string $detailModalTab = 'datos';
+
     public string $approval_notes = '';
 
     public string $observation = '';
 
     public string $cancellation_reason = '';
+
+    public ?PurchaseOrder $conformityOrder = null;
+
+    public bool $showConformityModal = false;
+
+    public string $conformity_result = 'conforme';
+
+    public string $conformity_observation = '';
+
+    public string $conformity_date = '';
+
+    public string $conformity_confirmation = '';
 
     public function render(): View
     {
@@ -51,6 +68,7 @@ class ManagePurchaseOrders extends Component
         return view('livewire.purchases.manage-purchase-orders', [
             'orders' => $orders,
             'statusOptions' => OrderStatus::cases(),
+            'conformityResultOptions' => ConformityResult::cases(),
         ])->layout('layouts.app', ['title' => $this->title]);
     }
 
@@ -59,6 +77,7 @@ class ManagePurchaseOrders extends Component
         $this->selectedOrder = PurchaseOrder::query()
             ->with(['project', 'supplier', 'quotation', 'items', 'contract', 'approvedByUser', 'cancelledByUser'])
             ->findOrFail($purchaseOrderId);
+        $this->detailModalTab = 'datos';
         $this->showDetailModal = true;
     }
 
@@ -135,8 +154,101 @@ class ManagePurchaseOrders extends Component
     {
         $this->showDetailModal = false;
         $this->selectedOrder = null;
+        $this->detailModalTab = 'datos';
         $this->approval_notes = '';
         $this->observation = '';
         $this->cancellation_reason = '';
+    }
+
+    public function openConformityModal(int $purchaseOrderId): void
+    {
+        abort_unless(
+            auth()->user()->can('ordenes.conformidad')
+            || auth()->user()->can('ordenes.rechazar')
+            || auth()->user()->can('purchases.aprobar'),
+            403,
+        );
+
+        $this->conformityOrder = PurchaseOrder::query()
+            ->with(['project', 'supplier', 'conformity'])
+            ->findOrFail($purchaseOrderId);
+
+        $existingConformity = $this->conformityOrder->conformity;
+
+        $this->conformity_result = $existingConformity?->result ?? ConformityResult::Conform->value();
+        $this->conformity_observation = $existingConformity?->observation ?? '';
+        $this->conformity_date = $existingConformity?->conformity_date?->format('Y-m-d') ?? now()->toDateString();
+        $this->conformity_confirmation = '';
+        $this->showConformityModal = true;
+    }
+
+    public function saveConformity(RecordOrderConformityAction $recordOrderConformity): void
+    {
+        abort_unless(
+            auth()->user()->can('ordenes.conformidad')
+            || auth()->user()->can('ordenes.rechazar')
+            || auth()->user()->can('purchases.aprobar'),
+            403,
+        );
+        abort_if($this->conformityOrder === null, 404);
+
+        $rules = [
+            'conformity_result' => ['required', Rule::in([
+                ConformityResult::Conform->value(),
+                ConformityResult::Rejected->value(),
+            ])],
+            'conformity_date' => ['required', 'date'],
+            'conformity_observation' => ['nullable', 'string'],
+        ];
+
+        if ($this->conformity_result === ConformityResult::Rejected->value()) {
+            $rules['conformity_observation'] = ['required', 'string'];
+        }
+
+        if ($this->conformity_result === ConformityResult::Conform->value()) {
+            $rules['conformity_confirmation'] = [
+                'required',
+                'string',
+                function (string $attribute, mixed $value, \Closure $fail): void {
+                    if (mb_strtolower(trim((string) $value)) !== 'conforme') {
+                        $fail('Debe escribir la palabra conforme para confirmar.');
+                    }
+                },
+            ];
+        }
+
+        $validated = $this->validate($rules, [], [
+            'conformity_result' => 'resultado',
+            'conformity_date' => 'fecha',
+            'conformity_observation' => 'observación',
+            'conformity_confirmation' => 'confirmación',
+        ]);
+
+        $recordOrderConformity->handle(
+            $this->conformityOrder,
+            auth()->user(),
+            $validated['conformity_result'],
+            $validated['conformity_observation'] ?: null,
+            $validated['conformity_date'],
+        );
+
+        $this->closeConformityModal();
+        $this->successToast('Conformidad registrada correctamente.');
+    }
+
+    public function closeConformityModal(): void
+    {
+        $this->showConformityModal = false;
+        $this->conformityOrder = null;
+        $this->conformity_result = ConformityResult::Conform->value();
+        $this->conformity_observation = '';
+        $this->conformity_date = now()->toDateString();
+        $this->conformity_confirmation = '';
+        $this->resetValidation([
+            'conformity_result',
+            'conformity_date',
+            'conformity_observation',
+            'conformity_confirmation',
+        ]);
     }
 }

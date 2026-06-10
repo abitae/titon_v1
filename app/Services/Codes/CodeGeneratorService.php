@@ -19,7 +19,7 @@ class CodeGeneratorService
         return $this->issuer->peek(
             $company,
             $subject,
-            $this->series($project, $subject, $orderType),
+            $this->series($project, $subject),
             $year,
             $this->suffixOverride($subject, $orderType),
         );
@@ -30,21 +30,15 @@ class CodeGeneratorService
         return $this->issuer->issue(
             $company,
             $subject,
-            $this->series($project, $subject, $orderType),
+            $this->series($project, $subject),
             $year,
             $this->suffixOverride($subject, $orderType),
         );
     }
 
-    protected function series(Project $project, CorrelativeSubject $subject, ?OrderType $orderType = null): string
+    protected function series(Project $project, CorrelativeSubject $subject): string
     {
-        $base = $this->resolveProjectSeries($project);
-
-        if ($orderType !== null && in_array($subject, [CorrelativeSubject::Order, CorrelativeSubject::PurchaseOrder], true)) {
-            return $base.'-'.$orderType->suffix();
-        }
-
-        return $base;
+        return $this->resolveProjectSeries($project);
     }
 
     /**

@@ -19,6 +19,7 @@ use App\Models\Supplier;
 use App\Models\SupplierQuotation;
 use App\Services\Purchases\QuotationComparisonSummary;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
@@ -38,6 +39,8 @@ class ManageSupplierQuotations extends Component
     public bool $showFormModal = false;
 
     public string $supplier_id = '';
+
+    public string $supplier_search = '';
 
     public string $code = '';
 
@@ -93,10 +96,11 @@ class ManageSupplierQuotations extends Component
     {
         return view('livewire.purchases.manage-supplier-quotations', [
             'quotations' => $this->purchaseRequest->quotations()->with(['supplier', 'items', 'media'])->latest()->get(),
-            'suppliers' => Supplier::query()->orderBy('business_name')->get(),
+            'supplierOptions' => $this->filteredSuppliers(),
             'currencyOptions' => CurrencyCode::cases(),
             'captureModeOptions' => QuotationCaptureMode::cases(),
             'summary' => $quotationComparisonSummary->build($this->purchaseRequest),
+            'comparisonSummary' => $this->buildSelectedComparisonSummary($quotationComparisonSummary),
             'comparison' => $this->purchaseRequest->comparison()->with(['selectedQuotation.supplier', 'selectedByUser'])->first(),
             'editingQuotation' => $this->editingQuotationId
                 ? $this->purchaseRequest->quotations()->with('media')->find($this->editingQuotationId)
@@ -116,6 +120,7 @@ class ManageSupplierQuotations extends Component
 
         $this->editingQuotationId = $quotation->id;
         $this->supplier_id = (string) $quotation->supplier_id;
+        $this->supplier_search = $quotation->supplier?->business_name ?? '';
         $this->code = $quotation->code;
         $this->quotation_date = $quotation->quotation_date?->format('Y-m-d') ?? '';
         $this->valid_until = $quotation->valid_until?->format('Y-m-d') ?? '';
@@ -315,6 +320,43 @@ class ManageSupplierQuotations extends Component
         $this->showFormModal = false;
     }
 
+    public function selectSupplier(int $supplierId): void
+    {
+        $supplier = Supplier::query()->findOrFail($supplierId);
+
+        $this->supplier_id = (string) $supplier->id;
+        $this->supplier_search = $supplier->business_name;
+    }
+
+    public function updatedSupplierSearch(): void
+    {
+        if (blank($this->supplier_id)) {
+            return;
+        }
+
+        $supplier = Supplier::query()->find((int) $this->supplier_id);
+
+        if ($supplier === null) {
+            $this->supplier_id = '';
+
+            return;
+        }
+
+        $search = mb_strtolower(trim($this->supplier_search));
+
+        if ($search === '') {
+            return;
+        }
+
+        $matchesSelected = str_contains(mb_strtolower($supplier->business_name), $search)
+            || str_contains(mb_strtolower($supplier->commercial_name ?? ''), $search)
+            || str_contains(mb_strtolower($supplier->ruc), $search);
+
+        if (! $matchesSelected) {
+            $this->supplier_id = '';
+        }
+    }
+
     protected function resetForm(bool $useRequestItems): void
     {
         $this->closeItemModal();
@@ -329,6 +371,7 @@ class ManageSupplierQuotations extends Component
         ]);
 
         $this->supplier_id = '';
+        $this->supplier_search = '';
 
         $this->capture_mode = QuotationCaptureMode::Form->value();
         $this->quotation_date = now()->toDateString();
@@ -338,6 +381,37 @@ class ManageSupplierQuotations extends Component
         $this->delivery_time = '1';
         $this->items = $useRequestItems ? $this->itemsFromRequirement() : $this->itemsFromRequirement();
         $this->showFormModal = false;
+    }
+
+    /**
+     * @return Collection<int, Supplier>
+     */
+    protected function filteredSuppliers(): Collection
+    {
+        $query = Supplier::query()->orderBy('business_name');
+
+        if (filled(trim($this->supplier_search))) {
+            $term = '%'.trim($this->supplier_search).'%';
+
+            $query->where(function ($builder) use ($term): void {
+                $builder
+                    ->where('business_name', 'like', $term)
+                    ->orWhere('commercial_name', 'like', $term)
+                    ->orWhere('ruc', 'like', $term);
+            });
+        }
+
+        $suppliers = $query->limit(50)->get();
+
+        if (filled($this->supplier_id)) {
+            $selected = Supplier::query()->find((int) $this->supplier_id);
+
+            if ($selected !== null && ! $suppliers->contains('id', $selected->id)) {
+                $suppliers->prepend($selected);
+            }
+        }
+
+        return $suppliers;
     }
 
     /**

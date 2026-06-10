@@ -24,7 +24,6 @@ use App\Livewire\Mechanics\ManageFleetSpareParts;
 use App\Livewire\Mechanics\ManageFleetTechnicalInspections;
 use App\Livewire\Mechanics\ManageFleetWorkOrders;
 use App\Livewire\Mechanics\ShowMechanicalDashboard;
-use App\Livewire\Orders\RecordOrderConformity;
 use App\Livewire\Payments\ManagePaymentSchedules;
 use App\Livewire\Payments\ManageSupplierPayments;
 use App\Livewire\Projects\ManageProjects;
@@ -96,13 +95,12 @@ Route::middleware(['auth', 'verified', 'active.company.context'])->group(functio
         Route::get('purchase-orders', ManagePurchaseOrders::class)
             ->middleware('permission:purchases.ver')
             ->name('purchases.orders');
+        Route::get('purchase-orders/{purchaseOrder}/pdf/preview', [PurchaseComparisonDownloadController::class, 'orderPreview'])
+            ->middleware('permission:purchases.ver')
+            ->name('purchases.orders.pdf.preview');
         Route::get('purchase-orders/{purchaseOrder}/pdf', [PurchaseComparisonDownloadController::class, 'order'])
             ->middleware('permission:purchases.exportar')
             ->name('purchases.orders.pdf');
-        Route::get('purchase-orders/{purchaseOrder}/conformity', RecordOrderConformity::class)
-            ->middleware('permission:purchases.aprobar')
-            ->name('purchases.orders.conformity');
-
         Route::get('accounts-payable', ManageAccountsPayable::class)
             ->middleware('permission:payments.ver')
             ->name('accounts-payable.index');

@@ -15,6 +15,7 @@
         'archivado' => 'bg-violet-100 text-violet-700 dark:bg-violet-950/60 dark:text-violet-300',
         'aprobado' => 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300',
         'rechazado' => 'bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300',
+        'conforme' => 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300',
         'vencido' => 'bg-fuchsia-100 text-fuchsia-700 dark:bg-fuchsia-950/60 dark:text-fuchsia-300',
         'borrador' => 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200',
         'solicitada', 'en_cotizacion' => 'bg-sky-100 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300',

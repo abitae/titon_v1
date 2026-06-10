@@ -121,7 +121,7 @@ class AppNavigation
                 'current' => request()->routeIs([
                     'purchases.orders',
                     'purchases.orders.pdf',
-                    'purchases.orders.conformity',
+                    'purchases.orders.pdf.preview',
                 ]),
             ],
             [

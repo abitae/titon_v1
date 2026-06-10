@@ -1,8 +1,7 @@
 @php
     /** @var \App\Models\PurchaseRequest $purchaseRequest */
     /** @var array<string, mixed> $summary */
-    $comparisonQuotations = $summary['quotations']->take(2);
-    $missingSlots = max(0, 2 - $comparisonQuotations->count());
+    $comparisonQuotations = $summary['quotations'];
 @endphp
 
 @if ($showComparisonModal)
@@ -12,7 +11,7 @@
                 <h2 class="text-base font-semibold text-slate-950 dark:text-white">Comparativa de cotizaciones</h2>
                 <p class="truncate text-xs text-slate-500 dark:text-slate-400">
                     {{ $purchaseRequest->code }} · {{ $purchaseRequest->project?->name ?? 'Sin obra' }}
-                    · {{ $summary['quotations']->count() }} cotización(es)
+                    · {{ $comparisonQuotations->count() }} cotización(es) seleccionada(s)
                 </p>
             </div>
 
@@ -30,12 +29,12 @@
             </div>
         </div>
 
-        @if ($summary['quotations']->isEmpty())
+        @if ($comparisonQuotations->isEmpty())
             <div class="flex flex-1 items-center justify-center p-6">
-                <p class="text-sm text-slate-500 dark:text-slate-400">Todavía no hay cotizaciones para comparar.</p>
+                <p class="text-sm text-slate-500 dark:text-slate-400">Seleccione al menos 2 cotizaciones para comparar.</p>
             </div>
         @else
-            <div class="grid min-h-0 flex-1 grid-cols-1 gap-2 bg-slate-100/80 p-2 dark:bg-slate-950 lg:grid-cols-2">
+            <div class="grid min-h-0 flex-1 grid-cols-1 gap-2 overflow-y-auto bg-slate-100/80 p-2 dark:bg-slate-950 lg:grid-cols-2">
                 @foreach ($comparisonQuotations as $quotation)
                     @php
                         $pdfUrl = $quotation->quotationPdfPreviewUrl();
@@ -44,7 +43,7 @@
                     @endphp
                     <div
                         wire:key="comparison-panel-{{ $quotation->id }}"
-                        class="flex min-h-0 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:shadow-none"
+                        class="flex min-h-[40vh] flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:shadow-none lg:min-h-0"
                     >
                         <div class="flex shrink-0 items-start justify-between gap-2 border-b border-slate-200 px-3 py-2 dark:border-slate-800">
                             <div class="min-w-0">
@@ -76,12 +75,6 @@
                         </div>
                     </div>
                 @endforeach
-
-                @for ($slot = 0; $slot < $missingSlots; $slot++)
-                    <div class="flex min-h-[40vh] items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white/80 p-6 lg:min-h-0 dark:border-slate-800 dark:bg-slate-900/60">
-                        <p class="text-center text-sm text-slate-500 dark:text-slate-400">Agregue otra cotización para completar la comparativa lado a lado.</p>
-                    </div>
-                @endfor
             </div>
         @endif
     </div>

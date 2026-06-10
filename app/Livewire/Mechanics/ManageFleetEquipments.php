@@ -4,6 +4,7 @@ namespace App\Livewire\Mechanics;
 
 use App\Actions\Companies\ResolveCurrentCompany;
 use App\Concerns\InteractsWithToast;
+use App\Concerns\ViewsPdfInModal;
 use App\Enums\CorrelativeSubject;
 use App\Enums\FleetEquipmentOperationalStatus;
 use App\Models\FleetEquipment;
@@ -19,7 +20,23 @@ use Livewire\WithPagination;
 
 class ManageFleetEquipments extends Component
 {
-    use InteractsWithToast, WithFileUploads, WithPagination;
+    use InteractsWithToast, ViewsPdfInModal, WithFileUploads, WithPagination;
+
+    public function openEquipmentsReportPdf(): void
+    {
+        $this->openRoutePdfModal('mechanics.report.equipments.pdf', 'Equipos y maquinarias');
+    }
+
+    public function openEquipmentDocument(string $url, string $name, string $mimeType): void
+    {
+        if ($mimeType === 'application/pdf' || str_ends_with(mb_strtolower($name), '.pdf')) {
+            $this->openPdfModal($url, $name, 'Documento adjunto del equipo');
+
+            return;
+        }
+
+        $this->redirect($url, navigate: false);
+    }
 
     public string $title = 'Equipos y maquinarias';
 

@@ -28,7 +28,22 @@ class GeneratePurchaseOrder
             ->where('supplier_quotation_id', $quotation->id)
             ->first();
 
-        $code = $existingOrder?->code ?? ($comparison->order_code ?: null);
+        $code = $existingOrder?->code;
+
+        if ($code === null || $code === '') {
+            $storedCode = trim((string) ($comparison->order_code ?? ''));
+
+            if ($storedCode !== '') {
+                $codeOwner = PurchaseOrder::query()
+                    ->where('company_id', $requirement->company_id)
+                    ->where('code', $storedCode)
+                    ->first();
+
+                if ($codeOwner === null || $codeOwner->supplier_quotation_id === $quotation->id) {
+                    $code = $storedCode;
+                }
+            }
+        }
 
         if ($code === null || $code === '') {
             $code = app(CodeGeneratorService::class)->generate(

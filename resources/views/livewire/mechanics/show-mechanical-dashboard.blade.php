@@ -84,7 +84,7 @@
                     @can($perm)
                         <div class="flex flex-wrap items-center gap-2 rounded-2xl border border-slate-100 bg-slate-50/80 px-3 py-3 dark:border-slate-800 dark:bg-slate-950/50">
                             <span class="min-w-0 flex-1 text-sm font-medium text-slate-800 dark:text-slate-100">{{ $label }}</span>
-                            <a href="{{ route($routePdf) }}" target="_blank" rel="noopener" class="rounded-lg bg-slate-900 px-2.5 py-1 text-xs font-semibold text-white dark:bg-cyan-600 dark:text-slate-950">PDF</a>
+                            <button type="button" wire:click="openMechanicsReportPdf('{{ $routePdf }}', @js($label))" class="rounded-lg bg-slate-900 px-2.5 py-1 text-xs font-semibold text-white dark:bg-cyan-600 dark:text-slate-950">PDF</button>
                             <a href="{{ route($routeXlsx) }}" class="rounded-lg border border-slate-300 px-2.5 py-1 text-xs font-semibold text-slate-700 dark:border-slate-600 dark:text-slate-200">Excel</a>
                         </div>
                     @endcan
@@ -104,4 +104,12 @@
     </div>
 
     <x-charts.chart id="mech-cost-eq" title="Top equipos por costo (OT cerradas)" :config="$charts['cost_by_equipment']" height="360" />
+
+    <x-platform.pdf-viewer-modal
+        :show="$showPdfModal"
+        :url="$pdfViewerUrl"
+        :title="$pdfViewerTitle"
+        :subtitle="$pdfViewerSubtitle"
+        :allowExternalOpen="false"
+    />
 </div>

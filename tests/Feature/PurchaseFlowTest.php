@@ -138,6 +138,29 @@ test('supplier quotations can be created and totals are calculated', function ()
     expect($purchaseRequest->fresh()->status)->toBe('en_proceso');
 });
 
+test('supplier quotations modal filters suppliers by search term', function () {
+    $purchaseRequest = PurchaseRequest::query()->create([
+        'company_id' => $this->company->id,
+        'work_project_id' => $this->project->id,
+        'responsible_user_id' => $this->user->id,
+        'requested_by' => $this->user->id,
+        'code' => 'SC-SRCH',
+        'priority' => 'media',
+        'request_date' => now()->toDateString(),
+        'description' => 'Busqueda de proveedor',
+        'status' => 'creado',
+    ]);
+
+    Livewire::test(ManageSupplierQuotations::class, ['purchaseRequest' => $purchaseRequest])
+        ->call('openCreateModal')
+        ->set('supplier_search', 'Proveedor B')
+        ->assertSee('Proveedor B')
+        ->assertDontSee('Proveedor A')
+        ->call('selectSupplier', $this->supplierB->id)
+        ->assertSet('supplier_id', (string) $this->supplierB->id)
+        ->assertSet('supplier_search', 'Proveedor B');
+});
+
 test('supplier quotations validate required fields in form mode', function () {
     $purchaseRequest = PurchaseRequest::query()->create([
         'company_id' => $this->company->id,
@@ -249,8 +272,71 @@ test('form quotation preview generates inline pdf for comparison', function () {
 
     Livewire::test(ManageSupplierQuotations::class, ['purchaseRequest' => $purchaseRequest->fresh()])
         ->call('openComparisonModal')
+        ->assertSet('showComparisonModal', false);
+
+    Livewire::test(ManageSupplierQuotations::class, ['purchaseRequest' => $purchaseRequest->fresh()])
+        ->call('openCreateModal')
+        ->set('supplier_id', $this->supplierB->id)
+        ->set('currency', 'PEN')
+        ->set('tax', '90')
+        ->set('delivery_time', '4')
+        ->set('items', [
+            [
+                'product_or_service' => 'Cable THW B',
+                'unit' => 'rollo',
+                'quantity' => '5',
+                'unit_price' => '90',
+            ],
+        ])
+        ->call('saveQuotation')
+        ->assertHasNoErrors();
+
+    $quotationIds = SupplierQuotation::query()
+        ->where('requirement_id', $purchaseRequest->id)
+        ->pluck('id')
+        ->all();
+
+    Livewire::test(ManageSupplierQuotations::class, ['purchaseRequest' => $purchaseRequest->fresh()])
+        ->set('comparison_quotation_ids', $quotationIds)
+        ->call('openComparisonModal')
         ->assertSet('showComparisonModal', true)
         ->assertSeeHtml('iframe');
+});
+
+test('comparison modal requires at least two selected quotations', function () {
+    $purchaseRequest = PurchaseRequest::query()->create([
+        'company_id' => $this->company->id,
+        'work_project_id' => $this->project->id,
+        'responsible_user_id' => $this->user->id,
+        'requested_by' => $this->user->id,
+        'code' => 'SC-MIN',
+        'priority' => 'media',
+        'request_date' => now()->toDateString(),
+        'description' => 'Mínimo comparativa',
+        'status' => 'en_proceso',
+    ]);
+
+    Livewire::test(ManageSupplierQuotations::class, ['purchaseRequest' => $purchaseRequest])
+        ->call('openCreateModal')
+        ->set('supplier_id', $this->supplierA->id)
+        ->set('currency', 'PEN')
+        ->set('tax', '90')
+        ->set('delivery_time', '4')
+        ->set('items', [[
+            'product_or_service' => 'Cable THW',
+            'unit' => 'rollo',
+            'quantity' => '5',
+            'unit_price' => '100',
+        ]])
+        ->call('saveQuotation')
+        ->assertHasNoErrors();
+
+    $quotationId = SupplierQuotation::query()->where('requirement_id', $purchaseRequest->id)->value('id');
+
+    Livewire::test(ManageSupplierQuotations::class, ['purchaseRequest' => $purchaseRequest->fresh()])
+        ->set('comparison_quotation_ids', [$quotationId])
+        ->call('openComparisonModal')
+        ->assertSet('showComparisonModal', false);
 });
 
 test('comparison modal opens fullscreen with quotation pdf previews', function () {
@@ -280,7 +366,13 @@ test('comparison modal opens fullscreen with quotation pdf previews', function (
             ->assertHasNoErrors();
     }
 
+    $quotationIds = SupplierQuotation::query()
+        ->where('requirement_id', $purchaseRequest->id)
+        ->pluck('id')
+        ->all();
+
     Livewire::test(ManageSupplierQuotations::class, ['purchaseRequest' => $purchaseRequest->fresh()])
+        ->set('comparison_quotation_ids', $quotationIds)
         ->call('openComparisonModal')
         ->assertSet('showComparisonModal', true)
         ->assertSee('Comparativa de cotizaciones')
@@ -350,7 +442,84 @@ test('winner selection and purchase order generation are persisted', function ()
 
     expect($purchaseRequest->status)->toBe('atendido');
     expect(Order::query()->where('requirement_id', $purchaseRequest->id)->exists())->toBeTrue();
-    expect($purchaseRequest->comparison?->order_code)->not->toBeEmpty();
+
+    $order = Order::query()->where('requirement_id', $purchaseRequest->id)->firstOrFail();
+
+    expect($order->code)->not->toMatch('/-OC-OC-/');
+    expect($order->code)->toMatch('/-OBR001-OC-\d{4}-\d{6}$/');
+    expect($purchaseRequest->comparison?->order_code)->toBe($order->code);
+});
+
+test('changing the winning quotation after order generation assigns a new order code', function () {
+    $purchaseRequest = PurchaseRequest::query()->create([
+        'company_id' => $this->company->id,
+        'work_project_id' => $this->project->id,
+        'responsible_user_id' => $this->user->id,
+        'requested_by' => $this->user->id,
+        'code' => 'SC-005',
+        'priority' => 'alta',
+        'request_date' => now()->toDateString(),
+        'description' => 'Compra con cambio de ganador',
+        'status' => 'en_proceso',
+    ]);
+
+    $quotationA = SupplierQuotation::query()->create([
+        'company_id' => $this->company->id,
+        'work_project_id' => $this->project->id,
+        'requirement_id' => $purchaseRequest->id,
+        'supplier_id' => $this->supplierA->id,
+        'code' => 'COT-CHANGE-A',
+        'quotation_date' => now()->toDateString(),
+        'currency' => 'PEN',
+        'subtotal' => 1000,
+        'tax' => 180,
+        'total' => 1180,
+        'delivery_time_days' => 5,
+        'status' => 'registrada',
+    ]);
+
+    $quotationB = SupplierQuotation::query()->create([
+        'company_id' => $this->company->id,
+        'work_project_id' => $this->project->id,
+        'requirement_id' => $purchaseRequest->id,
+        'supplier_id' => $this->supplierB->id,
+        'code' => 'COT-CHANGE-B',
+        'quotation_date' => now()->toDateString(),
+        'currency' => 'PEN',
+        'subtotal' => 950,
+        'tax' => 171,
+        'total' => 1121,
+        'delivery_time_days' => 7,
+        'status' => 'registrada',
+    ]);
+
+    $component = Livewire::test(ShowQuotationComparison::class, ['purchaseRequest' => $purchaseRequest]);
+
+    $component
+        ->call('openWinnerModal')
+        ->set('selected_supplier_quotation_id', $quotationA->id)
+        ->set('selection_reason', 'Primera selección.')
+        ->call('saveSelection')
+        ->call('openWinnerModal')
+        ->call('generateOrder')
+        ->assertHasNoErrors();
+
+    $firstOrder = Order::query()->where('supplier_quotation_id', $quotationA->id)->firstOrFail();
+
+    $component
+        ->call('openWinnerModal')
+        ->set('selected_supplier_quotation_id', $quotationB->id)
+        ->set('selection_reason', 'Cambio por mejor precio.')
+        ->call('saveSelection')
+        ->call('openWinnerModal')
+        ->call('generateOrder')
+        ->assertHasNoErrors();
+
+    $secondOrder = Order::query()->where('supplier_quotation_id', $quotationB->id)->firstOrFail();
+
+    expect($secondOrder->id)->not->toBe($firstOrder->id);
+    expect($secondOrder->code)->not->toBe($firstOrder->code);
+    expect($secondOrder->code)->not->toMatch('/-OC-OC-/');
 });
 
 test('purchase pages and comparison pdf routes render for authorized users', function () {

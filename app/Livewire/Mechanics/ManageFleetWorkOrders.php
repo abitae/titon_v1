@@ -4,6 +4,7 @@ namespace App\Livewire\Mechanics;
 
 use App\Actions\Companies\ResolveCurrentCompany;
 use App\Concerns\InteractsWithToast;
+use App\Concerns\ViewsPdfInModal;
 use App\Enums\CorrelativeSubject;
 use App\Enums\DocumentPriority;
 use App\Enums\FleetWorkOrderStatus;
@@ -29,7 +30,26 @@ use Livewire\WithPagination;
 
 class ManageFleetWorkOrders extends Component
 {
-    use InteractsWithToast, WithFileUploads, WithPagination;
+    use InteractsWithToast, ViewsPdfInModal, WithFileUploads, WithPagination;
+
+    public function openWorkOrdersReportPdf(string $report): void
+    {
+        $reports = [
+            'detail' => ['mechanics.report.work-orders.pdf', 'Ordenes de trabajo · Detalle'],
+            'by-technician' => ['mechanics.report.work-orders.by-technician.pdf', 'Ordenes de trabajo · Por tecnico'],
+            'by-project' => ['mechanics.report.work-orders.by-project.pdf', 'Ordenes de trabajo · Por obra'],
+            'by-equipment' => ['mechanics.report.work-orders.by-equipment.pdf', 'Ordenes de trabajo · Por equipo'],
+            'overdue' => ['mechanics.report.work-orders.overdue.pdf', 'Ordenes de trabajo · Vencidas'],
+            'costs' => ['mechanics.report.work-orders.costs.pdf', 'Ordenes de trabajo · Costos'],
+            'types' => ['mechanics.report.work-orders.types.pdf', 'Ordenes de trabajo · Tipos'],
+        ];
+
+        abort_unless(isset($reports[$report]), 404);
+
+        [$routeName, $title] = $reports[$report];
+
+        $this->openRoutePdfModal($routeName, $title, $this->exportQueryParams());
+    }
 
     public string $title = 'Ordenes de trabajo';
 

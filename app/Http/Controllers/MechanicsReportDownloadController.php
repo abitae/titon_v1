@@ -20,6 +20,7 @@ use App\Services\Mechanics\FleetWorkOrderExportDatasets;
 use App\Services\Mechanics\MechanicalCostAnalytics;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Facades\Excel;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -29,19 +30,13 @@ class MechanicsReportDownloadController extends Controller
 {
     use AppliesExportCorrelationStamp;
 
-    public function equipmentsPdf(UserAuditLogger $userAuditLogger, FleetEquipmentsPdfReport $fleetEquipmentsPdfReport): StreamedResponse
+    public function equipmentsPdf(Request $request, UserAuditLogger $userAuditLogger, FleetEquipmentsPdfReport $fleetEquipmentsPdfReport): StreamedResponse|Response
     {
         $this->authorizeMechanicsExport();
 
         $pdf = $fleetEquipmentsPdfReport->build(auth()->user());
 
-        $this->logMechanicsExport($userAuditLogger, 'equipos_pdf', 'PDF listado de equipos.');
-
-        return response()->streamDownload(static function () use ($pdf): void {
-            echo $pdf;
-        }, $this->stampedExportFilename('equipos-maquinarias.pdf'), [
-            'Content-Type' => 'application/pdf',
-        ]);
+        return $this->deliverPdf($request, $pdf, 'equipos-maquinarias.pdf', $userAuditLogger, 'equipos_pdf', 'PDF listado de equipos.');
     }
 
     public function equipmentsExcel(UserAuditLogger $userAuditLogger): BinaryFileResponse
@@ -55,14 +50,13 @@ class MechanicsReportDownloadController extends Controller
         return Excel::download(new FleetEquipmentsExport($rows), $this->stampedExportFilename('equipos-maquinarias.xlsx'));
     }
 
-    public function machineryStatusPdf(UserAuditLogger $userAuditLogger, GenericMechanicsPdfReport $genericMechanicsPdfReport): StreamedResponse
+    public function machineryStatusPdf(Request $request, UserAuditLogger $userAuditLogger, GenericMechanicsPdfReport $genericMechanicsPdfReport): StreamedResponse|Response
     {
         $this->authorizeMechanicsExport();
         [$summaryLines, $headings, $rows] = $this->machineryStatusDataset();
         $pdf = $genericMechanicsPdfReport->build(auth()->user(), 'Estado de maquinaria', 'Estado de maquinaria', $headings, $rows, $summaryLines);
-        $this->logMechanicsExport($userAuditLogger, 'estado_maquinaria_pdf', 'PDF estado de maquinaria.');
 
-        return $this->streamPdf($pdf, 'estado-maquinaria.pdf');
+        return $this->deliverPdf($request, $pdf, 'estado-maquinaria.pdf', $userAuditLogger, 'estado_maquinaria_pdf', 'PDF estado de maquinaria.');
     }
 
     public function machineryStatusExcel(UserAuditLogger $userAuditLogger): BinaryFileResponse
@@ -74,14 +68,13 @@ class MechanicsReportDownloadController extends Controller
         return Excel::download(new MechanicsFlatExcelExport($headings, $rows), $this->stampedExportFilename('estado-maquinaria.xlsx'));
     }
 
-    public function inspectionsPdf(UserAuditLogger $userAuditLogger, GenericMechanicsPdfReport $genericMechanicsPdfReport): StreamedResponse
+    public function inspectionsPdf(Request $request, UserAuditLogger $userAuditLogger, GenericMechanicsPdfReport $genericMechanicsPdfReport): StreamedResponse|Response
     {
-        $this->authorizeMechanicsExport();
+        $this->authorizeInspectionsExport();
         [$headings, $rows] = $this->inspectionsDataset();
         $pdf = $genericMechanicsPdfReport->build(auth()->user(), 'Revisiones tecnicas', 'Revisiones tecnicas', $headings, $rows);
-        $this->logMechanicsExport($userAuditLogger, 'revisiones_pdf', 'PDF revisiones tecnicas.');
 
-        return $this->streamPdf($pdf, 'revisiones-tecnicas.pdf');
+        return $this->deliverPdf($request, $pdf, 'revisiones-tecnicas.pdf', $userAuditLogger, 'revisiones_pdf', 'PDF revisiones tecnicas.');
     }
 
     public function inspectionsExcel(UserAuditLogger $userAuditLogger): BinaryFileResponse
@@ -93,14 +86,13 @@ class MechanicsReportDownloadController extends Controller
         return Excel::download(new MechanicsFlatExcelExport($headings, $rows), $this->stampedExportFilename('revisiones-tecnicas.xlsx'));
     }
 
-    public function preventivePdf(UserAuditLogger $userAuditLogger, GenericMechanicsPdfReport $genericMechanicsPdfReport): StreamedResponse
+    public function preventivePdf(Request $request, UserAuditLogger $userAuditLogger, GenericMechanicsPdfReport $genericMechanicsPdfReport): StreamedResponse|Response
     {
         $this->authorizeMechanicsExport();
         [$headings, $rows] = $this->preventiveDataset();
         $pdf = $genericMechanicsPdfReport->build(auth()->user(), 'Mantenimiento preventivo', 'Mantenimientos preventivos', $headings, $rows);
-        $this->logMechanicsExport($userAuditLogger, 'preventivo_pdf', 'PDF mantenimiento preventivo.');
 
-        return $this->streamPdf($pdf, 'mantenimiento-preventivo.pdf');
+        return $this->deliverPdf($request, $pdf, 'mantenimiento-preventivo.pdf', $userAuditLogger, 'preventivo_pdf', 'PDF mantenimiento preventivo.');
     }
 
     public function preventiveExcel(UserAuditLogger $userAuditLogger): BinaryFileResponse
@@ -112,14 +104,13 @@ class MechanicsReportDownloadController extends Controller
         return Excel::download(new MechanicsFlatExcelExport($headings, $rows), $this->stampedExportFilename('mantenimiento-preventivo.xlsx'));
     }
 
-    public function correctivePdf(UserAuditLogger $userAuditLogger, GenericMechanicsPdfReport $genericMechanicsPdfReport): StreamedResponse
+    public function correctivePdf(Request $request, UserAuditLogger $userAuditLogger, GenericMechanicsPdfReport $genericMechanicsPdfReport): StreamedResponse|Response
     {
         $this->authorizeMechanicsExport();
         [$headings, $rows] = $this->correctiveDataset();
         $pdf = $genericMechanicsPdfReport->build(auth()->user(), 'Mantenimiento correctivo', 'Mantenimientos correctivos', $headings, $rows);
-        $this->logMechanicsExport($userAuditLogger, 'correctivo_pdf', 'PDF mantenimiento correctivo.');
 
-        return $this->streamPdf($pdf, 'mantenimiento-correctivo.pdf');
+        return $this->deliverPdf($request, $pdf, 'mantenimiento-correctivo.pdf', $userAuditLogger, 'correctivo_pdf', 'PDF mantenimiento correctivo.');
     }
 
     public function correctiveExcel(UserAuditLogger $userAuditLogger): BinaryFileResponse
@@ -131,14 +122,13 @@ class MechanicsReportDownloadController extends Controller
         return Excel::download(new MechanicsFlatExcelExport($headings, $rows), $this->stampedExportFilename('mantenimiento-correctivo.xlsx'));
     }
 
-    public function workOrdersPdf(Request $request, UserAuditLogger $userAuditLogger, GenericMechanicsPdfReport $genericMechanicsPdfReport): StreamedResponse
+    public function workOrdersPdf(Request $request, UserAuditLogger $userAuditLogger, GenericMechanicsPdfReport $genericMechanicsPdfReport): StreamedResponse|Response
     {
         $this->authorizeMechanicsExport();
         [$headings, $rows] = FleetWorkOrderExportDatasets::flatCostDetail((clone $this->workOrdersFilteredQuery($request)));
         $pdf = $genericMechanicsPdfReport->build(auth()->user(), 'Ordenes de trabajo mecanicas', 'Ordenes de trabajo mecanicas (detalle)', $headings, $rows);
-        $this->logMechanicsExport($userAuditLogger, 'ot_pdf', 'PDF ordenes de trabajo filtradas.');
 
-        return $this->streamPdf($pdf, 'ordenes-trabajo-mecanicas.pdf');
+        return $this->deliverPdf($request, $pdf, 'ordenes-trabajo-mecanicas.pdf', $userAuditLogger, 'ot_pdf', 'PDF ordenes de trabajo filtradas.');
     }
 
     public function workOrdersExcel(Request $request, UserAuditLogger $userAuditLogger): BinaryFileResponse
@@ -150,14 +140,13 @@ class MechanicsReportDownloadController extends Controller
         return Excel::download(new MechanicsFlatExcelExport($headings, $rows), $this->stampedExportFilename('ordenes-trabajo-mecanicas.xlsx'));
     }
 
-    public function workOrdersGroupedTechnicianPdf(Request $request, UserAuditLogger $userAuditLogger, GenericMechanicsPdfReport $genericMechanicsPdfReport): StreamedResponse
+    public function workOrdersGroupedTechnicianPdf(Request $request, UserAuditLogger $userAuditLogger, GenericMechanicsPdfReport $genericMechanicsPdfReport): StreamedResponse|Response
     {
         $this->authorizeMechanicsExport();
         [$headings, $rows] = FleetWorkOrderExportDatasets::groupedByTechnician($this->workOrdersFilteredQuery($request));
         $pdf = $genericMechanicsPdfReport->build(auth()->user(), 'OT por tecnico', 'OT por tecnico', $headings, $rows);
-        $this->logMechanicsExport($userAuditLogger, 'ot_por_tecnico_pdf', 'PDF OT agrupadas por tecnico.');
 
-        return $this->streamPdf($pdf, 'ot-por-tecnico.pdf');
+        return $this->deliverPdf($request, $pdf, 'ot-por-tecnico.pdf', $userAuditLogger, 'ot_por_tecnico_pdf', 'PDF OT agrupadas por tecnico.');
     }
 
     public function workOrdersGroupedTechnicianExcel(Request $request, UserAuditLogger $userAuditLogger): BinaryFileResponse
@@ -169,14 +158,13 @@ class MechanicsReportDownloadController extends Controller
         return Excel::download(new MechanicsFlatExcelExport($headings, $rows), $this->stampedExportFilename('ot-por-tecnico.xlsx'));
     }
 
-    public function workOrdersGroupedProjectPdf(Request $request, UserAuditLogger $userAuditLogger, GenericMechanicsPdfReport $genericMechanicsPdfReport): StreamedResponse
+    public function workOrdersGroupedProjectPdf(Request $request, UserAuditLogger $userAuditLogger, GenericMechanicsPdfReport $genericMechanicsPdfReport): StreamedResponse|Response
     {
         $this->authorizeMechanicsExport();
         [$headings, $rows] = FleetWorkOrderExportDatasets::groupedByProject($this->workOrdersFilteredQuery($request));
         $pdf = $genericMechanicsPdfReport->build(auth()->user(), 'OT por obra', 'OT por obra', $headings, $rows);
-        $this->logMechanicsExport($userAuditLogger, 'ot_por_obra_pdf', 'PDF OT agrupadas por obra.');
 
-        return $this->streamPdf($pdf, 'ot-por-obra.pdf');
+        return $this->deliverPdf($request, $pdf, 'ot-por-obra.pdf', $userAuditLogger, 'ot_por_obra_pdf', 'PDF OT agrupadas por obra.');
     }
 
     public function workOrdersGroupedProjectExcel(Request $request, UserAuditLogger $userAuditLogger): BinaryFileResponse
@@ -188,14 +176,13 @@ class MechanicsReportDownloadController extends Controller
         return Excel::download(new MechanicsFlatExcelExport($headings, $rows), $this->stampedExportFilename('ot-por-obra.xlsx'));
     }
 
-    public function workOrdersGroupedEquipmentPdf(Request $request, UserAuditLogger $userAuditLogger, GenericMechanicsPdfReport $genericMechanicsPdfReport): StreamedResponse
+    public function workOrdersGroupedEquipmentPdf(Request $request, UserAuditLogger $userAuditLogger, GenericMechanicsPdfReport $genericMechanicsPdfReport): StreamedResponse|Response
     {
         $this->authorizeMechanicsExport();
         [$headings, $rows] = FleetWorkOrderExportDatasets::groupedByEquipment($this->workOrdersFilteredQuery($request));
         $pdf = $genericMechanicsPdfReport->build(auth()->user(), 'OT por equipo', 'OT por equipo', $headings, $rows);
-        $this->logMechanicsExport($userAuditLogger, 'ot_por_equipo_pdf', 'PDF OT agrupadas por equipo.');
 
-        return $this->streamPdf($pdf, 'ot-por-equipo.pdf');
+        return $this->deliverPdf($request, $pdf, 'ot-por-equipo.pdf', $userAuditLogger, 'ot_por_equipo_pdf', 'PDF OT agrupadas por equipo.');
     }
 
     public function workOrdersGroupedEquipmentExcel(Request $request, UserAuditLogger $userAuditLogger): BinaryFileResponse
@@ -207,14 +194,13 @@ class MechanicsReportDownloadController extends Controller
         return Excel::download(new MechanicsFlatExcelExport($headings, $rows), $this->stampedExportFilename('ot-por-equipo.xlsx'));
     }
 
-    public function workOrdersOverduePdf(Request $request, UserAuditLogger $userAuditLogger, GenericMechanicsPdfReport $genericMechanicsPdfReport): StreamedResponse
+    public function workOrdersOverduePdf(Request $request, UserAuditLogger $userAuditLogger, GenericMechanicsPdfReport $genericMechanicsPdfReport): StreamedResponse|Response
     {
         $this->authorizeMechanicsExport();
         [$headings, $rows] = FleetWorkOrderExportDatasets::flatCostDetail((clone $this->overdueWorkOrdersFilteredQuery($request)));
         $pdf = $genericMechanicsPdfReport->build(auth()->user(), 'OT vencidas', 'Ordenes vencidas (programacion)', $headings, $rows);
-        $this->logMechanicsExport($userAuditLogger, 'ot_vencidas_pdf', 'PDF OT vencidas.');
 
-        return $this->streamPdf($pdf, 'ot-vencidas.pdf');
+        return $this->deliverPdf($request, $pdf, 'ot-vencidas.pdf', $userAuditLogger, 'ot_vencidas_pdf', 'PDF OT vencidas.');
     }
 
     public function workOrdersOverdueExcel(Request $request, UserAuditLogger $userAuditLogger): BinaryFileResponse
@@ -226,14 +212,13 @@ class MechanicsReportDownloadController extends Controller
         return Excel::download(new MechanicsFlatExcelExport($headings, $rows), $this->stampedExportFilename('ot-vencidas.xlsx'));
     }
 
-    public function workOrdersTypesPdf(Request $request, UserAuditLogger $userAuditLogger, GenericMechanicsPdfReport $genericMechanicsPdfReport): StreamedResponse
+    public function workOrdersTypesPdf(Request $request, UserAuditLogger $userAuditLogger, GenericMechanicsPdfReport $genericMechanicsPdfReport): StreamedResponse|Response
     {
         $this->authorizeMechanicsExport();
         [$headings, $rows] = FleetWorkOrderExportDatasets::preventiveVsCorrective(clone $this->workOrdersFilteredQuery($request));
         $pdf = $genericMechanicsPdfReport->build(auth()->user(), 'OT preventivo vs correctivo', 'Conteo OT por tipo', $headings, $rows);
-        $this->logMechanicsExport($userAuditLogger, 'ot_tipos_pdf', 'PDF conteo OT por tipo.');
 
-        return $this->streamPdf($pdf, 'ot-preventivo-correctivo.pdf');
+        return $this->deliverPdf($request, $pdf, 'ot-preventivo-correctivo.pdf', $userAuditLogger, 'ot_tipos_pdf', 'PDF conteo OT por tipo.');
     }
 
     public function workOrdersTypesExcel(Request $request, UserAuditLogger $userAuditLogger): BinaryFileResponse
@@ -245,7 +230,7 @@ class MechanicsReportDownloadController extends Controller
         return Excel::download(new MechanicsFlatExcelExport($headings, $rows), $this->stampedExportFilename('ot-preventivo-correctivo.xlsx'));
     }
 
-    public function workOrdersCostsPdf(Request $request, UserAuditLogger $userAuditLogger, GenericMechanicsPdfReport $genericMechanicsPdfReport): StreamedResponse
+    public function workOrdersCostsPdf(Request $request, UserAuditLogger $userAuditLogger, GenericMechanicsPdfReport $genericMechanicsPdfReport): StreamedResponse|Response
     {
         $this->authorizeMechanicsExport();
         $query = clone $this->workOrdersFilteredQuery($request);
@@ -256,9 +241,8 @@ class MechanicsReportDownloadController extends Controller
             'Costo total MO + repuestos (filtros): S/ '.number_format((float) $total, 2, '.', ''),
         ];
         $pdf = $genericMechanicsPdfReport->build(auth()->user(), 'Costos por OT', 'Costos por OT', $headings, $rows, $summary);
-        $this->logMechanicsExport($userAuditLogger, 'ot_costos_pdf', 'PDF costos OT filtradas.');
 
-        return $this->streamPdf($pdf, 'ot-costos.pdf');
+        return $this->deliverPdf($request, $pdf, 'ot-costos.pdf', $userAuditLogger, 'ot_costos_pdf', 'PDF costos OT filtradas.');
     }
 
     public function workOrdersCostsExcel(Request $request, UserAuditLogger $userAuditLogger): BinaryFileResponse
@@ -270,14 +254,13 @@ class MechanicsReportDownloadController extends Controller
         return Excel::download(new MechanicsFlatExcelExport($headings, $rows), $this->stampedExportFilename('ot-costos.xlsx'));
     }
 
-    public function maintenanceCostsPdf(UserAuditLogger $userAuditLogger, GenericMechanicsPdfReport $genericMechanicsPdfReport, MechanicalCostAnalytics $mechanicalCostAnalytics): StreamedResponse
+    public function maintenanceCostsPdf(Request $request, UserAuditLogger $userAuditLogger, GenericMechanicsPdfReport $genericMechanicsPdfReport, MechanicalCostAnalytics $mechanicalCostAnalytics): StreamedResponse|Response
     {
         $this->authorizeMechanicsExport();
         [$headings, $rows] = $this->maintenanceCostsDataset($mechanicalCostAnalytics);
         $pdf = $genericMechanicsPdfReport->build(auth()->user(), 'Costos de mantenimiento', 'Costos de mantenimiento', $headings, $rows);
-        $this->logMechanicsExport($userAuditLogger, 'costos_pdf', 'PDF costos mantenimiento.');
 
-        return $this->streamPdf($pdf, 'costos-mantenimiento.pdf');
+        return $this->deliverPdf($request, $pdf, 'costos-mantenimiento.pdf', $userAuditLogger, 'costos_pdf', 'PDF costos mantenimiento.');
     }
 
     public function maintenanceCostsExcel(UserAuditLogger $userAuditLogger, MechanicalCostAnalytics $mechanicalCostAnalytics): BinaryFileResponse
@@ -289,14 +272,13 @@ class MechanicsReportDownloadController extends Controller
         return Excel::download(new MechanicsFlatExcelExport($headings, $rows), $this->stampedExportFilename('costos-mantenimiento.xlsx'));
     }
 
-    public function consumedSparesPdf(UserAuditLogger $userAuditLogger, GenericMechanicsPdfReport $genericMechanicsPdfReport): StreamedResponse
+    public function consumedSparesPdf(Request $request, UserAuditLogger $userAuditLogger, GenericMechanicsPdfReport $genericMechanicsPdfReport): StreamedResponse|Response
     {
         $this->authorizeMechanicsExport();
         [$headings, $rows] = $this->consumedSparesDataset();
         $pdf = $genericMechanicsPdfReport->build(auth()->user(), 'Repuestos consumidos', 'Repuestos consumidos', $headings, $rows);
-        $this->logMechanicsExport($userAuditLogger, 'repuestos_consumidos_pdf', 'PDF repuestos consumidos.');
 
-        return $this->streamPdf($pdf, 'repuestos-consumidos.pdf');
+        return $this->deliverPdf($request, $pdf, 'repuestos-consumidos.pdf', $userAuditLogger, 'repuestos_consumidos_pdf', 'PDF repuestos consumidos.');
     }
 
     public function consumedSparesExcel(UserAuditLogger $userAuditLogger): BinaryFileResponse
@@ -308,14 +290,13 @@ class MechanicsReportDownloadController extends Controller
         return Excel::download(new MechanicsFlatExcelExport($headings, $rows), $this->stampedExportFilename('repuestos-consumidos.xlsx'));
     }
 
-    public function equipmentByProjectPdf(UserAuditLogger $userAuditLogger, GenericMechanicsPdfReport $genericMechanicsPdfReport): StreamedResponse
+    public function equipmentByProjectPdf(Request $request, UserAuditLogger $userAuditLogger, GenericMechanicsPdfReport $genericMechanicsPdfReport): StreamedResponse|Response
     {
         $this->authorizeMechanicsExport();
         [$headings, $rows] = $this->equipmentByProjectDataset();
         $pdf = $genericMechanicsPdfReport->build(auth()->user(), 'Equipos por obra', 'Equipos por obra', $headings, $rows);
-        $this->logMechanicsExport($userAuditLogger, 'equipos_por_obra_pdf', 'PDF equipos por obra.');
 
-        return $this->streamPdf($pdf, 'equipos-por-obra.pdf');
+        return $this->deliverPdf($request, $pdf, 'equipos-por-obra.pdf', $userAuditLogger, 'equipos_por_obra_pdf', 'PDF equipos por obra.');
     }
 
     public function equipmentByProjectExcel(UserAuditLogger $userAuditLogger): BinaryFileResponse
@@ -331,6 +312,43 @@ class MechanicsReportDownloadController extends Controller
     {
         abort_unless(auth()->check(), 403);
         abort_unless(auth()->user()->can('mecanica.exportar'), 403);
+    }
+
+    protected function authorizeInspectionsExport(): void
+    {
+        abort_unless(auth()->check(), 403);
+        abort_unless(
+            auth()->user()->can('revisiones.exportar') || auth()->user()->can('mecanica.exportar'),
+            403,
+        );
+    }
+
+    protected function deliverPdf(
+        Request $request,
+        string $binary,
+        string $filename,
+        UserAuditLogger $userAuditLogger,
+        string $auditKey,
+        string $auditObservation,
+    ): StreamedResponse|Response {
+        if ($request->boolean('preview')) {
+            return $this->inlinePdfResponse($binary, $filename);
+        }
+
+        $this->logMechanicsExport($userAuditLogger, $auditKey, $auditObservation);
+
+        return $this->streamPdf($binary, $filename);
+    }
+
+    protected function inlinePdfResponse(string $binary, string $filename): Response
+    {
+        $safeName = (string) preg_replace('/[^a-zA-Z0-9._-]+/', '-', $filename);
+
+        return response($binary, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="'.$safeName.'"',
+            'X-Frame-Options' => 'SAMEORIGIN',
+        ]);
     }
 
     protected function logMechanicsExport(UserAuditLogger $userAuditLogger, string $key, string $observation): void

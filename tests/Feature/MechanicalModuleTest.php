@@ -132,3 +132,21 @@ test('spare outbound movement updates stock and work order spare parts cost', fu
 test('mechanics maintenance cost excel report downloads for authorized user', function () {
     $this->get(route('mechanics.report.maintenance-costs.excel'))->assertSuccessful();
 });
+
+test('mechanics pdf reports can be previewed inline for modal viewer', function () {
+    $response = $this->get(route('mechanics.report.equipments.pdf', ['preview' => 1]));
+
+    $response->assertSuccessful();
+    $response->assertHeader('content-type', 'application/pdf');
+    expect(str_contains(strtolower((string) $response->headers->get('content-disposition')), 'inline'))->toBeTrue();
+    expect(str_starts_with($response->getContent(), '%PDF'))->toBeTrue();
+});
+
+test('equipments page opens pdf report in modal', function () {
+    $component = Livewire::test(ManageFleetEquipments::class)
+        ->call('openEquipmentsReportPdf')
+        ->assertSet('showPdfModal', true)
+        ->assertSet('pdfViewerTitle', 'Equipos y maquinarias');
+
+    expect($component->get('pdfViewerUrl'))->toContain('preview=1');
+});

@@ -254,21 +254,21 @@
                     <flux:dropdown>
                         <flux:button variant="filled" icon="arrow-down-tray" size="sm">Exportar (filtros actu.)</flux:button>
                         <flux:menu>
-                            <flux:menu.item icon="document-text" href="{{ route('mechanics.report.work-orders.pdf', $exportParams) }}" target="_blank">PDF · Detalle</flux:menu.item>
+                            <flux:menu.item icon="document-text" wire:click="openWorkOrdersReportPdf('detail')">PDF · Detalle</flux:menu.item>
                             <flux:menu.item icon="table-cells" href="{{ route('mechanics.report.work-orders.excel', $exportParams) }}">Excel · Detalle</flux:menu.item>
                             <flux:menu.separator />
-                            <flux:menu.item icon="users" href="{{ route('mechanics.report.work-orders.by-technician.pdf', $exportParams) }}" target="_blank">PDF · Por técnico</flux:menu.item>
+                            <flux:menu.item icon="users" wire:click="openWorkOrdersReportPdf('by-technician')">PDF · Por técnico</flux:menu.item>
                             <flux:menu.item href="{{ route('mechanics.report.work-orders.by-technician.excel', $exportParams) }}">Excel · Por técnico</flux:menu.item>
-                            <flux:menu.item icon="building-office" href="{{ route('mechanics.report.work-orders.by-project.pdf', $exportParams) }}" target="_blank">PDF · Por obra</flux:menu.item>
+                            <flux:menu.item icon="building-office" wire:click="openWorkOrdersReportPdf('by-project')">PDF · Por obra</flux:menu.item>
                             <flux:menu.item href="{{ route('mechanics.report.work-orders.by-project.excel', $exportParams) }}">Excel · Por obra</flux:menu.item>
-                            <flux:menu.item icon="wrench-screwdriver" href="{{ route('mechanics.report.work-orders.by-equipment.pdf', $exportParams) }}" target="_blank">PDF · Por equipo</flux:menu.item>
+                            <flux:menu.item icon="wrench-screwdriver" wire:click="openWorkOrdersReportPdf('by-equipment')">PDF · Por equipo</flux:menu.item>
                             <flux:menu.item href="{{ route('mechanics.report.work-orders.by-equipment.excel', $exportParams) }}">Excel · Por equipo</flux:menu.item>
                             <flux:menu.separator />
-                            <flux:menu.item icon="exclamation-triangle" href="{{ route('mechanics.report.work-orders.overdue.pdf', $exportParams) }}" target="_blank">PDF · Vencidas</flux:menu.item>
+                            <flux:menu.item icon="exclamation-triangle" wire:click="openWorkOrdersReportPdf('overdue')">PDF · Vencidas</flux:menu.item>
                             <flux:menu.item href="{{ route('mechanics.report.work-orders.overdue.excel', $exportParams) }}">Excel · Vencidas</flux:menu.item>
-                            <flux:menu.item icon="currency-dollar" href="{{ route('mechanics.report.work-orders.costs.pdf', $exportParams) }}" target="_blank">PDF · Costos</flux:menu.item>
+                            <flux:menu.item icon="currency-dollar" wire:click="openWorkOrdersReportPdf('costs')">PDF · Costos</flux:menu.item>
                             <flux:menu.item href="{{ route('mechanics.report.work-orders.costs.excel', $exportParams) }}">Excel · Costos</flux:menu.item>
-                            <flux:menu.item icon="chart-bar" href="{{ route('mechanics.report.work-orders.types.pdf', $exportParams) }}" target="_blank">PDF · Tipos (prevent./corr.)</flux:menu.item>
+                            <flux:menu.item icon="chart-bar" wire:click="openWorkOrdersReportPdf('types')">PDF · Tipos (prevent./corr.)</flux:menu.item>
                             <flux:menu.item href="{{ route('mechanics.report.work-orders.types.excel', $exportParams) }}">Excel · Tipos</flux:menu.item>
                         </flux:menu>
                     </flux:dropdown>
@@ -499,4 +499,12 @@
     </flux:modal>
 
     @include('livewire.mechanics.partials.fleet-work-order-form-modal')
+
+    <x-platform.pdf-viewer-modal
+        :show="$showPdfModal"
+        :url="$pdfViewerUrl"
+        :title="$pdfViewerTitle"
+        :subtitle="$pdfViewerSubtitle"
+        :allowExternalOpen="false"
+    />
 </div>

@@ -8,7 +8,7 @@
         <div class="flex flex-wrap gap-2">
             <a wire:navigate href="{{ route('modules.mechanics') }}" class="rounded-xl border border-slate-300 px-4 py-2 text-sm dark:border-slate-600">Dashboard</a>
             @can('mecanica.exportar')
-                <a href="{{ route('mechanics.report.equipments.pdf') }}" class="rounded-xl border border-slate-300 px-4 py-2 text-sm dark:border-slate-600">PDF</a>
+                <button type="button" wire:click="openEquipmentsReportPdf" class="rounded-xl border border-slate-300 px-4 py-2 text-sm dark:border-slate-600">PDF</button>
                 <a href="{{ route('mechanics.report.equipments.excel') }}" class="rounded-xl border border-slate-300 px-4 py-2 text-sm dark:border-slate-600">Excel</a>
             @endcan
             @can('equipos.crear')
@@ -197,10 +197,26 @@
                         <li><a href="{{ $media->getUrl() }}" target="_blank" class="underline">Foto: {{ $media->name }}</a></li>
                     @endforeach
                     @foreach ($selectedEquipment->getMedia('equipment_documents') as $media)
-                        <li><a href="{{ $media->getUrl() }}" target="_blank" class="underline">Doc: {{ $media->name }}</a></li>
+                        <li>
+                            <button
+                                type="button"
+                                wire:click="openEquipmentDocument(@js($media->getUrl()), @js($media->name), @js($media->mime_type))"
+                                class="underline"
+                            >
+                                Doc: {{ $media->name }}
+                            </button>
+                        </li>
                     @endforeach
                 </ul>
             </div>
         @endif
     </x-platform.modal>
+
+    <x-platform.pdf-viewer-modal
+        :show="$showPdfModal"
+        :url="$pdfViewerUrl"
+        :title="$pdfViewerTitle"
+        :subtitle="$pdfViewerSubtitle"
+        :allowExternalOpen="false"
+    />
 </div>

@@ -1,4 +1,4 @@
-@props(['show' => false, 'url' => '', 'title' => 'Documento PDF'])
+@props(['show' => false, 'url' => '', 'title' => 'Documento PDF', 'subtitle' => 'Vista previa del documento PDF', 'allowExternalOpen' => true])
 
 @if ($show)
     <div class="platform-modal-backdrop fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-slate-900/40 px-3 py-4 backdrop-blur-sm dark:bg-slate-950/60">
@@ -6,10 +6,10 @@
             <div class="flex items-center justify-between gap-2">
                 <div class="min-w-0 flex-1">
                     <h2 class="truncate text-base font-semibold text-slate-950 dark:text-white">{{ $title }}</h2>
-                    <p class="text-[11px] text-slate-500 dark:text-slate-400">Vista previa del PDF de cotización</p>
+                    <p class="text-[11px] text-slate-500 dark:text-slate-400">{{ $subtitle }}</p>
                 </div>
                 <div class="flex shrink-0 items-center gap-1">
-                    @if ($url)
+                    @if ($url && $allowExternalOpen)
                         <flux:tooltip content="Abrir en pestaña nueva">
                             <flux:button variant="ghost" size="sm" icon="arrow-top-right-on-square" href="{{ $url }}" target="_blank" class="!size-7 !min-h-0 !p-0" aria-label="Abrir en pestaña nueva" />
                         </flux:tooltip>
