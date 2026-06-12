@@ -71,7 +71,7 @@
                 </div>
                 <div class="mt-4 flex flex-col gap-3">
                     @forelse ($document->getMedia('attachments') as $media)
-                        <a href="{{ $media->getUrl() }}" target="_blank" class="rounded-2xl border border-slate-200 px-4 py-3 text-sm font-medium text-cyan-700 hover:border-cyan-200 hover:bg-cyan-50 dark:border-slate-800 dark:text-cyan-300">
+                        <a href="{{ $media->getUrl() }}" target="_blank" class="rounded-2xl border border-slate-200 px-2.5 py-1.5 text-sm font-medium text-cyan-700 hover:border-cyan-200 hover:bg-cyan-50 dark:border-slate-800 dark:text-cyan-300">
                             {{ $media->file_name }}
                         </a>
                     @empty
@@ -79,7 +79,7 @@
                     @endforelse
                 </div>
                 <div class="mt-4">
-                    <input wire:model="newAttachments" type="file" multiple class="block w-full rounded-xl border border-dashed border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
+                    <input wire:model="newAttachments" type="file" multiple class="block w-full rounded-xl border border-dashed border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
                     @error('newAttachments.*') <p class="mt-1 text-sm text-rose-600">{{ $message }}</p> @enderror
                     <button type="button" wire:click="uploadAttachments" class="mt-3 rounded-xl bg-slate-950 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 dark:bg-cyan-500 dark:text-slate-950">Subir adjuntos</button>
                 </div>
@@ -123,7 +123,7 @@
 
             <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
                 <h2 class="text-lg font-semibold text-slate-950 dark:text-white">Adjuntos del movimiento</h2>
-                <input wire:model="movementAttachments" type="file" multiple class="mt-4 block w-full rounded-xl border border-dashed border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
+                <input wire:model="movementAttachments" type="file" multiple class="mt-4 block w-full rounded-xl border border-dashed border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
                 @error('movementAttachments.*') <p class="mt-1 text-sm text-rose-600">{{ $message }}</p> @enderror
                 <p class="mt-2 text-xs text-slate-500 dark:text-slate-400">Se adjuntaran a la siguiente accion documentaria que ejecutes.</p>
             </div>
@@ -133,7 +133,7 @@
                 <div class="mt-4 grid gap-4">
                     <div>
                         <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Area destino</label>
-                        <select wire:model="derive_destination_area_id" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white">
+                        <select wire:model="derive_destination_area_id" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white">
                             <option value="">Seleccionar</option>
                             @foreach ($areas as $area)
                                 <option value="{{ $area->id }}">{{ $area->name }}</option>
@@ -143,7 +143,7 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Nuevo responsable</label>
-                        <select wire:model="derive_current_user_id" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white">
+                        <select wire:model="derive_current_user_id" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white">
                             <option value="">Seleccionar</option>
                             @foreach ($users as $user)
                                 <option value="{{ $user->id }}">{{ $user->name }}</option>
@@ -153,7 +153,7 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Nota</label>
-                        <textarea wire:model="derive_notes" rows="3" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white"></textarea>
+                        <textarea wire:model="derive_notes" rows="3" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white"></textarea>
                         @error('derive_notes') <p class="mt-1 text-sm text-rose-600">{{ $message }}</p> @enderror
                     </div>
                     <button type="button" wire:click="deriveDocument" class="rounded-xl bg-slate-950 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 dark:bg-cyan-500 dark:text-slate-950">Derivar</button>
@@ -162,7 +162,7 @@
 
             <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
                 <h2 class="text-lg font-semibold text-slate-950 dark:text-white">Observacion</h2>
-                <textarea wire:model="observation" rows="4" class="mt-4 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" placeholder="Detalle de la observacion"></textarea>
+                <textarea wire:model="observation" rows="4" class="mt-4 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" placeholder="Detalle de la observacion"></textarea>
                 @error('observation') <p class="mt-1 text-sm text-rose-600">{{ $message }}</p> @enderror
                 <button type="button" wire:click="observeDocument" class="mt-3 rounded-xl border border-orange-200 bg-orange-50 px-4 py-2 text-sm font-medium text-orange-700 dark:border-orange-900/40 dark:bg-orange-950/30 dark:text-orange-300">Observar</button>
             </div>
@@ -172,19 +172,19 @@
                 <div class="mt-4 grid gap-4">
                     <div>
                         <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Nota de proceso / atencion</label>
-                        <textarea wire:model="process_notes" rows="3" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white"></textarea>
+                        <textarea wire:model="process_notes" rows="3" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white"></textarea>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Nota de archivo</label>
-                        <textarea wire:model="archive_notes" rows="3" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white"></textarea>
+                        <textarea wire:model="archive_notes" rows="3" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white"></textarea>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Motivo de reapertura</label>
-                        <textarea wire:model="reopen_notes" rows="3" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white"></textarea>
+                        <textarea wire:model="reopen_notes" rows="3" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white"></textarea>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Motivo de anulacion</label>
-                        <textarea wire:model="annulment_reason" rows="3" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white"></textarea>
+                        <textarea wire:model="annulment_reason" rows="3" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white"></textarea>
                         @error('annulment_reason') <p class="mt-1 text-sm text-rose-600">{{ $message }}</p> @enderror
                     </div>
                 </div>
@@ -195,16 +195,16 @@
                 <div class="mt-4 grid gap-4">
                     <div>
                         <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Comentario de aprobacion</label>
-                        <textarea wire:model="approval_comments" rows="3" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white"></textarea>
+                        <textarea wire:model="approval_comments" rows="3" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white"></textarea>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Motivo de rechazo</label>
-                        <textarea wire:model="rejection_comments" rows="3" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white"></textarea>
+                        <textarea wire:model="rejection_comments" rows="3" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white"></textarea>
                         @error('rejection_comments') <p class="mt-1 text-sm text-rose-600">{{ $message }}</p> @enderror
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Nota de cierre</label>
-                        <textarea wire:model="close_notes" rows="3" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white"></textarea>
+                        <textarea wire:model="close_notes" rows="3" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white"></textarea>
                     </div>
                     <button type="button" wire:click="rejectDocument" class="rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-medium text-rose-700 dark:border-rose-900/40 dark:bg-rose-950/30 dark:text-rose-300">Rechazar documento</button>
                 </div>

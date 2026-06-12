@@ -10,27 +10,27 @@
 <div class="grid gap-5 md:grid-cols-2">
     <div>
         <label for="name" class="block text-sm font-medium text-slate-700 dark:text-slate-200">Nombre</label>
-        <input id="name" name="name" value="{{ old('name', $user->name ?? '') }}" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
+        <input id="name" name="name" value="{{ old('name', $user->name ?? '') }}" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
         @error('name') <p class="mt-1 text-sm text-rose-600">{{ $message }}</p> @enderror
     </div>
     <div>
         <label for="email" class="block text-sm font-medium text-slate-700 dark:text-slate-200">Correo</label>
-        <input id="email" name="email" type="email" value="{{ old('email', $user->email ?? '') }}" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
+        <input id="email" name="email" type="email" value="{{ old('email', $user->email ?? '') }}" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
         @error('email') <p class="mt-1 text-sm text-rose-600">{{ $message }}</p> @enderror
     </div>
     <div>
         <label for="password" class="block text-sm font-medium text-slate-700 dark:text-slate-200">Contraseña {{ isset($user) ? '(opcional)' : '' }}</label>
-        <input id="password" name="password" type="password" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
+        <input id="password" name="password" type="password" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
         @error('password') <p class="mt-1 text-sm text-rose-600">{{ $message }}</p> @enderror
     </div>
     <div>
         <label for="password_confirmation" class="block text-sm font-medium text-slate-700 dark:text-slate-200">Confirmar contraseña</label>
-        <input id="password_confirmation" name="password_confirmation" type="password" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
+        <input id="password_confirmation" name="password_confirmation" type="password" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
     </div>
 </div>
 
 <div class="mt-8 overflow-hidden rounded-3xl border border-slate-200 dark:border-slate-800">
-    <div class="bg-slate-50 px-6 py-4 dark:bg-slate-950/60">
+    <div class="bg-slate-50 px-2.5 py-1.5 dark:bg-slate-950/60">
         <h2 class="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Empresas y roles</h2>
     </div>
     <div class="divide-y divide-slate-200 dark:divide-slate-800">
@@ -46,7 +46,7 @@
 
                 <div>
                     <label class="block text-xs font-medium uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Rol</label>
-                    <select name="role_ids[{{ $company->id }}]" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white">
+                    <select name="role_ids[{{ $company->id }}]" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white">
                         <option value="">Selecciona un rol</option>
                         @foreach ($roles as $role)
                             <option value="{{ $role->id }}" @selected((int) ($roleIds[$company->id] ?? 0) === $role->id)>

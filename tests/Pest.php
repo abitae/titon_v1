@@ -1,6 +1,11 @@
 <?php
 
+use App\Models\Company;
+use App\Models\User;
+use App\Services\Companies\CompanyContext;
+use Database\Seeders\PermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 /*
@@ -17,6 +22,10 @@ use Tests\TestCase;
 pest()->extend(TestCase::class)
     ->use(RefreshDatabase::class)
     ->in('Feature');
+
+pest()->extend(TestCase::class)
+    ->use(RefreshDatabase::class)
+    ->in('Unit');
 
 pest()->beforeEach(function (): void {
     $this->withoutVite();
@@ -48,7 +57,29 @@ expect()->extend('toBeOne', function () {
 |
 */
 
-function something()
+function authenticateWithCompany(string $roleName = 'Super Admin'): array
 {
-    // ..
+    test()->seed(PermissionSeeder::class);
+
+    $company = Company::factory()->create([
+        'correlative_prefix' => 'TITON',
+    ]);
+
+    $user = User::factory()->create();
+    $role = Role::findByName($roleName, 'web');
+
+    $user->companies()->attach($company, [
+        'role_id' => $role->id,
+        'active' => true,
+        'default_company' => true,
+    ]);
+
+    setPermissionsTeamId($company->id);
+    $user->assignRole($role);
+
+    test()->actingAs($user);
+    session([CompanyContext::SESSION_KEY => $company->id]);
+    setPermissionsTeamId($company->id);
+
+    return compact('company', 'user', 'role');
 }

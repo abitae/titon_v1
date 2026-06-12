@@ -11,10 +11,16 @@ use App\Models\Requirement;
 use App\Models\SupplierQuotation;
 use App\Models\User;
 use App\Services\Codes\CodeGeneratorService;
+use Illuminate\Support\Facades\DB;
 
 class UpsertQuotationComparison
 {
     public function handle(Requirement $requirement, SupplierQuotation $supplierQuotation, User $user, string $selectionReason): QuotationComparison
+    {
+        return DB::transaction(fn (): QuotationComparison => $this->persistComparison($requirement, $supplierQuotation, $user, $selectionReason));
+    }
+
+    protected function persistComparison(Requirement $requirement, SupplierQuotation $supplierQuotation, User $user, string $selectionReason): QuotationComparison
     {
         $previousQuotationId = QuotationComparison::query()
             ->where('requirement_id', $requirement->id)

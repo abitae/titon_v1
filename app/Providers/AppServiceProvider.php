@@ -4,13 +4,22 @@ namespace App\Providers;
 
 use App\Http\Middleware\EnsureActiveCompany;
 use App\Http\Middleware\SetActiveCompanyContext;
+use App\Models\AccountsPayable;
+use App\Models\Order;
 use App\Models\PurchaseRequest;
+use App\Models\SupplierContract;
+use App\Policies\AccountsPayablePolicy;
+use App\Policies\OrderPolicy;
 use App\Policies\RequirementPolicy;
+use App\Policies\SupplierContractPolicy;
 use App\Services\Audit\UserAuditLogger;
+use App\Services\Pdf\MpdfBuilder;
+use App\Services\Pdf\PdfReportBuilder;
 use Carbon\CarbonImmutable;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
 use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Http\Kernel;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Support\Facades\Date;
@@ -28,7 +37,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->bind(PdfReportBuilder::class, MpdfBuilder::class);
     }
 
     /**
@@ -70,7 +79,12 @@ class AppServiceProvider extends ServiceProvider
             : null,
         );
 
+        Model::preventLazyLoading(! app()->isProduction());
+
         Gate::policy(PurchaseRequest::class, RequirementPolicy::class);
+        Gate::policy(Order::class, OrderPolicy::class);
+        Gate::policy(AccountsPayable::class, AccountsPayablePolicy::class);
+        Gate::policy(SupplierContract::class, SupplierContractPolicy::class);
 
         Gate::before(function ($user, string $ability): ?bool {
             return $user->hasRole('Super Admin') ? true : null;

@@ -3,7 +3,7 @@
         <div class="space-y-2">
             @foreach ($alerts as $alert)
                 <div
-                    class="rounded-2xl border px-4 py-3 text-sm
+                    class="rounded-2xl border px-2.5 py-1.5 text-sm
                         @class([
                             'border-rose-300 bg-rose-50 text-rose-900 dark:border-rose-800 dark:bg-rose-950/60 dark:text-rose-50' => ($alert['type'] ?? '') === 'danger',
                             'border-amber-300 bg-amber-50 text-amber-950 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-50' => ($alert['type'] ?? '') !== 'danger',
@@ -34,7 +34,7 @@
                 <a
                     wire:navigate
                     href="{{ route($routeName) }}"
-                    class="rounded-xl border border-slate-200 bg-white px-3 py-2 font-medium text-slate-700 shadow-sm hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800"
+                    class="rounded-xl border border-slate-200 bg-white px-2 py-1 font-medium text-slate-700 shadow-sm hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800"
                 >{{ $label }}</a>
             @endforeach
         </nav>
@@ -82,7 +82,7 @@
                     ['Equipos por obra', 'mechanics.report.equipment-by-project.pdf', 'mechanics.report.equipment-by-project.excel', 'mecanica.exportar'],
                 ] as [$label, $routePdf, $routeXlsx, $perm])
                     @can($perm)
-                        <div class="flex flex-wrap items-center gap-2 rounded-2xl border border-slate-100 bg-slate-50/80 px-3 py-3 dark:border-slate-800 dark:bg-slate-950/50">
+                        <div class="flex flex-wrap items-center gap-2 rounded-2xl border border-slate-100 bg-slate-50/80 px-2.5 py-1.5 dark:border-slate-800 dark:bg-slate-950/50">
                             <span class="min-w-0 flex-1 text-sm font-medium text-slate-800 dark:text-slate-100">{{ $label }}</span>
                             <button type="button" wire:click="openMechanicsReportPdf('{{ $routePdf }}', @js($label))" class="rounded-lg bg-slate-900 px-2.5 py-1 text-xs font-semibold text-white dark:bg-cyan-600 dark:text-slate-950">PDF</button>
                             <a href="{{ route($routeXlsx) }}" class="rounded-lg border border-slate-300 px-2.5 py-1 text-xs font-semibold text-slate-700 dark:border-slate-600 dark:text-slate-200">Excel</a>

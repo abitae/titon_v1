@@ -142,7 +142,7 @@
         </div>
 
         @if ($errors->any())
-            <div class="mt-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 dark:border-rose-900/40 dark:bg-rose-950/30">
+            <div class="mt-3 rounded-lg border border-rose-200 bg-rose-50 px-2 py-1 dark:border-rose-900/40 dark:bg-rose-950/30">
                 <p class="text-xs font-semibold text-rose-700 dark:text-rose-300">Revise los campos indicados:</p>
                 <ul class="mt-1 list-inside list-disc text-[11px] text-rose-600 dark:text-rose-400">
                     @foreach ($errors->all() as $message)

@@ -22,11 +22,11 @@
     <x-platform.compact-table :headers="['Modulo', 'Sufijo', 'Plantilla', 'Longitud num.', 'Acciones']">
         @foreach ($formats as $format)
             <tr wire:key="correlative-format-{{ $format->id }}" class="align-top text-sm text-slate-700 dark:text-slate-200">
-                <td class="px-6 py-4">
+                <td class="px-2.5 py-1.5">
                     <p class="font-medium text-slate-950 dark:text-white">{{ $format->subjectEnum()->label() }}</p>
                     <p class="text-xs font-mono text-slate-500">{{ $format->subject }}</p>
                 </td>
-                <td class="px-6 py-4">
+                <td class="px-2.5 py-1.5">
                     <input
                         wire:model.blur="draft.{{ $format->id }}.suffix"
                         class="block w-full min-w-[6rem] rounded-xl border border-slate-300 bg-white px-2 py-1.5 text-xs font-mono dark:border-slate-700 dark:bg-slate-950 dark:text-white"
@@ -35,7 +35,7 @@
                         <p class="mt-1 text-xs text-rose-600">{{ $message }}</p>
                     @enderror
                 </td>
-                <td class="px-6 py-4">
+                <td class="px-2.5 py-1.5">
                     <input
                         wire:model.blur="draft.{{ $format->id }}.template"
                         class="block w-full min-w-[16rem] rounded-xl border border-slate-300 bg-white px-2 py-1.5 text-xs font-mono dark:border-slate-700 dark:bg-slate-950 dark:text-white"
@@ -44,7 +44,7 @@
                         <p class="mt-1 text-xs text-rose-600">{{ $message }}</p>
                     @enderror
                 </td>
-                <td class="px-6 py-4">
+                <td class="px-2.5 py-1.5">
                     <input
                         type="number"
                         min="1"
@@ -56,7 +56,7 @@
                         <p class="mt-1 text-xs text-rose-600">{{ $message }}</p>
                     @enderror
                 </td>
-                <td class="px-6 py-4">
+                <td class="px-2.5 py-1.5">
                     @can ('catalogs.editar')
                         <button
                             type="button"

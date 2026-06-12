@@ -33,7 +33,7 @@
                         'Politicas y permisos',
                         'Reportes y exportaciones',
                     ] as $task)
-                        <div class="rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-700 dark:border-slate-800 dark:text-slate-200">
+                        <div class="rounded-2xl border border-slate-200 px-2.5 py-1.5 text-sm text-slate-700 dark:border-slate-800 dark:text-slate-200">
                             {{ $task }}
                         </div>
                     @endforeach

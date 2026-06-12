@@ -59,7 +59,7 @@
     </div>
 
     @if ($comparison?->selectedQuotation)
-        <div class="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 dark:border-emerald-900/40 dark:bg-emerald-950/20">
+        <div class="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-2 py-1 dark:border-emerald-900/40 dark:bg-emerald-950/20">
             <p class="text-[10px] font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">Ganador actual</p>
             <p class="mt-1 text-xs text-emerald-800 dark:text-emerald-200">
                 {{ $comparison->selectedQuotation->supplier?->business_name }}

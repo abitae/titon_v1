@@ -14,11 +14,11 @@
     </div>
 
     <div class="grid gap-2 sm:grid-cols-2">
-        <div class="rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <div class="rounded-xl border border-slate-200 bg-white px-2 py-1 shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Saldo total activo</p>
             <p class="mt-0.5 text-base font-semibold tabular-nums text-emerald-700 dark:text-emerald-300">{{ number_format($totalBalance, 2) }} PEN</p>
         </div>
-        <div class="rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <div class="rounded-xl border border-slate-200 bg-white px-2 py-1 shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Cuentas activas</p>
             <p class="mt-0.5 text-base font-semibold text-slate-950 dark:text-white">{{ $accounts->total() }}</p>
         </div>
@@ -132,7 +132,7 @@
         <form wire:submit="saveAccount" class="mt-4 grid gap-3 sm:grid-cols-2">
             <div class="sm:col-span-2">
                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Nombre</label>
-                <input wire:model="account_name" class="mt-1 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
+                <input wire:model="account_name" class="mt-1 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
                 @error('account_name') <p class="mt-1 text-sm text-rose-600">{{ $message }}</p> @enderror
             </div>
             <div class="sm:col-span-2 flex items-center gap-4">
@@ -148,7 +148,7 @@
             @unless ($is_cash)
                 <div>
                     <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Institución</label>
-                    <select wire:model="catalog_bank_id" class="mt-1 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white">
+                    <select wire:model="catalog_bank_id" class="mt-1 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white">
                         <option value="">Seleccionar…</option>
                         @foreach ($institutions as $institution)
                             <option value="{{ $institution->id }}">{{ $institution->name }}</option>
@@ -158,19 +158,19 @@
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Número de cuenta</label>
-                    <input wire:model="account_number" class="mt-1 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
+                    <input wire:model="account_number" class="mt-1 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
                     @error('account_number') <p class="mt-1 text-sm text-rose-600">{{ $message }}</p> @enderror
                 </div>
             @endunless
             <div>
                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Moneda</label>
-                <input wire:model="currency" class="mt-1 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
+                <input wire:model="currency" class="mt-1 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
                 @error('currency') <p class="mt-1 text-sm text-rose-600">{{ $message }}</p> @enderror
             </div>
             @unless ($editingAccountId)
                 <div>
                     <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Saldo inicial</label>
-                    <input wire:model="opening_balance" type="number" step="0.01" min="0" class="mt-1 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
+                    <input wire:model="opening_balance" type="number" step="0.01" min="0" class="mt-1 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
                     @error('opening_balance') <p class="mt-1 text-sm text-rose-600">{{ $message }}</p> @enderror
                 </div>
             @endunless
@@ -193,7 +193,7 @@
             <input type="hidden" wire:model="movement_kind" />
             <div>
                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Cuenta</label>
-                <select wire:model="movement_bank_account_id" class="mt-1 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white">
+                <select wire:model="movement_bank_account_id" class="mt-1 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white">
                     <option value="">Seleccionar…</option>
                     @foreach ($accounts as $accountOption)
                         <option value="{{ $accountOption->id }}">{{ $accountOption->displayLabel() }} ({{ number_format((float) $accountOption->balance, 2) }})</option>
@@ -204,23 +204,23 @@
             <div class="grid gap-3 sm:grid-cols-2">
                 <div>
                     <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Monto</label>
-                    <input wire:model="movement_amount" type="number" step="0.01" min="0.01" class="mt-1 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
+                    <input wire:model="movement_amount" type="number" step="0.01" min="0.01" class="mt-1 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
                     @error('movement_amount') <p class="mt-1 text-sm text-rose-600">{{ $message }}</p> @enderror
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Fecha</label>
-                    <input wire:model="movement_date" type="date" class="mt-1 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
+                    <input wire:model="movement_date" type="date" class="mt-1 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
                     @error('movement_date') <p class="mt-1 text-sm text-rose-600">{{ $message }}</p> @enderror
                 </div>
             </div>
             <div>
                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Concepto</label>
-                <input wire:model="movement_concept" class="mt-1 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
+                <input wire:model="movement_concept" class="mt-1 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
                 @error('movement_concept') <p class="mt-1 text-sm text-rose-600">{{ $message }}</p> @enderror
             </div>
             <div>
                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Referencia</label>
-                <input wire:model="movement_reference" class="mt-1 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
+                <input wire:model="movement_reference" class="mt-1 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
                 @error('movement_reference') <p class="mt-1 text-sm text-rose-600">{{ $message }}</p> @enderror
             </div>
             <div class="flex justify-end">

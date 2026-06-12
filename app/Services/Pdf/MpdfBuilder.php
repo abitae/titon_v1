@@ -7,7 +7,7 @@ use Illuminate\Support\Str;
 use Mpdf\Mpdf;
 use Mpdf\Output\Destination;
 
-class MpdfBuilder
+class MpdfBuilder implements PdfReportBuilder
 {
     public function __construct(
         protected Factory $viewFactory,

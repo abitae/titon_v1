@@ -419,7 +419,7 @@ test('purchase order attaches pdf quotation when winner was captured as pdf', fu
         ->set('selected_supplier_quotation_id', $quotation->id)
         ->set('selection_reason', 'Cotización PDF adjudicada.')
         ->call('generateOrder')
-        ->assertHasNoErrors();
+        ->assertRedirect(route('purchases.orders'));
 
     $order = PurchaseOrder::query()->where('requirement_id', $purchaseRequest->id)->firstOrFail();
 
@@ -476,7 +476,7 @@ test('purchase order pdf includes requirement items when quotation has no line i
         ->set('selected_supplier_quotation_id', $quotation->id)
         ->set('selection_reason', 'Cotización PDF con mejor precio.')
         ->call('generateOrder')
-        ->assertHasNoErrors();
+        ->assertRedirect(route('purchases.orders'));
 
     $order = Order::query()->where('requirement_id', $purchaseRequest->id)->firstOrFail();
 
@@ -523,7 +523,7 @@ test('purchase order can be generated from quotations page without saving winner
         ->set('selected_supplier_quotation_id', $quotation->id)
         ->set('selection_reason', 'Mejor propuesta técnica y económica.')
         ->call('generateOrder')
-        ->assertHasNoErrors();
+        ->assertRedirect(route('purchases.orders'));
 
     expect(Order::query()->where('requirement_id', $purchaseRequest->id)->exists())->toBeTrue();
 
@@ -581,9 +581,16 @@ test('winner selection and purchase order generation are persisted', function ()
         ->set('selected_supplier_quotation_id', $quotationB->id)
         ->set('selection_reason', 'Mejor precio global para la obra.')
         ->call('saveSelection')
+        ->assertRedirect(route('modules.purchases'));
+
+    $purchaseRequest->refresh();
+
+    Livewire::test(ShowQuotationComparison::class, ['purchaseRequest' => $purchaseRequest])
         ->call('openWinnerModal')
+        ->set('selected_supplier_quotation_id', $quotationB->id)
+        ->set('selection_reason', 'Mejor precio global para la obra.')
         ->call('generateOrder')
-        ->assertHasNoErrors();
+        ->assertRedirect(route('purchases.orders'));
 
     $purchaseRequest->refresh();
 
@@ -645,27 +652,37 @@ test('changing the winning quotation after order generation assigns a new order 
         'status' => 'registrada',
     ]);
 
-    $component = Livewire::test(ShowQuotationComparison::class, ['purchaseRequest' => $purchaseRequest]);
-
-    $component
+    Livewire::test(ShowQuotationComparison::class, ['purchaseRequest' => $purchaseRequest])
         ->call('openWinnerModal')
         ->set('selected_supplier_quotation_id', $quotationA->id)
         ->set('selection_reason', 'Primera selección.')
         ->call('saveSelection')
+        ->assertRedirect(route('modules.purchases'));
+
+    $purchaseRequest->refresh();
+
+    Livewire::test(ShowQuotationComparison::class, ['purchaseRequest' => $purchaseRequest])
         ->call('openWinnerModal')
+        ->set('selected_supplier_quotation_id', $quotationA->id)
+        ->set('selection_reason', 'Primera selección.')
         ->call('generateOrder')
-        ->assertHasNoErrors();
+        ->assertRedirect(route('purchases.orders'));
 
     $firstOrder = Order::query()->where('supplier_quotation_id', $quotationA->id)->firstOrFail();
 
-    $component
+    Livewire::test(ShowQuotationComparison::class, ['purchaseRequest' => $purchaseRequest->fresh()])
         ->call('openWinnerModal')
         ->set('selected_supplier_quotation_id', $quotationB->id)
         ->set('selection_reason', 'Cambio por mejor precio.')
         ->call('saveSelection')
+        ->assertRedirect(route('modules.purchases'));
+
+    Livewire::test(ShowQuotationComparison::class, ['purchaseRequest' => $purchaseRequest->fresh()])
         ->call('openWinnerModal')
+        ->set('selected_supplier_quotation_id', $quotationB->id)
+        ->set('selection_reason', 'Cambio por mejor precio.')
         ->call('generateOrder')
-        ->assertHasNoErrors();
+        ->assertRedirect(route('purchases.orders'));
 
     $secondOrder = Order::query()->where('supplier_quotation_id', $quotationB->id)->firstOrFail();
 

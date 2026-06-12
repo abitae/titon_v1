@@ -14,7 +14,7 @@ class ReportDownloadController extends Controller
 
     public function dashboard(Request $request, ExecutiveDashboardPdfReport $executiveDashboardPdfReport, UserAuditLogger $userAuditLogger): StreamedResponse
     {
-        abort_unless(auth()->check(), 403);
+        abort_unless(auth()->check() && auth()->user()->can('dashboard.ver'), 403);
 
         $mode = $request->string('mode', 'company')->toString();
         $pdf = $executiveDashboardPdfReport->build(auth()->user(), $mode);

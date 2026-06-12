@@ -12,15 +12,15 @@
 
     <x-platform.compact-table :headers="['Cuota', 'Descripcion', 'Vencimiento', 'Programado', 'Pagado', 'Saldo', 'Estado', 'Acciones']">
         @forelse ($schedules as $schedule)
-            <tr class="text-sm text-slate-700 dark:text-slate-200" wire:key="schedule-row-{{ $schedule->id }}">
-                <td class="px-6 py-4 font-medium text-slate-950 dark:text-white">{{ $schedule->installment_number }}</td>
-                <td class="px-6 py-4">{{ $schedule->description }}</td>
-                <td class="px-6 py-4">{{ $schedule->due_date?->format('d/m/Y') }}</td>
-                <td class="px-6 py-4">{{ $supplierContract->currency }} {{ number_format((float) $schedule->scheduled_amount, 2) }}</td>
-                <td class="px-6 py-4">{{ $supplierContract->currency }} {{ number_format((float) $schedule->paid_amount, 2) }}</td>
-                <td class="px-6 py-4">{{ $supplierContract->currency }} {{ number_format((float) $schedule->balance, 2) }}</td>
-                <td class="px-6 py-4"><x-platform.status-badge :value="$schedule->status" /></td>
-                <td class="px-6 py-4">
+            <tr class="text-xs text-slate-700 dark:text-slate-200" wire:key="schedule-row-{{ $schedule->id }}">
+                <td class="px-2.5 py-1.5 font-medium text-slate-950 dark:text-white">{{ $schedule->installment_number }}</td>
+                <td class="px-2.5 py-1.5">{{ $schedule->description }}</td>
+                <td class="px-2.5 py-1.5">{{ $schedule->due_date?->format('d/m/Y') }}</td>
+                <td class="px-2.5 py-1.5">{{ $supplierContract->currency }} {{ number_format((float) $schedule->scheduled_amount, 2) }}</td>
+                <td class="px-2.5 py-1.5">{{ $supplierContract->currency }} {{ number_format((float) $schedule->paid_amount, 2) }}</td>
+                <td class="px-2.5 py-1.5">{{ $supplierContract->currency }} {{ number_format((float) $schedule->balance, 2) }}</td>
+                <td class="px-2.5 py-1.5"><x-platform.status-badge :value="$schedule->status" /></td>
+                <td class="px-2.5 py-1.5">
                     <button type="button" wire:click="openEditModal({{ $schedule->id }})" class="rounded-lg px-2 py-1 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200">Editar</button>
                 </td>
             </tr>
@@ -43,27 +43,27 @@
         <div class="mt-6 grid gap-4 md:grid-cols-2">
             <div>
                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Numero de cuota</label>
-                <input wire:model="installment_number" type="number" min="1" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
+                <input wire:model="installment_number" type="number" min="1" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
                 @error('installment_number') <p class="mt-1 text-sm text-rose-600">{{ $message }}</p> @enderror
             </div>
             <div>
                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Vencimiento</label>
-                <input wire:model="due_date" type="date" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
+                <input wire:model="due_date" type="date" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
                 @error('due_date') <p class="mt-1 text-sm text-rose-600">{{ $message }}</p> @enderror
             </div>
             <div class="md:col-span-2">
                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Descripcion</label>
-                <input wire:model="description" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
+                <input wire:model="description" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
                 @error('description') <p class="mt-1 text-sm text-rose-600">{{ $message }}</p> @enderror
             </div>
             <div>
                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Monto programado</label>
-                <input wire:model="scheduled_amount" type="number" step="0.01" min="0.01" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
+                <input wire:model="scheduled_amount" type="number" step="0.01" min="0.01" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
                 @error('scheduled_amount') <p class="mt-1 text-sm text-rose-600">{{ $message }}</p> @enderror
             </div>
             <div>
                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Estado</label>
-                <select wire:model="status" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white">
+                <select wire:model="status" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white">
                     @foreach ($statusOptions as $statusOption)
                         <option value="{{ $statusOption->value() }}">{{ $statusOption->label() }}</option>
                     @endforeach

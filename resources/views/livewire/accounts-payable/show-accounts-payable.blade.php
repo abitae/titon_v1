@@ -15,15 +15,15 @@
     </div>
 
     <div class="grid gap-2 sm:grid-cols-3">
-        <div class="rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <div class="rounded-xl border border-slate-200 bg-white px-2 py-1 shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Monto</p>
             <p class="mt-0.5 text-base font-semibold tabular-nums text-slate-950 dark:text-white">{{ number_format((float) $accountsPayable->amount, 2) }} {{ $accountsPayable->currency }}</p>
         </div>
-        <div class="rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <div class="rounded-xl border border-slate-200 bg-white px-2 py-1 shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Pagado</p>
             <p class="mt-0.5 text-base font-semibold tabular-nums text-slate-950 dark:text-white">{{ number_format((float) $accountsPayable->paid_amount, 2) }}</p>
         </div>
-        <div class="rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <div class="rounded-xl border border-slate-200 bg-white px-2 py-1 shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Saldo</p>
             <p class="mt-0.5 text-base font-semibold tabular-nums text-emerald-700 dark:text-emerald-300">{{ number_format((float) $accountsPayable->balance, 2) }}</p>
         </div>
@@ -50,14 +50,14 @@
                         </td>
                         <td class="px-2.5 py-1.5">
                             @if ($document->hasUploadedFile() && $uploadedMedia)
-                                <a
-                                    href="{{ $uploadedMedia->getUrl() }}"
-                                    target="_blank"
+                                <button
+                                    type="button"
+                                    wire:click="openPayableDocumentPreview({{ $document->id }})"
                                     class="inline-flex max-w-[12rem] items-center gap-1 truncate text-[11px] font-medium text-cyan-700 hover:text-cyan-800 dark:text-cyan-300 dark:hover:text-cyan-200"
                                 >
                                     <flux:icon.document variant="mini" class="size-3.5 shrink-0" />
                                     <span class="truncate">{{ $uploadedMedia->file_name }}</span>
-                                </a>
+                                </button>
                             @else
                                 <input
                                     type="file"
@@ -168,7 +168,7 @@
             </div>
 
             @if ($configuredCashAccounts === 0 && $configuredBankAccounts === 0)
-                <div class="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-200">
+                <div class="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-2 py-1 text-[11px] text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-200">
                     No hay cuentas activas en {{ $accountsPayable->currency }}. Configure al menos una caja o cuenta bancaria antes de pagar.
                 </div>
             @endif
@@ -248,4 +248,12 @@
             </form>
         </div>
     @endcanany
+
+    <x-platform.pdf-viewer-modal
+        :show="$showPdfModal"
+        :url="$pdfViewerUrl"
+        :title="$pdfViewerTitle"
+        :subtitle="$pdfViewerSubtitle"
+        :allow-external-open="false"
+    />
 </div>

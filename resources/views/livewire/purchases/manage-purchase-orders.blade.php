@@ -9,7 +9,7 @@
         </flux:button>
     </div>
 
-    <div class="flex flex-wrap items-end gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+    <div class="flex flex-wrap items-end gap-2 rounded-xl border border-slate-200 bg-white px-2 py-1.5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <div class="min-w-[10rem] flex-1">
             <label class="block text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Buscar</label>
             <input wire:model.live.debounce.300ms="search" class="mt-1 block h-8 w-full rounded-lg border border-slate-300 bg-white px-2.5 text-xs dark:border-slate-700 dark:bg-slate-950 dark:text-white" placeholder="Código o condiciones" />
@@ -112,7 +112,7 @@
         @endforelse
     </x-platform.compact-table>
 
-    <div class="rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+    <div class="rounded-xl border border-slate-200 bg-white px-2 py-1 shadow-sm dark:border-slate-800 dark:bg-slate-900">
         {{ $orders->links() }}
     </div>
 
@@ -252,7 +252,7 @@
                                 <p class="text-[10px] font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">Contrato</p>
                                 <p class="text-xs font-medium text-slate-950 dark:text-white">{{ $selectedOrder->contract->contract_number }}</p>
                             </div>
-                            <flux:button variant="outline" href="{{ route('modules.contracts') }}" wire:navigate size="sm">Ver</flux:button>
+                            <flux:button variant="outline" href="{{ route('modules.contracts', ['contract' => $selectedOrder->contract->id]) }}" wire:navigate size="sm">Ver</flux:button>
                         </div>
                     @else
                         <div class="flex flex-wrap items-center justify-between gap-2">

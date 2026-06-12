@@ -36,22 +36,29 @@ class ManagePaymentSchedules extends Component
 
     public string $status = 'pendiente';
 
-    public function mount(SupplierContract $supplierContract): void
+    public function mount(SupplierContract $supplierContract, RefreshPaymentScheduleStatus $refreshPaymentScheduleStatus): void
     {
         $this->supplierContract = $supplierContract->load(['project', 'supplier']);
         $this->due_date = now()->toDateString();
+        $this->refreshScheduleStatuses($refreshPaymentScheduleStatus);
     }
 
-    public function render(RefreshPaymentScheduleStatus $refreshPaymentScheduleStatus): View
+    public function render(): View
     {
-        $schedules = $this->supplierContract->paymentSchedules()->with('payments')->get()->map(function (ContractPaymentSchedule $schedule) use ($refreshPaymentScheduleStatus): ContractPaymentSchedule {
-            return $refreshPaymentScheduleStatus->handle($schedule);
-        });
-
         return view('livewire.payments.manage-payment-schedules', [
-            'schedules' => $schedules,
+            'schedules' => $this->supplierContract->paymentSchedules()->with('payments')->orderBy('installment_number')->get(),
             'statusOptions' => ContractPaymentScheduleStatus::cases(),
         ])->layout('layouts.app', ['title' => $this->title]);
+    }
+
+    protected function refreshScheduleStatuses(RefreshPaymentScheduleStatus $refreshPaymentScheduleStatus): void
+    {
+        $this->supplierContract->paymentSchedules()
+            ->with('payments')
+            ->get()
+            ->each(fn (ContractPaymentSchedule $schedule): ContractPaymentSchedule => $refreshPaymentScheduleStatus->handle($schedule));
+
+        $this->supplierContract->load('paymentSchedules.payments');
     }
 
     public function openCreateModal(): void
@@ -128,6 +135,7 @@ class ManagePaymentSchedules extends Component
         );
 
         $this->resetForm();
+        $this->refreshScheduleStatuses(app(RefreshPaymentScheduleStatus::class));
         $this->successToast($isEditing ? 'Cuota actualizada correctamente.' : 'Cuota creada correctamente.');
     }
 

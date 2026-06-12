@@ -28,11 +28,11 @@
     <x-platform.filter-bar>
         <div>
             <label class="block text-xs font-medium uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Buscar</label>
-            <input wire:model.live.debounce.300ms="search" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" placeholder="Código, obra o cliente" />
+            <input wire:model.live.debounce.300ms="search" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" placeholder="Código, obra o cliente" />
         </div>
         <div>
             <label class="block text-xs font-medium uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Ciudad</label>
-            <select wire:model.live="cityFilter" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white">
+            <select wire:model.live="cityFilter" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white">
                 <option value="">Todas</option>
                 @foreach ($cities as $cityOption)
                     <option value="{{ $cityOption->name }}">{{ $cityOption->name }}</option>
@@ -41,7 +41,7 @@
         </div>
         <div>
             <label class="block text-xs font-medium uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Responsable</label>
-            <select wire:model.live="responsibleFilter" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white">
+            <select wire:model.live="responsibleFilter" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white">
                 <option value="">Todos</option>
                 @foreach ($responsibleUsers as $responsibleUser)
                     <option value="{{ $responsibleUser->id }}">{{ $responsibleUser->name }}</option>
@@ -50,7 +50,7 @@
         </div>
         <div>
             <label class="block text-xs font-medium uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Estado</label>
-            <select wire:model.live="statusFilter" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white">
+            <select wire:model.live="statusFilter" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white">
                 <option value="">Todos</option>
                 @foreach ($statusOptions as $statusOption)
                     <option value="{{ $statusOption->value() }}">{{ $statusOption->label() }}</option>
@@ -61,16 +61,16 @@
 
     <x-platform.compact-table :headers="['Código', 'Obra', 'Responsable', 'Estado', 'Presupuesto', 'Acciones']">
         @forelse ($projects as $project)
-            <tr class="text-sm text-slate-700 dark:text-slate-200" wire:key="project-row-{{ $project->id }}">
-                <td class="px-6 py-4 font-medium text-slate-950 dark:text-white">{{ $project->code }}</td>
-                <td class="px-6 py-4">
+            <tr class="text-xs text-slate-700 dark:text-slate-200" wire:key="project-row-{{ $project->id }}">
+                <td class="px-2.5 py-1.5 font-medium text-slate-950 dark:text-white">{{ $project->code }}</td>
+                <td class="px-2.5 py-1.5">
                     <p class="font-medium text-slate-950 dark:text-white">{{ $project->name }}</p>
                     <p class="text-slate-500 dark:text-slate-400">{{ $project->city ?: 'Sin ciudad' }} · {{ $project->client_name ?: 'Sin cliente' }}</p>
                 </td>
-                <td class="px-6 py-4">{{ $project->responsibleUser?->name ?? 'Sin responsable' }}</td>
-                <td class="px-6 py-4"><x-platform.status-badge :value="$project->status" /></td>
-                <td class="px-6 py-4">S/ {{ number_format((float) $project->estimated_budget, 2) }}</td>
-                <td class="px-6 py-4">
+                <td class="px-2.5 py-1.5">{{ $project->responsibleUser?->name ?? 'Sin responsable' }}</td>
+                <td class="px-2.5 py-1.5"><x-platform.status-badge :value="$project->status" /></td>
+                <td class="px-2.5 py-1.5">S/ {{ number_format((float) $project->estimated_budget, 2) }}</td>
+                <td class="px-2.5 py-1.5">
                     <x-platform.action-buttons
                         :view="'openDetailModal('.$project->id.')'"
                         :edit="'openEditModal('.$project->id.')'"
@@ -86,7 +86,7 @@
         @endforelse
     </x-platform.compact-table>
 
-    <div class="rounded-3xl border border-slate-200 bg-white px-6 py-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+    <div class="rounded-3xl border border-slate-200 bg-white px-2.5 py-1.5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
         {{ $projects->links() }}
     </div>
 
@@ -103,19 +103,19 @@
             <div>
                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Código</label>
                 @if ($editingProjectId)
-                    <input wire:model="code" readonly class="mt-2 block w-full cursor-not-allowed rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300" />
+                    <input wire:model="code" readonly class="mt-2 block w-full cursor-not-allowed rounded-xl border border-slate-200 bg-slate-50 px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300" />
                 @else
-                    <p class="mt-2 rounded-xl border border-dashed border-cyan-300 bg-cyan-50 px-3 py-2 text-sm text-cyan-900 dark:border-cyan-800 dark:bg-cyan-950/40 dark:text-cyan-200">Se genera automaticamente al guardar.</p>
+                    <p class="mt-2 rounded-xl border border-dashed border-cyan-300 bg-cyan-50 px-2 py-1 text-sm text-cyan-900 dark:border-cyan-800 dark:bg-cyan-950/40 dark:text-cyan-200">Se genera automaticamente al guardar.</p>
                 @endif
             </div>
             <div>
                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Nombre</label>
-                <input wire:model="name" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
+                <input wire:model="name" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
                 @error('name') <p class="mt-1 text-sm text-rose-600">{{ $message }}</p> @enderror
             </div>
             <div>
                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Ciudad</label>
-                <input wire:model="city" list="project-cities" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
+                <input wire:model="city" list="project-cities" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
                 <datalist id="project-cities">
                     @foreach ($cities as $cityOption)
                         <option value="{{ $cityOption->name }}"></option>
@@ -125,17 +125,17 @@
             </div>
             <div>
                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Cliente</label>
-                <input wire:model="client_name" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
+                <input wire:model="client_name" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
                 @error('client_name') <p class="mt-1 text-sm text-rose-600">{{ $message }}</p> @enderror
             </div>
             <div class="md:col-span-2">
                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Dirección</label>
-                <input wire:model="address" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
+                <input wire:model="address" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
                 @error('address') <p class="mt-1 text-sm text-rose-600">{{ $message }}</p> @enderror
             </div>
             <div>
                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Responsable</label>
-                <select wire:model="responsible_user_id" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white">
+                <select wire:model="responsible_user_id" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white">
                     <option value="">Seleccionar</option>
                     @foreach ($responsibleUsers as $responsibleUser)
                         <option value="{{ $responsibleUser->id }}">{{ $responsibleUser->name }}</option>
@@ -145,7 +145,7 @@
             </div>
             <div>
                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Estado</label>
-                <select wire:model="status" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white">
+                <select wire:model="status" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white">
                     @foreach ($statusOptions as $statusOption)
                         <option value="{{ $statusOption->value() }}">{{ $statusOption->label() }}</option>
                     @endforeach
@@ -154,27 +154,27 @@
             </div>
             <div>
                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Inicio</label>
-                <input wire:model="start_date" type="date" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
+                <input wire:model="start_date" type="date" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
                 @error('start_date') <p class="mt-1 text-sm text-rose-600">{{ $message }}</p> @enderror
             </div>
             <div>
                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Fin estimado</label>
-                <input wire:model="estimated_end_date" type="date" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
+                <input wire:model="estimated_end_date" type="date" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
                 @error('estimated_end_date') <p class="mt-1 text-sm text-rose-600">{{ $message }}</p> @enderror
             </div>
             <div>
                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Presupuesto estimado</label>
-                <input wire:model="estimated_budget" type="number" step="0.01" min="0" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
+                <input wire:model="estimated_budget" type="number" step="0.01" min="0" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
                 @error('estimated_budget') <p class="mt-1 text-sm text-rose-600">{{ $message }}</p> @enderror
             </div>
             <div class="md:col-span-2">
                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Descripción</label>
-                <textarea wire:model="description" rows="4" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white"></textarea>
+                <textarea wire:model="description" rows="4" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white"></textarea>
                 @error('description') <p class="mt-1 text-sm text-rose-600">{{ $message }}</p> @enderror
             </div>
             <div class="md:col-span-2">
                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Archivos</label>
-                <input wire:model="attachments" type="file" multiple class="mt-2 block w-full rounded-xl border border-dashed border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
+                <input wire:model="attachments" type="file" multiple class="mt-2 block w-full rounded-xl border border-dashed border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
                 @error('attachments.*') <p class="mt-1 text-sm text-rose-600">{{ $message }}</p> @enderror
             </div>
         </div>

@@ -63,7 +63,7 @@
             </flux:field>
             <flux:field>
                 <flux:label>Obra</flux:label>
-                <select wire:model.live="filter_project_id" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950">
+                <select wire:model.live="filter_project_id" class="w-full rounded-lg border border-slate-200 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950">
                     <option value="">Todas</option>
                     @foreach ($projects as $project)
                         <option value="{{ $project->id }}">{{ $project->code }}</option>
@@ -72,7 +72,7 @@
             </flux:field>
             <flux:field>
                 <flux:label>Equipo</flux:label>
-                <select wire:model.live="filter_equipment_id" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950">
+                <select wire:model.live="filter_equipment_id" class="w-full rounded-lg border border-slate-200 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950">
                     <option value="">Todos</option>
                     @foreach ($equipments as $equipment)
                         <option value="{{ $equipment->id }}">{{ $equipment->internal_code }}</option>
@@ -81,7 +81,7 @@
             </flux:field>
             <flux:field>
                 <flux:label>Técnico</flux:label>
-                <select wire:model.live="filter_technician_id" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950">
+                <select wire:model.live="filter_technician_id" class="w-full rounded-lg border border-slate-200 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950">
                     <option value="">Todos</option>
                     @foreach ($responsibleUsers as $u)
                         <option value="{{ $u->id }}">{{ $u->name }}</option>
@@ -90,7 +90,7 @@
             </flux:field>
             <flux:field>
                 <flux:label>Tipo OT</flux:label>
-                <select wire:model.live="filter_type" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950">
+                <select wire:model.live="filter_type" class="w-full rounded-lg border border-slate-200 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950">
                     <option value="">Todos</option>
                     @foreach ($types as $t)
                         <option value="{{ $t->value() }}">{{ $t->label() }}</option>
@@ -99,7 +99,7 @@
             </flux:field>
             <flux:field>
                 <flux:label>Estado</flux:label>
-                <select wire:model.live="filter_status" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950">
+                <select wire:model.live="filter_status" class="w-full rounded-lg border border-slate-200 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950">
                     <option value="">Todos</option>
                     @foreach ($statuses as $s)
                         <option value="{{ $s->value() }}">{{ $s->label() }}</option>
@@ -108,7 +108,7 @@
             </flux:field>
             <flux:field>
                 <flux:label>Prioridad</flux:label>
-                <select wire:model.live="filter_priority" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950">
+                <select wire:model.live="filter_priority" class="w-full rounded-lg border border-slate-200 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950">
                     <option value="">Todas</option>
                     @foreach ($priorities as $p)
                         <option value="{{ $p->value() }}">{{ $p->label() }}</option>
@@ -159,7 +159,7 @@
         <div class="flex gap-3 overflow-x-auto pb-4">
             @foreach ($kanbanStatuses as $column)
                 <div class="flex w-72 shrink-0 flex-col rounded-3xl border border-slate-200 bg-slate-50/70 dark:border-slate-800 dark:bg-slate-900/70">
-                    <div class="border-b border-slate-200 px-3 py-2 dark:border-slate-800">
+                    <div class="border-b border-slate-200 px-2 py-1 dark:border-slate-800">
                         <p class="text-xs font-bold uppercase tracking-wide text-slate-500">{{ $column->label() }}</p>
                         <p class="text-lg font-semibold text-slate-900 dark:text-white">{{ $kanbanGrouped[$column->value()]->count() }}</p>
                     </div>
@@ -235,12 +235,12 @@
     @endif
 
     @if ($viewTab === 'list')
-        <div class="flex flex-wrap items-center justify-between gap-3 rounded-3xl border border-slate-200 bg-white px-4 py-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <div class="flex flex-wrap items-center justify-between gap-3 rounded-3xl border border-slate-200 bg-white px-2.5 py-1.5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <div class="flex flex-wrap items-center gap-2">
                 @can('mantenimientos.crear')
                     @if ($selectedIds !== [])
                         <flux:badge>{{ count($selectedIds) }} sel.</flux:badge>
-                        <select wire:model.live="bulkTargetStatus" class="min-w-[11rem] rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950">
+                        <select wire:model.live="bulkTargetStatus" class="min-w-[11rem] rounded-lg border border-slate-200 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950">
                             <option value="">Estado objetivo…</option>
                             @foreach ($statuses as $s)
                                 <option value="{{ $s->value() }}">{{ $s->label() }}</option>
@@ -276,26 +276,26 @@
             </div>
         </div>
 
-        <div class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-slate-200 text-sm dark:divide-slate-800">
-                    <thead class="bg-slate-50 text-xs font-semibold uppercase text-slate-500 dark:bg-slate-950">
+                <table class="min-w-full divide-y divide-slate-200 text-xs dark:divide-slate-800">
+                    <thead class="bg-slate-50 text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:bg-slate-950">
                         <tr>
                             @can('mantenimientos.crear')
-                                <th class="px-3 py-3"><input type="checkbox" wire:click="toggleSelectAllOnPage" class="rounded" /></th>
+                                <th class="px-2.5 py-1.5"><input type="checkbox" wire:click="toggleSelectAllOnPage" class="rounded" /></th>
                             @endcan
-                            <th class="cursor-pointer whitespace-nowrap px-3 py-3" wire:click="sortBy('code')">
+                            <th class="cursor-pointer whitespace-nowrap px-2.5 py-1.5" wire:click="sortBy('code')">
                                 OT {!! $sortColumn === 'code' ? ($sortDirection === 'asc' ? '↑' : '↓') : '' !!}
                             </th>
-                            <th class="px-3 py-3">Equipo</th>
-                            <th class="cursor-pointer px-3 py-3" wire:click="sortBy('type')">Tipo</th>
-                            <th class="cursor-pointer px-3 py-3" wire:click="sortBy('status')">Estado</th>
-                            <th class="cursor-pointer px-3 py-3" wire:click="sortBy('priority')">Prioridad</th>
-                            <th class="px-3 py-3">Técnico</th>
-                            <th class="cursor-pointer whitespace-nowrap px-3 py-3" wire:click="sortBy('scheduled_date')">Prog.</th>
-                            <th class="cursor-pointer whitespace-nowrap px-3 py-3" wire:click="sortBy('issued_at')">Emisión</th>
-                            <th class="cursor-pointer px-3 py-3 text-end" wire:click="sortBy('total_cost')">Total S/</th>
-                            <th class="px-3 py-3 text-end"></th>
+                            <th class="px-2.5 py-1.5">Equipo</th>
+                            <th class="cursor-pointer px-2.5 py-1.5" wire:click="sortBy('type')">Tipo</th>
+                            <th class="cursor-pointer px-2.5 py-1.5" wire:click="sortBy('status')">Estado</th>
+                            <th class="cursor-pointer px-2.5 py-1.5" wire:click="sortBy('priority')">Prioridad</th>
+                            <th class="px-2.5 py-1.5">Técnico</th>
+                            <th class="cursor-pointer whitespace-nowrap px-2.5 py-1.5" wire:click="sortBy('scheduled_date')">Prog.</th>
+                            <th class="cursor-pointer whitespace-nowrap px-2.5 py-1.5" wire:click="sortBy('issued_at')">Emisión</th>
+                            <th class="cursor-pointer px-2.5 py-1.5 text-end" wire:click="sortBy('total_cost')">Total S/</th>
+                            <th class="px-2.5 py-1.5 text-end"></th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
@@ -307,25 +307,25 @@
                                 'bg-rose-50/80 dark:bg-rose-950/20' => $risk === 'vencida',
                             ])>
                                 @can('mantenimientos.crear')
-                                    <td class="px-3 py-2">
+                                    <td class="px-2 py-1">
                                         <input type="checkbox" value="{{ $row->id }}" wire:model.live="selectedIds" class="rounded" />
                                     </td>
                                 @endcan
-                                <td class="px-3 py-2 font-semibold">{{ $row->code }}</td>
-                                <td class="px-3 py-2">{{ $row->equipment?->internal_code }}</td>
-                                <td class="px-3 py-2">
+                                <td class="px-2 py-1 font-semibold">{{ $row->code }}</td>
+                                <td class="px-2 py-1">{{ $row->equipment?->internal_code }}</td>
+                                <td class="px-2 py-1">
                                     @foreach ($types as $t)
                                         @if ($t->value() === $row->type) {{ $t->label() }} @endif
                                     @endforeach
                                 </td>
-                                <td class="px-3 py-2">
+                                <td class="px-2 py-1">
                                     @foreach ($statuses as $s)
                                         @if ($s->value() === $row->status)
                                             <flux:badge color="blue" size="sm">{{ $s->label() }}</flux:badge>
                                         @endif
                                     @endforeach
                                 </td>
-                                <td class="px-3 py-2">
+                                <td class="px-2 py-1">
                                     @foreach ($priorities as $p)
                                         @if ($p->value() === $row->priority)
                                             <flux:badge color="{{ $row->priority === 'critica' ? 'danger' : ($row->priority === 'alta' ? 'orange' : 'zinc') }}" size="sm">{{ $p->label() }}</flux:badge>
@@ -335,11 +335,11 @@
                                         <flux:badge size="sm" color="{{ $risk === 'vencida' ? 'danger' : ($risk === 'hoy' ? 'amber' : 'cyan') }}">{{ $risk }}</flux:badge>
                                     @endif
                                 </td>
-                                <td class="px-3 py-2">{{ $row->responsibleUser?->name ?? '—' }}</td>
-                                <td class="px-3 py-2 whitespace-nowrap">{{ $row->scheduled_date?->format('d/m/Y') ?? '—' }}</td>
-                                <td class="px-3 py-2 whitespace-nowrap">{{ $row->issued_at?->format('d/m/Y') ?? '—' }}</td>
-                                <td class="px-3 py-2 text-end">{{ number_format((float) $row->total_cost, 2) }}</td>
-                                <td class="px-3 py-2 text-end space-x-2">
+                                <td class="px-2 py-1">{{ $row->responsibleUser?->name ?? '—' }}</td>
+                                <td class="px-2 py-1 whitespace-nowrap">{{ $row->scheduled_date?->format('d/m/Y') ?? '—' }}</td>
+                                <td class="px-2 py-1 whitespace-nowrap">{{ $row->issued_at?->format('d/m/Y') ?? '—' }}</td>
+                                <td class="px-2 py-1 text-end">{{ number_format((float) $row->total_cost, 2) }}</td>
+                                <td class="px-2 py-1 text-end space-x-2">
                                     @can('mantenimientos.crear')
                                         <flux:button variant="ghost" size="xs" wire:click="openAssignModal({{ $row->id }})">Asignar</flux:button>
                                         <flux:button variant="ghost" size="xs" wire:click="openEdit({{ $row->id }})">Editar</flux:button>
@@ -360,7 +360,7 @@
                     </tbody>
                 </table>
             </div>
-            <div class="border-t border-slate-200 px-4 py-3 dark:border-slate-800">
+            <div class="border-t border-slate-200 px-2.5 py-1.5 dark:border-slate-800">
                 {{ $listRows->links() }}
             </div>
         </div>
@@ -399,7 +399,7 @@
     @endif
 
     @if ($viewTab === 'calendar')
-        <div class="flex flex-wrap items-center justify-between gap-3 rounded-3xl border border-slate-200 bg-white px-4 py-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <div class="flex flex-wrap items-center justify-between gap-3 rounded-3xl border border-slate-200 bg-white px-2.5 py-1.5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <flux:field class="flex items-end gap-2">
                 <flux:label class="mr-2">Mes</flux:label>
                 <flux:input type="month" wire:model.live="calendarMonth" />
@@ -411,7 +411,7 @@
             @endcan
         </div>
 
-        <div class="overflow-x-auto rounded-3xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <div class="grid grid-cols-7 border-b border-slate-200 text-center text-xs font-semibold uppercase text-slate-500 dark:border-slate-800 dark:text-slate-400">
                 @foreach (['L', 'M', 'X', 'J', 'V', 'S', 'D'] as $d)
                     <div class="px-1 py-2">{{ $d }}</div>
@@ -485,7 +485,7 @@
         <flux:heading size="lg">Asignar técnico</flux:heading>
         <flux:field class="mt-4">
             <flux:label>Responsable</flux:label>
-            <select wire:model.live="assignResponsibleUserId" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950">
+            <select wire:model.live="assignResponsibleUserId" class="mt-1 w-full rounded-lg border border-slate-200 px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950">
                 <option value="">Sin asignar</option>
                 @foreach ($responsibleUsers as $u)
                     <option value="{{ $u->id }}">{{ $u->name }}</option>

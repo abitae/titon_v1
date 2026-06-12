@@ -51,6 +51,7 @@ Route::middleware(['auth', 'verified', 'active.company.context'])->group(functio
     Route::middleware('active.company')->group(function () {
         Route::get('dashboard', ShowDashboard::class)->name('dashboard');
         Route::get('dashboard/executive-report.pdf', [ReportDownloadController::class, 'dashboard'])
+            ->middleware('permission:dashboard.ver')
             ->name('reports.dashboard.pdf');
         Route::get('auditoria/usuarios', ManageUserAudits::class)
             ->middleware('permission:audits.ver')

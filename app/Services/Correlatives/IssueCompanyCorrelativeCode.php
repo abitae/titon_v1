@@ -6,6 +6,7 @@ use App\Enums\CorrelativeSubject;
 use App\Models\Company;
 use App\Models\CompanyCorrelativeFormat;
 use App\Models\CompanyCorrelativeSequence;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -48,13 +49,17 @@ class IssueCompanyCorrelativeCode
                 ->first();
 
             if ($sequence === null) {
-                CompanyCorrelativeSequence::query()->create([
-                    'company_id' => $company->id,
-                    'subject' => $subject->value,
-                    'series' => $series,
-                    'year' => $year,
-                    'last_number' => 0,
-                ]);
+                try {
+                    CompanyCorrelativeSequence::query()->create([
+                        'company_id' => $company->id,
+                        'subject' => $subject->value,
+                        'series' => $series,
+                        'year' => $year,
+                        'last_number' => 0,
+                    ]);
+                } catch (QueryException) {
+                    // Carrera concurrente al crear la primera secuencia del año/serie.
+                }
 
                 $sequence = CompanyCorrelativeSequence::query()
                     ->where('company_id', $company->id)

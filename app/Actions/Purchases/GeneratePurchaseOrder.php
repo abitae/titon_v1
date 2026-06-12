@@ -14,6 +14,7 @@ use App\Models\SupplierQuotation;
 use App\Models\SupplierQuotationItem;
 use App\Services\Codes\CodeGeneratorService;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 class GeneratePurchaseOrder
 {
@@ -22,6 +23,13 @@ class GeneratePurchaseOrder
     ) {}
 
     public function handle(Requirement $requirement): PurchaseOrder
+    {
+        return DB::transaction(function () use ($requirement): PurchaseOrder {
+            return $this->persistPurchaseOrder($requirement);
+        });
+    }
+
+    protected function persistPurchaseOrder(Requirement $requirement): PurchaseOrder
     {
         $requirement->load(['items', 'comparison.selectedQuotation.items']);
 

@@ -6,6 +6,7 @@ use App\Enums\DocumentMovementType;
 use App\Enums\DocumentStatus;
 use App\Models\Document;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 
@@ -21,6 +22,24 @@ class TransitionDocument
      * @param  array<int, TemporaryUploadedFile|UploadedFile>  $attachments
      */
     public function handle(
+        Document $document,
+        User $actor,
+        DocumentMovementType $action,
+        DocumentStatus $status,
+        array $attributes = [],
+        ?string $notes = null,
+        array $metadata = [],
+        array $attachments = [],
+    ): Document {
+        return DB::transaction(fn (): Document => $this->transition($document, $actor, $action, $status, $attributes, $notes, $metadata, $attachments));
+    }
+
+    /**
+     * @param  array<string, mixed>  $attributes
+     * @param  array<string, mixed>  $metadata
+     * @param  array<int, TemporaryUploadedFile|UploadedFile>  $attachments
+     */
+    protected function transition(
         Document $document,
         User $actor,
         DocumentMovementType $action,

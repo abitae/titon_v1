@@ -56,5 +56,8 @@ jobs:
       - name: Build Assets
         run: npm run build
 
+      - name: Run Pint
+        run: vendor/bin/pint --test --format agent
+
       - name: Run Tests
-        run: ./vendor/bin/pest
+        run: ./vendor/bin/pest --compact --coverage --min=0

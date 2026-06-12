@@ -27,11 +27,11 @@
     <x-platform.filter-bar class="xl:grid-cols-3">
         <div>
             <label class="block text-xs font-medium uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Buscar</label>
-            <input wire:model.live.debounce.300ms="search" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" placeholder="RUC, razón social o nombre comercial" />
+            <input wire:model.live.debounce.300ms="search" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" placeholder="RUC, razón social o nombre comercial" />
         </div>
         <div>
             <label class="block text-xs font-medium uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Ciudad</label>
-            <select wire:model.live="cityFilter" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white">
+            <select wire:model.live="cityFilter" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white">
                 <option value="">Todas</option>
                 @foreach ($cities as $cityOption)
                     <option value="{{ $cityOption->name }}">{{ $cityOption->name }}</option>
@@ -40,7 +40,7 @@
         </div>
         <div>
             <label class="block text-xs font-medium uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Estado</label>
-            <select wire:model.live="statusFilter" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white">
+            <select wire:model.live="statusFilter" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white">
                 <option value="">Todos</option>
                 @foreach ($statusOptions as $statusOption)
                     <option value="{{ $statusOption->value() }}">{{ $statusOption->label() }}</option>
@@ -51,16 +51,16 @@
 
     <x-platform.compact-table :headers="['RUC', 'Proveedor', 'Ciudad', 'Estado', 'Banco', 'Acciones']">
         @forelse ($suppliers as $supplier)
-            <tr class="text-sm text-slate-700 dark:text-slate-200" wire:key="supplier-row-{{ $supplier->id }}">
-                <td class="px-6 py-4 font-medium text-slate-950 dark:text-white">{{ $supplier->ruc }}</td>
-                <td class="px-6 py-4">
+            <tr class="text-xs text-slate-700 dark:text-slate-200" wire:key="supplier-row-{{ $supplier->id }}">
+                <td class="px-2.5 py-1.5 font-medium text-slate-950 dark:text-white">{{ $supplier->ruc }}</td>
+                <td class="px-2.5 py-1.5">
                     <p class="font-medium text-slate-950 dark:text-white">{{ $supplier->business_name }}</p>
                     <p class="text-slate-500 dark:text-slate-400">{{ $supplier->commercial_name ?: 'Sin nombre comercial' }}</p>
                 </td>
-                <td class="px-6 py-4">{{ $supplier->city ?: 'Sin ciudad' }}</td>
-                <td class="px-6 py-4"><x-platform.status-badge :value="$supplier->status" /></td>
-                <td class="px-6 py-4">{{ $supplier->bank_name ?: 'Sin banco' }}</td>
-                <td class="px-6 py-4">
+                <td class="px-2.5 py-1.5">{{ $supplier->city ?: 'Sin ciudad' }}</td>
+                <td class="px-2.5 py-1.5"><x-platform.status-badge :value="$supplier->status" /></td>
+                <td class="px-2.5 py-1.5">{{ $supplier->bank_name ?: 'Sin banco' }}</td>
+                <td class="px-2.5 py-1.5">
                     <x-platform.action-buttons
                         :view="'openDetailModal('.$supplier->id.')'"
                         :edit="'openEditModal('.$supplier->id.')'"
@@ -76,7 +76,7 @@
         @endforelse
     </x-platform.compact-table>
 
-    <div class="rounded-3xl border border-slate-200 bg-white px-6 py-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+    <div class="rounded-3xl border border-slate-200 bg-white px-2.5 py-1.5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
         {{ $suppliers->links() }}
     </div>
 
@@ -92,42 +92,42 @@
         <div class="mt-6 grid gap-4 md:grid-cols-2">
             <div>
                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">RUC</label>
-                <input wire:model="ruc" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
+                <input wire:model="ruc" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
                 @error('ruc') <p class="mt-1 text-sm text-rose-600">{{ $message }}</p> @enderror
             </div>
             <div>
                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Razón social</label>
-                <input wire:model="business_name" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
+                <input wire:model="business_name" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
                 @error('business_name') <p class="mt-1 text-sm text-rose-600">{{ $message }}</p> @enderror
             </div>
             <div>
                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Nombre comercial</label>
-                <input wire:model="commercial_name" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
+                <input wire:model="commercial_name" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
                 @error('commercial_name') <p class="mt-1 text-sm text-rose-600">{{ $message }}</p> @enderror
             </div>
             <div>
                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Contacto</label>
-                <input wire:model="contact_name" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
+                <input wire:model="contact_name" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
                 @error('contact_name') <p class="mt-1 text-sm text-rose-600">{{ $message }}</p> @enderror
             </div>
             <div>
                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Teléfono</label>
-                <input wire:model="phone" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
+                <input wire:model="phone" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
                 @error('phone') <p class="mt-1 text-sm text-rose-600">{{ $message }}</p> @enderror
             </div>
             <div>
                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Correo</label>
-                <input wire:model="email" type="email" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
+                <input wire:model="email" type="email" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
                 @error('email') <p class="mt-1 text-sm text-rose-600">{{ $message }}</p> @enderror
             </div>
             <div class="md:col-span-2">
                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Dirección</label>
-                <input wire:model="address" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
+                <input wire:model="address" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
                 @error('address') <p class="mt-1 text-sm text-rose-600">{{ $message }}</p> @enderror
             </div>
             <div>
                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Ciudad</label>
-                <input wire:model="city" list="supplier-cities" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
+                <input wire:model="city" list="supplier-cities" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
                 <datalist id="supplier-cities">
                     @foreach ($cities as $cityOption)
                         <option value="{{ $cityOption->name }}"></option>
@@ -137,7 +137,7 @@
             </div>
             <div>
                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Estado</label>
-                <select wire:model="status" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white">
+                <select wire:model="status" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white">
                     @foreach ($statusOptions as $statusOption)
                         <option value="{{ $statusOption->value() }}">{{ $statusOption->label() }}</option>
                     @endforeach
@@ -146,7 +146,7 @@
             </div>
             <div>
                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Banco</label>
-                <input wire:model="bank_name" list="supplier-banks" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
+                <input wire:model="bank_name" list="supplier-banks" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
                 <datalist id="supplier-banks">
                     @foreach ($banks as $bank)
                         <option value="{{ $bank->name }}"></option>
@@ -156,17 +156,17 @@
             </div>
             <div>
                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Cuenta bancaria</label>
-                <input wire:model="bank_account" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
+                <input wire:model="bank_account" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
                 @error('bank_account') <p class="mt-1 text-sm text-rose-600">{{ $message }}</p> @enderror
             </div>
             <div>
                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">CCI</label>
-                <input wire:model="cci" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
+                <input wire:model="cci" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
                 @error('cci') <p class="mt-1 text-sm text-rose-600">{{ $message }}</p> @enderror
             </div>
             <div class="md:col-span-2">
                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Archivos</label>
-                <input wire:model="attachments" type="file" multiple class="mt-2 block w-full rounded-xl border border-dashed border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
+                <input wire:model="attachments" type="file" multiple class="mt-2 block w-full rounded-xl border border-dashed border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
                 @error('attachments.*') <p class="mt-1 text-sm text-rose-600">{{ $message }}</p> @enderror
             </div>
         </div>

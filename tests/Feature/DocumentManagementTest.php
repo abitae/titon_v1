@@ -87,7 +87,10 @@ test('documents can be registered with media attachments for the active company'
         ->call('saveDocument')
         ->assertHasNoErrors();
 
-    $document = Document::query()->where('code', 'DOC-001')->firstOrFail();
+    $document = Document::query()
+        ->where('company_id', $this->company->id)
+        ->where('document_number', 'CARTA-2026-001')
+        ->firstOrFail();
 
     expect($document->company_id)->toBe($this->company->id);
     expect($document->document_number)->toBe('CARTA-2026-001');

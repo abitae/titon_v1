@@ -69,6 +69,8 @@ trait SelectsWinningQuotation
         $this->purchaseRequest->refresh();
         $this->showWinnerModal = false;
         $this->successToast('Proveedor ganador seleccionado correctamente.');
+
+        $this->redirectRoute('modules.purchases', navigate: true);
     }
 
     public function generateOrder(
@@ -109,6 +111,9 @@ trait SelectsWinningQuotation
         $this->generated_purchase_order_id = $purchaseOrder->id;
         $this->purchaseRequest->refresh();
 
+        $this->showWinnerModal = false;
         $this->successToast('Orden generada correctamente.');
+
+        $this->redirectRoute('purchases.orders', navigate: true);
     }
 }

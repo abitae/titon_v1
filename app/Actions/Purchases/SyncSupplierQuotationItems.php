@@ -3,6 +3,7 @@
 namespace App\Actions\Purchases;
 
 use App\Models\SupplierQuotation;
+use Illuminate\Support\Facades\DB;
 
 class SyncSupplierQuotationItems
 {
@@ -10,6 +11,16 @@ class SyncSupplierQuotationItems
      * @param  list<array<string, mixed>>  $items
      */
     public function handle(SupplierQuotation $supplierQuotation, array $items): void
+    {
+        DB::transaction(function () use ($supplierQuotation, $items): void {
+            $this->syncItems($supplierQuotation, $items);
+        });
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $items
+     */
+    protected function syncItems(SupplierQuotation $supplierQuotation, array $items): void
     {
         $supplierQuotation->items()->delete();
 

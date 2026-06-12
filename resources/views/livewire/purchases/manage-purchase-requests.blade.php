@@ -17,7 +17,7 @@
         </div>
     </div>
 
-    <div class="flex flex-wrap items-end gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+    <div class="flex flex-wrap items-end gap-2 rounded-xl border border-slate-200 bg-white px-2 py-1.5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <div class="min-w-[10rem] flex-1">
             <label class="block text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Buscar</label>
             <input wire:model.live.debounce.300ms="search" class="mt-1 block h-8 w-full rounded-lg border border-slate-300 bg-white px-2.5 text-xs dark:border-slate-700 dark:bg-slate-950 dark:text-white" placeholder="Código o descripción" />
@@ -93,7 +93,7 @@
                                 variant="ghost"
                                 size="sm"
                                 icon="scale"
-                                href="{{ route('purchases.quotations', $purchaseRequest) }}"
+                                href="{{ route('purchases.comparison', $purchaseRequest) }}"
                                 wire:navigate
                                 class="!size-7 !min-h-0 !p-0"
                                 aria-label="Comparar cotizaciones"
@@ -132,7 +132,7 @@
         @endforelse
     </x-platform.compact-table>
 
-    <div class="rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+    <div class="rounded-xl border border-slate-200 bg-white px-2 py-1 shadow-sm dark:border-slate-800 dark:bg-slate-900">
         {{ $purchaseRequests->links() }}
     </div>
 

@@ -289,6 +289,15 @@ class ManageBanks extends Component
 
         $account = BankAccount::query()->findOrFail($validated['movement_bank_account_id']);
 
+        if (
+            $validated['movement_kind'] === 'withdrawal'
+            && (float) $account->balance < (float) $validated['movement_amount']
+        ) {
+            $this->addError('movement_amount', 'Saldo insuficiente en la cuenta seleccionada.');
+
+            return;
+        }
+
         $type = $validated['movement_kind'] === 'deposit'
             ? BankMovementType::Deposit->value()
             : BankMovementType::Withdrawal->value();

@@ -9,10 +9,16 @@ use App\Models\Company;
 use App\Models\Order;
 use App\Models\SupplierContract;
 use App\Services\Correlatives\IssueCompanyCorrelativeCode;
+use Illuminate\Support\Facades\DB;
 
 class CreateSupplierContractFromOrder
 {
     public function handle(Order $order): SupplierContract
+    {
+        return DB::transaction(fn (): SupplierContract => $this->persistContract($order));
+    }
+
+    protected function persistContract(Order $order): SupplierContract
     {
         $company = Company::query()->findOrFail($order->company_id);
         $existing = SupplierContract::query()

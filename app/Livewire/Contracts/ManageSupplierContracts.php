@@ -5,6 +5,7 @@ namespace App\Livewire\Contracts;
 use App\Actions\Contracts\ApproveSupplierContract;
 use App\Actions\Contracts\CancelSupplierContract;
 use App\Concerns\InteractsWithToast;
+use App\Concerns\ViewsPdfInModal;
 use App\Enums\SupplierContractStatus;
 use App\Models\PurchaseOrder;
 use App\Models\SupplierContract;
@@ -16,7 +17,16 @@ use Livewire\WithFileUploads;
 
 class ManageSupplierContracts extends Component
 {
-    use InteractsWithToast, WithFileUploads;
+    use InteractsWithToast, ViewsPdfInModal, WithFileUploads;
+
+    public function mount(): void
+    {
+        $contractId = request()->integer('contract');
+
+        if ($contractId > 0) {
+            $this->openDetailModal($contractId);
+        }
+    }
 
     public string $title = 'Contratos con proveedores';
 
@@ -52,7 +62,7 @@ class ManageSupplierContracts extends Component
         return view('livewire.contracts.manage-supplier-contracts', [
             'contracts' => $contracts,
             'statusOptions' => SupplierContractStatus::cases(),
-            'orders' => PurchaseOrder::query()->with(['supplier', 'project'])->orderByDesc('issue_date')->get(),
+            'orders' => PurchaseOrder::query()->with(['supplier', 'project'])->orderByDesc('issue_date')->limit(50)->get(),
         ])->layout('layouts.app', ['title' => $this->title]);
     }
 
@@ -120,7 +130,7 @@ class ManageSupplierContracts extends Component
         abort_if($this->selectedContract === null, 404);
 
         $this->validate([
-            'signed_contract_files.*' => ['required', 'file', 'max:10240'],
+            'signed_contract_files.*' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png,webp', 'max:10240'],
         ]);
 
         foreach ($this->signed_contract_files as $uploadedFile) {

@@ -459,16 +459,23 @@ class ManageFleetWorkOrders extends Component
         $topLoadsBuilder = FleetWorkOrder::query();
         FleetWorkOrderBoardQuery::apply($topLoadsBuilder, $statsFilters);
 
-        $topLoads = (clone $topLoadsBuilder)
+        $topLoadRows = (clone $topLoadsBuilder)
             ->selectRaw('responsible_user_id, COUNT(*) as open_count')
             ->whereNotNull('responsible_user_id')
             ->whereIn('status', FleetWorkOrderStatus::openStatuses())
             ->groupBy('responsible_user_id')
             ->orderByDesc('open_count')
             ->limit(5)
+            ->get();
+
+        $topLoadUsers = User::query()
+            ->whereIn('id', $topLoadRows->pluck('responsible_user_id'))
             ->get()
-            ->map(function ($row): ?array {
-                $user = User::query()->find($row->responsible_user_id);
+            ->keyBy('id');
+
+        $topLoads = $topLoadRows
+            ->map(function ($row) use ($topLoadUsers): ?array {
+                $user = $topLoadUsers->get($row->responsible_user_id);
 
                 if ($user === null) {
                     return null;
@@ -655,9 +662,7 @@ class ManageFleetWorkOrders extends Component
 
         $resolvedCode = $this->editingId
             ? (string) $validated['code']
-            : (trim((string) ($validated['code'] ?? '')) !== ''
-                ? trim((string) $validated['code'])
-                : app(IssueCompanyCorrelativeCode::class)->issue($company, CorrelativeSubject::FleetWorkOrder));
+            : app(IssueCompanyCorrelativeCode::class)->issue($company, CorrelativeSubject::FleetWorkOrder);
 
         $payload = [
             'company_id' => $company->id,

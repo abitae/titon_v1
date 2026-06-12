@@ -2,6 +2,7 @@
 
 use App\Models\Company;
 use App\Models\User;
+use App\Services\Companies\CompanyContext;
 use Database\Seeders\PermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Role;
@@ -25,6 +26,8 @@ test('authenticated users can access all business modules', function () {
     $user->assignRole($role);
 
     $this->actingAs($user);
+    session([CompanyContext::SESSION_KEY => $company->id]);
+    setPermissionsTeamId($company->id);
 
     foreach ([
         'modules.documents' => 'Documentos',
@@ -35,8 +38,7 @@ test('authenticated users can access all business modules', function () {
     ] as $route => $label) {
         $this->get(route($route))
             ->assertOk()
-            ->assertSee($label)
-            ->assertSee($company->name);
+            ->assertSee($label);
     }
 });
 

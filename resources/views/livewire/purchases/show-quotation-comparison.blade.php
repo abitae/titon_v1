@@ -28,46 +28,36 @@
         </div>
     </section>
 
-    <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-800">
-                <thead>
-                    <tr class="text-left text-xs uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-                        <th class="px-4 py-3 font-medium">Proveedor</th>
-                        <th class="px-4 py-3 font-medium">Codigo</th>
-                        <th class="px-4 py-3 font-medium">Total</th>
-                        <th class="px-4 py-3 font-medium">Entrega</th>
-                        <th class="px-4 py-3 font-medium">Pago</th>
-                        <th class="px-4 py-3 font-medium">Garantia</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
-                    @forelse ($summary['quotations'] as $quotation)
-                        <tr class="text-sm text-slate-700 dark:text-slate-200">
-                            <td class="px-4 py-4 font-medium text-slate-950 dark:text-white">{{ $quotation->supplier?->business_name ?? 'Sin proveedor' }}</td>
-                            <td class="px-4 py-4">{{ $quotation->code }}</td>
-                            <td class="px-4 py-4">
-                                <span class="{{ (float) $quotation->total === (float) ($summary['min_total'] ?? 0) ? 'rounded-full bg-emerald-100 px-3 py-1 font-medium text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300' : '' }}">
-                                    {{ $quotation->currency }} {{ number_format((float) $quotation->total, 2) }}
-                                </span>
-                            </td>
-                            <td class="px-4 py-4">
-                                <span class="{{ (int) $quotation->delivery_time_days === (int) ($summary['min_delivery_time'] ?? 0) ? 'rounded-full bg-sky-100 px-3 py-1 font-medium text-sky-700 dark:bg-sky-950/40 dark:text-sky-300' : '' }}">
-                                    {{ $quotation->delivery_time_days }} días
-                                </span>
-                            </td>
-                            <td class="px-4 py-4">{{ $quotation->payment_conditions ?: 'Sin condicion' }}</td>
-                            <td class="px-4 py-4">{{ $quotation->warranty ?: 'Sin garantia' }}</td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="6" class="px-4 py-10 text-center text-sm text-slate-500 dark:text-slate-400">Todavia no hay cotizaciones para comparar.</td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-    </div>
+    <x-platform.compact-table :headers="['Proveedor', 'Código', 'Total', 'Entrega', 'Pago', 'Garantía']">
+        @forelse ($summary['quotations'] as $quotation)
+            <tr wire:key="comparison-quotation-{{ $quotation->id }}">
+                <td class="font-medium text-slate-950 dark:text-white">{{ $quotation->supplier?->business_name ?? 'Sin proveedor' }}</td>
+                <td>{{ $quotation->code }}</td>
+                <td>
+                    <span @class([
+                        'rounded-full px-2 py-0.5 text-[10px] font-medium',
+                        'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300' => (float) $quotation->total === (float) ($summary['min_total'] ?? 0),
+                    ])>
+                        {{ $quotation->currency }} {{ number_format((float) $quotation->total, 2) }}
+                    </span>
+                </td>
+                <td>
+                    <span @class([
+                        'rounded-full px-2 py-0.5 text-[10px] font-medium',
+                        'bg-sky-100 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300' => (int) $quotation->delivery_time_days === (int) ($summary['min_delivery_time'] ?? 0),
+                    ])>
+                        {{ $quotation->delivery_time_days }} días
+                    </span>
+                </td>
+                <td>{{ $quotation->payment_conditions ?: 'Sin condición' }}</td>
+                <td>{{ $quotation->warranty ?: 'Sin garantía' }}</td>
+            </tr>
+        @empty
+            <tr>
+                <td colspan="6" class="!py-5 text-center text-[11px] text-slate-500 dark:text-slate-400">Todavía no hay cotizaciones para comparar.</td>
+            </tr>
+        @endforelse
+    </x-platform.compact-table>
 
     @if ($comparison?->selectedQuotation)
         <div class="rounded-3xl border border-emerald-200 bg-emerald-50 p-6 shadow-sm dark:border-emerald-900/40 dark:bg-emerald-950/20">

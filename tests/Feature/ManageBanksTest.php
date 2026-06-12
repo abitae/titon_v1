@@ -88,7 +88,8 @@ test('withdrawal is blocked when balance is insufficient', function () {
         ->set('movement_amount', '500')
         ->set('movement_date', now()->toDateString())
         ->set('movement_concept', 'Retiro excesivo')
-        ->call('saveMovement');
+        ->call('saveMovement')
+        ->assertHasErrors(['movement_amount']);
 
     expect((float) $account->fresh()->balance)->toBe(100.0);
 });

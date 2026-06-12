@@ -12,7 +12,7 @@
                 </flux:field>
                 <flux:field>
                     <flux:label>Equipo</flux:label>
-                    <select wire:model.live="fleet_equipment_id" class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950">
+                    <select wire:model.live="fleet_equipment_id" class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950">
                         @foreach ($equipments as $equipment)
                             <option value="{{ $equipment->id }}">{{ $equipment->internal_code }}</option>
                         @endforeach
@@ -20,7 +20,7 @@
                 </flux:field>
                 <flux:field>
                     <flux:label>Obra</flux:label>
-                    <select wire:model="work_project_id" class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950">
+                    <select wire:model="work_project_id" class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950">
                         <option value="">—</option>
                         @foreach ($projects as $project)
                             <option value="{{ $project->id }}">{{ $project->code }}</option>
@@ -29,7 +29,7 @@
                 </flux:field>
                 <flux:field>
                     <flux:label>Tipo</flux:label>
-                    <select wire:model="type" class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950">
+                    <select wire:model="type" class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950">
                         @foreach ($types as $t)
                             <option value="{{ $t->value() }}">{{ $t->label() }}</option>
                         @endforeach
@@ -37,7 +37,7 @@
                 </flux:field>
                 <flux:field>
                     <flux:label>Prioridad</flux:label>
-                    <select wire:model="priority" class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950">
+                    <select wire:model="priority" class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950">
                         @foreach ($priorities as $p)
                             <option value="{{ $p->value() }}">{{ $p->label() }}</option>
                         @endforeach
@@ -45,7 +45,7 @@
                 </flux:field>
                 <flux:field>
                     <flux:label>Estado</flux:label>
-                    <select wire:model="status" class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950">
+                    <select wire:model="status" class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950">
                         @foreach ($statuses as $s)
                             <option value="{{ $s->value() }}">{{ $s->label() }}</option>
                         @endforeach
@@ -83,7 +83,7 @@
                 </flux:field>
                 <flux:field>
                     <flux:label>Responsable</flux:label>
-                    <select wire:model="responsible_user_id" class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950">
+                    <select wire:model="responsible_user_id" class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950">
                         <option value="">—</option>
                         @foreach ($responsibleUsers as $u)
                             <option value="{{ $u->id }}">{{ $u->name }}</option>

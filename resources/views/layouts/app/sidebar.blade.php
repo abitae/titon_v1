@@ -42,7 +42,7 @@
             </div>
 
             <flux:sidebar.nav class="shrink-0 border-t border-slate-200/60 bg-gradient-to-t from-slate-50/90 to-transparent pt-2 dark:border-slate-700/60 dark:from-slate-950/90">
-                <div class="rounded-xl border border-slate-200/80 bg-white/80 px-3 py-2.5 text-xs text-slate-600 backdrop-blur dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-400">
+                <div class="rounded-xl border border-slate-200/80 bg-white/80 px-2 py-1.5 text-xs text-slate-600 backdrop-blur dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-400">
                     <p class="font-medium text-slate-800 dark:text-slate-200">Atajos</p>
                     <a
                         href="{{ route('settings.catalogs') }}"

@@ -58,11 +58,13 @@ test('projects module can create records for the active company', function () {
         ->call('saveProject')
         ->assertHasNoErrors();
 
-    $this->assertDatabaseHas('projects', [
-        'company_id' => $this->company->id,
-        'code' => 'OBR-001',
-        'name' => 'Obra Central',
-    ]);
+    $project = Project::query()
+        ->where('company_id', $this->company->id)
+        ->where('name', 'Obra Central')
+        ->first();
+
+    expect($project)->not->toBeNull();
+    expect($project->code)->toMatch('/-OB-\d{4}-\d{6}$/');
 });
 
 test('project queries respect the active company scope', function () {

@@ -6,7 +6,7 @@
 
 @if ($showComparisonModal)
     <div class="fixed inset-0 z-[110] flex flex-col bg-slate-50 dark:bg-slate-950">
-        <div class="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-950/95">
+        <div class="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-white/95 px-2.5 py-1.5 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-950/95">
             <div class="min-w-0">
                 <h2 class="text-base font-semibold text-slate-950 dark:text-white">Comparativa de cotizaciones</h2>
                 <p class="truncate text-xs text-slate-500 dark:text-slate-400">
@@ -45,7 +45,7 @@
                         wire:key="comparison-panel-{{ $quotation->id }}"
                         class="flex min-h-[40vh] flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:shadow-none lg:min-h-0"
                     >
-                        <div class="flex shrink-0 items-start justify-between gap-2 border-b border-slate-200 px-3 py-2 dark:border-slate-800">
+                        <div class="flex shrink-0 items-start justify-between gap-2 border-b border-slate-200 px-2 py-1 dark:border-slate-800">
                             <div class="min-w-0">
                                 <p class="truncate text-sm font-semibold text-slate-950 dark:text-white">{{ $quotation->supplier?->business_name ?? 'Sin proveedor' }}</p>
                                 <p class="text-[11px] text-slate-500 dark:text-slate-400">{{ $quotation->code }} · {{ $quotation->currency }} {{ number_format((float) $quotation->total, 2) }}</p>

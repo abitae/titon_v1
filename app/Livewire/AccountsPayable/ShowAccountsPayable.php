@@ -5,6 +5,7 @@ namespace App\Livewire\AccountsPayable;
 use App\Actions\AccountsPayable\RegisterAccountsPayablePayment;
 use App\Actions\AccountsPayable\UploadPayableDocument;
 use App\Concerns\InteractsWithToast;
+use App\Concerns\ViewsPdfInModal;
 use App\Enums\CatalogType;
 use App\Models\AccountsPayable;
 use App\Models\BankAccount;
@@ -18,7 +19,20 @@ use Livewire\WithFileUploads;
 
 class ShowAccountsPayable extends Component
 {
-    use InteractsWithToast, WithFileUploads;
+    use InteractsWithToast, ViewsPdfInModal, WithFileUploads;
+
+    public function openPayableDocumentPreview(int $documentId): void
+    {
+        $document = PayableDocument::query()
+            ->where('accounts_payable_id', $this->accountsPayable->id)
+            ->findOrFail($documentId);
+
+        $media = $document->getFirstMedia('archivo');
+
+        abort_if($media === null, 404);
+
+        $this->openPdfModal($media->getUrl(), $document->typeLabel(), 'Documento de cuenta por pagar');
+    }
 
     public string $title = 'Detalle CxP';
 
