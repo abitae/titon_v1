@@ -11,6 +11,7 @@ enum PlatformModule
     case Contracts;
     case Payments;
     case Banks;
+    case Warehouse;
     case Mechanics;
 
     public function label(): string
@@ -23,6 +24,7 @@ enum PlatformModule
             self::Contracts => 'Contratos',
             self::Payments => 'Pagos a proveedores',
             self::Banks => 'Bancos',
+            self::Warehouse => 'Almacen',
             self::Mechanics => 'Mecanica',
         };
     }
@@ -37,6 +39,7 @@ enum PlatformModule
             self::Contracts => 'Control de contratos, vigencias y anexos.',
             self::Payments => 'Pagos contra contratos y cronogramas de proveedores.',
             self::Banks => 'Cuentas bancarias, caja y movimientos de dinero.',
+            self::Warehouse => 'Inventario y kardex de materiales y servicios por obra.',
             self::Mechanics => 'Maquinaria, revisiones, mantenimientos y repuestos.',
         };
     }
@@ -51,6 +54,7 @@ enum PlatformModule
             self::Contracts => 'document-text',
             self::Payments => 'banknotes',
             self::Banks => 'building-library',
+            self::Warehouse => 'archive-box',
             self::Mechanics => 'wrench-screwdriver',
         };
     }
@@ -65,6 +69,7 @@ enum PlatformModule
             self::Contracts => 'modules.contracts',
             self::Payments => 'modules.payments',
             self::Banks => 'modules.banks',
+            self::Warehouse => 'modules.warehouse',
             self::Mechanics => 'modules.mechanics',
         };
     }
@@ -79,6 +84,7 @@ enum PlatformModule
             self::Contracts => 'contracts',
             self::Payments => 'supplier-payments',
             self::Banks => 'bancos',
+            self::Warehouse => 'almacen',
             self::Mechanics => 'mecanica',
         };
     }
@@ -89,6 +95,7 @@ enum PlatformModule
             self::Mechanics => request()->routeIs('modules.mechanics') || request()->routeIs('mechanics.*'),
             self::Payments => request()->routeIs('modules.payments', 'payments.schedules'),
             self::Banks => request()->routeIs('modules.banks'),
+            self::Warehouse => request()->routeIs('modules.warehouse'),
             default => request()->routeIs($this->routeName()),
         };
     }
@@ -104,6 +111,7 @@ enum PlatformModule
             self::Suppliers,
             self::Contracts,
             self::Banks,
+            self::Warehouse,
             self::Mechanics,
         ];
     }

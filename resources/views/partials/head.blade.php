@@ -1,5 +1,7 @@
 @php
-    $applicationName = app(\App\Services\Application\ApplicationSettingsManager::class)->appName();
+    $siteContent = app(\App\Services\Frontend\SiteContentService::class);
+    $applicationName = $siteName ?? $siteContent->brandName();
+    $resolvedFaviconUrl = $faviconUrl ?? $siteContent->brandFaviconUrl();
 @endphp
 
 <meta charset="utf-8" />
@@ -9,9 +11,13 @@
     {{ filled($title ?? null) ? $title.' - '.$applicationName : $applicationName }}
 </title>
 
-<link rel="icon" href="/favicon.ico" sizes="any">
-<link rel="icon" href="/favicon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+@if ($resolvedFaviconUrl)
+    <link rel="icon" href="{{ $resolvedFaviconUrl }}" sizes="any">
+@else
+    <link rel="icon" href="/favicon.ico" sizes="any">
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+@endif
 
 @fonts
 

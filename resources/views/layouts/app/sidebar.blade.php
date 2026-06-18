@@ -24,7 +24,18 @@
             <div class="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-y-contain [-ms-overflow-style:none] [scrollbar-gutter:stable] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-300/80 dark:[&::-webkit-scrollbar-thumb]:bg-slate-600/80">
                 <flux:sidebar.nav class="gap-1.5 py-3">
                     @foreach ($navigation as $group)
-                        <flux:sidebar.group :heading="$group['heading']" class="grid min-w-0 gap-1">
+                        @php
+                            $groupExpanded = collect($group['items'])->contains(
+                                fn (array $item): bool => (bool) ($item['current'] ?? false),
+                            );
+                        @endphp
+
+                        <flux:sidebar.group
+                            expandable
+                            :heading="$group['heading']"
+                            :expanded="$groupExpanded"
+                            class="grid min-w-0 gap-1"
+                        >
                             @foreach ($group['items'] as $item)
                                 <flux:sidebar.item
                                     :icon="$item['icon']"

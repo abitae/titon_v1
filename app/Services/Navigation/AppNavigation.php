@@ -3,6 +3,7 @@
 namespace App\Services\Navigation;
 
 use App\Enums\PlatformModule;
+use Illuminate\Support\Facades\Auth;
 
 class AppNavigation
 {
@@ -11,7 +12,7 @@ class AppNavigation
      */
     public function sidebarGroups(): array
     {
-        return [
+        $groups = [
             [
                 'heading' => 'Plataforma',
                 'items' => [
@@ -88,6 +89,40 @@ class AppNavigation
                 ],
             ],
         ];
+
+        if (Auth::user()?->hasRole('Super Admin')) {
+            $groups[] = [
+                'heading' => 'Sitio web',
+                'items' => [
+                    [
+                        'label' => 'Contenido',
+                        'description' => 'Textos e imágenes del sitio público.',
+                        'icon' => 'document-text',
+                        'route' => 'admin.site-content',
+                        'href' => route('admin.site-content'),
+                        'current' => request()->routeIs('admin.site-content'),
+                    ],
+                    [
+                        'label' => 'Portafolio',
+                        'description' => 'Proyectos publicados en el sitio.',
+                        'icon' => 'photo',
+                        'route' => 'admin.showcase-projects',
+                        'href' => route('admin.showcase-projects'),
+                        'current' => request()->routeIs('admin.showcase-projects'),
+                    ],
+                    [
+                        'label' => 'Mensajes',
+                        'description' => 'Formulario de contacto del sitio.',
+                        'icon' => 'envelope',
+                        'route' => 'admin.contact-messages',
+                        'href' => route('admin.contact-messages'),
+                        'current' => request()->routeIs('admin.contact-messages'),
+                    ],
+                ],
+            ];
+        }
+
+        return $groups;
     }
 
     /**

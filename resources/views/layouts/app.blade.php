@@ -1,7 +1,7 @@
 @props(['title' => null])
 
 @php
-    $applicationSettings = app(\App\Services\Application\ApplicationSettingsManager::class);
+    $siteContent = app(\App\Services\Frontend\SiteContentService::class);
     $pageHeading = filled($title) ? $title : __('Inicio');
 @endphp
 
@@ -21,7 +21,7 @@
                 <div class="min-w-0 flex-1">
                     <div class="flex min-w-0 flex-col gap-0.5">
                         <p class="text-[10px] font-semibold uppercase tracking-[0.28em] text-cyan-700 dark:text-cyan-400">
-                            {{ $applicationSettings->appName() }}
+                            {{ $siteContent->brandName() }}
                         </p>
                         <flux:heading size="xl" level="1" class="truncate text-slate-900 dark:text-white">
                             {{ $pageHeading }}

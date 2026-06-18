@@ -3,6 +3,7 @@
 namespace App\Actions\Orders;
 
 use App\Actions\AccountsPayable\CreateAccountsPayableFromOrder;
+use App\Actions\Warehouse\ReceiveOrderIntoWarehouse;
 use App\Enums\ConformityResult;
 use App\Enums\OrderStatus;
 use App\Enums\RequirementStatus;
@@ -10,12 +11,15 @@ use App\Models\Order;
 use App\Models\OrderConformity;
 use App\Models\User;
 use App\Services\Audit\UserAuditLogger;
+use App\Services\Warehouse\RecalculateWarehouseStockItem;
 use Illuminate\Support\Facades\DB;
 
 class RecordOrderConformity
 {
     public function __construct(
         protected CreateAccountsPayableFromOrder $createAccountsPayable,
+        protected ReceiveOrderIntoWarehouse $receiveOrderIntoWarehouse,
+        protected RecalculateWarehouseStockItem $recalculateWarehouseStockItem,
         protected UserAuditLogger $userAuditLogger,
     ) {}
 
@@ -52,9 +56,11 @@ class RecordOrderConformity
             if ($result === ConformityResult::Conform->value()) {
                 $order->update(['status' => OrderStatus::Conform->value()]);
                 $this->createAccountsPayable->handle($order);
+                $this->receiveOrderIntoWarehouse->handle($order, $conformity, $responsible);
 
                 $order->requirement?->update(['status' => RequirementStatus::Attended->value()]);
             } else {
+                $this->recalculateWarehouseStockItem->revertConformityMovementsForOrder((int) $order->id);
                 $order->update(['status' => OrderStatus::Rejected->value()]);
             }
 

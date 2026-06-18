@@ -28,6 +28,7 @@ class PermissionSeeder extends Seeder
             'contracts',
             'payments',
             'bancos',
+            'almacen',
             'audits',
             'mecanica',
         ];
@@ -83,6 +84,17 @@ class PermissionSeeder extends Seeder
             Permission::findOrCreate($permissionName, 'web');
         }
 
+        $warehouseGranular = [
+            'almacen.ver',
+            'almacen.mover',
+            'almacen.transferir',
+            'almacen.exportar',
+        ];
+
+        foreach ($warehouseGranular as $permissionName) {
+            Permission::findOrCreate($permissionName, 'web');
+        }
+
         $roles = [
             'Super Admin' => Permission::query()->pluck('name')->all(),
             'Gerencia' => [
@@ -110,6 +122,10 @@ class PermissionSeeder extends Seeder
                 'revisiones.ver',
                 'revisiones.exportar',
                 'mantenimientos.ver',
+                'almacen.ver',
+                'almacen.mover',
+                'almacen.transferir',
+                'almacen.exportar',
             ],
             'Administrador' => [
                 'dashboard.ver',
@@ -172,6 +188,10 @@ class PermissionSeeder extends Seeder
                 'revisiones.ver',
                 'revisiones.crear',
                 'revisiones.exportar',
+                'almacen.ver',
+                'almacen.mover',
+                'almacen.transferir',
+                'almacen.exportar',
             ],
             'Compras' => [
                 'dashboard.ver',
@@ -198,6 +218,7 @@ class PermissionSeeder extends Seeder
                 'equipos.ver',
                 'mantenimientos.ver',
                 'revisiones.ver',
+                'almacen.ver',
             ],
             'Finanzas' => [
                 'dashboard.ver',
@@ -238,6 +259,9 @@ class PermissionSeeder extends Seeder
                 'mantenimientos.cerrar',
                 'revisiones.ver',
                 'revisiones.crear',
+                'almacen.ver',
+                'almacen.mover',
+                'almacen.transferir',
             ],
             'Consulta' => [
                 'dashboard.ver',
@@ -255,6 +279,7 @@ class PermissionSeeder extends Seeder
                 'equipos.ver',
                 'mantenimientos.ver',
                 'revisiones.ver',
+                'almacen.ver',
             ],
         ];
 

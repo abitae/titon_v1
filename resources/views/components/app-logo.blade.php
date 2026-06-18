@@ -3,9 +3,9 @@
 ])
 
 @php
-    $applicationSettings = app(\App\Services\Application\ApplicationSettingsManager::class);
-    $applicationName = $applicationSettings->appName();
-    $applicationLogo = $applicationSettings->logoUrl();
+    $siteContent = app(\App\Services\Frontend\SiteContentService::class);
+    $applicationName = $siteContent->brandName();
+    $applicationLogo = $siteContent->brandLogoUrl();
 @endphp
 
 @if($sidebar)

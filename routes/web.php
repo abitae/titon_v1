@@ -18,6 +18,9 @@ use App\Livewire\Documents\ManageInbox;
 use App\Livewire\Documents\ManageOutbox;
 use App\Livewire\Documents\ProjectDocuments;
 use App\Livewire\Documents\ShowDocument;
+use App\Livewire\Frontend\ManageContactMessages;
+use App\Livewire\Frontend\ManageShowcaseProjects;
+use App\Livewire\Frontend\ManageSiteContent;
 use App\Livewire\Mechanics\ManageFleetCorrectiveMaintenances;
 use App\Livewire\Mechanics\ManageFleetEquipments;
 use App\Livewire\Mechanics\ManageFleetPreventiveMaintenances;
@@ -38,11 +41,16 @@ use App\Livewire\Settings\ManageCatalogs;
 use App\Livewire\Settings\ManageCorrelativeFormats;
 use App\Livewire\Settings\ManageCostTypes;
 use App\Livewire\Suppliers\ManageSuppliers;
+use App\Livewire\Warehouse\ManageWarehouse;
 use Illuminate\Support\Facades\Route;
 
-Route::view('/', 'welcome')->name('home');
+require __DIR__.'/frontend.php';
 
 Route::middleware(['auth', 'verified', 'active.company.context'])->group(function () {
+    Route::get('admin/sitio-web/contenido', ManageSiteContent::class)->name('admin.site-content');
+    Route::get('admin/sitio-web/proyectos', ManageShowcaseProjects::class)->name('admin.showcase-projects');
+    Route::get('admin/sitio-web/mensajes', ManageContactMessages::class)->name('admin.contact-messages');
+
     Route::post('active-company', [ActiveCompanyController::class, 'store'])->name('active-company.store');
 
     Route::resource('companies', CompanyController::class)->except('show');
@@ -145,6 +153,9 @@ Route::middleware(['auth', 'verified', 'active.company.context'])->group(functio
         Route::get(PlatformModule::Banks->slug(), ManageBanks::class)
             ->middleware('permission:bancos.ver')
             ->name(PlatformModule::Banks->routeName());
+        Route::get(PlatformModule::Warehouse->slug(), ManageWarehouse::class)
+            ->middleware('permission:almacen.ver')
+            ->name(PlatformModule::Warehouse->routeName());
         Route::get('contracts/{supplierContract}/payment-schedules', ManagePaymentSchedules::class)
             ->middleware('permission:payments.ver')
             ->name('payments.schedules');

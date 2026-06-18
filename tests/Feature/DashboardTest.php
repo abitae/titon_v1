@@ -34,5 +34,6 @@ test('authenticated users can visit the dashboard', function () {
     $response = $this->get(route('dashboard'));
     $response->assertOk()
         ->assertSee('Panel Ejecutivo')
-        ->assertSee('Dashboard');
+        ->assertSee('Dashboard')
+        ->assertSee('data-flux-sidebar-group', false);
 });
