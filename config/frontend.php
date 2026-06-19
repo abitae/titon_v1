@@ -12,4 +12,6 @@ return [
 
     'mail_domain' => env('FRONTEND_MAIL_DOMAIN', 'titon.pe'),
 
+    'outlook_manual_path' => env('FRONTEND_OUTLOOK_MANUAL_PATH', 'manual/Manual_Configuracion_Outlook_TITON.pdf'),
+
 ];

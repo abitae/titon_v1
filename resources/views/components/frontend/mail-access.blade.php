@@ -4,10 +4,7 @@
 
 @php
     $webmailUrl = config('frontend.webmail_url');
-    $mailHost = config('frontend.mail_host');
-    $imapPort = config('frontend.imap_port');
-    $smtpPort = config('frontend.smtp_port');
-    $mailDomain = config('frontend.mail_domain');
+    $outlookManualUrl = asset(config('frontend.outlook_manual_path'));
 @endphp
 
 <flux:modal.trigger name="frontend-mail-access">
@@ -25,7 +22,7 @@
 </flux:modal.trigger>
 
 @once
-    <flux:modal name="frontend-mail-access" class="max-w-lg">
+    <flux:modal name="frontend-mail-access" class="max-w-3xl">
         <div x-data="{ showOutlook: false }">
             <div x-show="! showOutlook" x-cloak class="space-y-6">
                 <div>
@@ -66,7 +63,7 @@
                         <span>
                             <span class="block font-semibold text-slate-900">Configurar Outlook</span>
                             <span class="mt-1 block text-sm text-slate-600">
-                                Consulta el manual para configurar tu correo en Outlook de escritorio.
+                                Abre el manual para configurar tu correo en Outlook de escritorio.
                             </span>
                         </span>
                     </button>
@@ -79,32 +76,33 @@
                 </div>
             </div>
 
-            <div x-show="showOutlook" x-cloak class="space-y-6">
-                <div>
-                    <flux:heading size="lg">Outlook de escritorio</flux:heading>
-                    <flux:subheading class="mt-2">
-                        Sigue estos pasos para configurar tu cuenta corporativa con IMAP.
-                    </flux:subheading>
+            <div x-show="showOutlook" x-cloak class="space-y-4">
+                <div class="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                        <flux:heading size="lg">Manual de Outlook</flux:heading>
+                        <flux:subheading class="mt-2">
+                            Guía de configuración de correo corporativo en Outlook de escritorio.
+                        </flux:subheading>
+                    </div>
+
+                    <a
+                        href="{{ $outlookManualUrl }}"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-cyan-200 hover:text-cyan-700"
+                        data-test="frontend-outlook-manual-pdf-link"
+                    >
+                        <flux:icon name="arrow-top-right-on-square" class="size-4" />
+                        Abrir en nueva pestaña
+                    </a>
                 </div>
 
-                <ol class="list-decimal space-y-3 ps-5 text-sm leading-relaxed text-slate-700">
-                    <li>Abre Outlook y ve a <strong>Archivo → Agregar cuenta</strong>.</li>
-                    <li>Ingresa tu dirección de correo corporativa (por ejemplo, <strong>usuario@{{ $mailDomain }}</strong>).</li>
-                    <li>Selecciona <strong>Configuración avanzada</strong> y elige <strong>Configurar manualmente</strong> o <strong>IMAP</strong>.</li>
-                    <li>
-                        <strong>Servidor entrante (IMAP):</strong> {{ $mailHost }}, puerto {{ $imapPort }}, cifrado SSL/TLS.
-                    </li>
-                    <li>
-                        <strong>Servidor saliente (SMTP):</strong> {{ $mailHost }}, puerto {{ $smtpPort }}, cifrado SSL/TLS.
-                    </li>
-                    <li><strong>Usuario:</strong> tu correo completo.</li>
-                    <li><strong>Contraseña:</strong> la de tu buzón de correo (cPanel), no la del panel de la aplicación.</li>
-                    <li>Haz clic en <strong>Probar configuración de cuenta</strong> y luego en <strong>Finalizar</strong>.</li>
-                </ol>
-
-                <p class="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
-                    Si tienes problemas, verifica que la contraseña sea la del buzón cPanel y que tu cuenta esté activa.
-                </p>
+                <iframe
+                    src="{{ $outlookManualUrl }}"
+                    title="Manual de configuración de Outlook TITON"
+                    class="h-[min(70vh,32rem)] w-full rounded-xl border border-slate-200 bg-white"
+                    data-test="frontend-outlook-manual-pdf"
+                ></iframe>
 
                 <div class="flex items-center justify-between gap-3">
                     <flux:button type="button" variant="ghost" x-on:click="showOutlook = false">

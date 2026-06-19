@@ -29,8 +29,9 @@ test('frontend header displays mail access options', function () {
     $response->assertSee(config('frontend.webmail_url'), false);
     $response->assertSee('data-test="frontend-webmail-link"', false);
     $response->assertSee('data-test="frontend-outlook-manual-trigger"', false);
-    $response->assertSee(config('frontend.mail_host'));
-    $response->assertSee('Outlook de escritorio');
+    $response->assertSee(asset(config('frontend.outlook_manual_path')), false);
+    $response->assertSee('Manual de Outlook');
+    $response->assertSee('data-test="frontend-outlook-manual-pdf"', false);
 });
 
 test('about page displays mission content', function () {
