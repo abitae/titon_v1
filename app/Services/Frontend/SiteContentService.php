@@ -159,8 +159,13 @@ class SiteContentService
     {
         Cache::forget($this->sectionCacheKey($key));
 
-        $prefix = str_contains($key, '.') ? strstr($key, '.', true) : $key;
-        Cache::forget($this->prefixCacheKey((string) $prefix));
+        $segments = explode('.', $key);
+        $prefix = '';
+
+        for ($index = 0; $index < count($segments) - 1; $index++) {
+            $prefix = $prefix === '' ? $segments[$index] : $prefix.'.'.$segments[$index];
+            Cache::forget($this->prefixCacheKey($prefix));
+        }
     }
 
     public function forgetAll(): void

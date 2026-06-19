@@ -1,6 +1,8 @@
 <?php
 
 use App\Services\Frontend\SiteContentService;
+use Illuminate\Database\Eloquent\Collection;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -19,11 +21,6 @@ class extends Component
     public ?object $cta = null;
 
   /**
-   * @var \Illuminate\Support\Collection<int, \App\Models\SiteSetting>
-   */
-    public $cards;
-
-  /**
    * @var \Illuminate\Support\Collection<int, \App\Models\ShowcaseProject>
    */
     public $featuredProjects;
@@ -34,8 +31,16 @@ class extends Component
         $this->intro = $content->section('home.intro');
         $this->services = $content->section('home.services');
         $this->cta = $content->section('home.cta');
-        $this->cards = $content->sectionsByPrefix('home.cards');
         $this->featuredProjects = $content->featuredProjects();
+    }
+
+    /**
+     * @return Collection<int, \App\Models\SiteSetting>
+     */
+    #[Computed]
+    public function cards(): Collection
+    {
+        return app(SiteContentService::class)->sectionsByPrefix('home.cards');
     }
 };
 ?>
@@ -61,8 +66,8 @@ class extends Component
         />
     @endif
 
-    @if ($cards->isNotEmpty())
-        <x-frontend.section-cards :cards="$cards" />
+    @if ($this->cards->isNotEmpty())
+        <x-frontend.section-cards :cards="$this->cards" />
     @endif
 
     <x-frontend.featured-carousel :projects="$featuredProjects" />

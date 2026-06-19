@@ -123,3 +123,17 @@ test('frontend uses site brand name and favicon', function () {
     $response->assertSee('Marca Titon');
     $response->assertSee(Storage::disk('public')->url('site/brand/favicon.png'), false);
 });
+
+test('home page displays card section images', function () {
+    $setting = SiteSetting::query()->where('key', 'home.cards.nosotros')->firstOrFail();
+
+    Storage::disk('public')->put('site/card-nosotros.jpg', 'fake-card-image');
+
+    $setting->update(['image_path' => 'site/card-nosotros.jpg']);
+
+    app(SiteContentService::class)->forgetSection('home.cards.nosotros');
+
+    $this->get(route('home'))
+        ->assertOk()
+        ->assertSee(Storage::disk('public')->url('site/card-nosotros.jpg'), false);
+});
