@@ -1,6 +1,8 @@
 <?php
 
+use App\Models\SiteSetting;
 use App\Services\Frontend\SiteContentService;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -10,8 +12,6 @@ new
 #[Title('Proyectos')]
 class extends Component
 {
-    public ?object $header = null;
-
     public string $cityFilter = '';
 
   /**
@@ -26,7 +26,6 @@ class extends Component
 
     public function mount(SiteContentService $content): void
     {
-        $this->header = $content->section('projects.header');
         $this->cities = $content->publishedCities();
         $this->loadProjects($content);
     }
@@ -34,6 +33,12 @@ class extends Component
     public function updatedCityFilter(SiteContentService $content): void
     {
         $this->loadProjects($content);
+    }
+
+    #[Computed]
+    public function header(): ?SiteSetting
+    {
+        return app(SiteContentService::class)->section('projects.header');
     }
 
     protected function loadProjects(SiteContentService $content): void
@@ -46,8 +51,12 @@ class extends Component
 ?>
 
 <div>
-    @if ($header)
-        <x-frontend.page-header :title="$header->title" :subtitle="$header->subtitle" />
+    @if ($this->header)
+        <x-frontend.page-header
+            :title="$this->header->title"
+            :subtitle="$this->header->subtitle"
+            :image-url="$this->header->imageUrl()"
+        />
     @endif
 
     <section class="bg-white py-16">

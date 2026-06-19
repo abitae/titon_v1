@@ -1,9 +1,13 @@
 <?php
 
+use App\Models\SiteSetting;
+use App\Services\Frontend\SiteContentService;
 use Database\Seeders\SiteContentSeeder;
+use Illuminate\Support\Facades\Storage;
 
 beforeEach(function () {
     $this->seed(SiteContentSeeder::class);
+    Storage::fake('public');
 });
 
 test('home page displays seeded hero content', function () {
@@ -39,3 +43,21 @@ test('contact page displays contact form', function () {
     $response->assertSee('Envíanos un mensaje');
     $response->assertSee('infraestructura@titon.pe');
 });
+
+test('frontend pages display header section images', function (string $routeName, string $sectionKey, string $imagePath) {
+    $setting = SiteSetting::query()->where('key', $sectionKey)->firstOrFail();
+
+    Storage::disk('public')->put($imagePath, 'fake-header-image');
+
+    $setting->update(['image_path' => $imagePath]);
+
+    app(SiteContentService::class)->forgetSection($sectionKey);
+
+    $this->get(route($routeName))
+        ->assertOk()
+        ->assertSee(Storage::disk('public')->url($imagePath), false);
+})->with([
+    'about' => ['frontend.about', 'about.header', 'site/about-header.jpg'],
+    'projects' => ['frontend.projects', 'projects.header', 'site/projects-header.jpg'],
+    'contact' => ['frontend.contact', 'contact.header', 'site/contact-header.jpg'],
+]);

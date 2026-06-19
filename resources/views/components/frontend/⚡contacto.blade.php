@@ -1,8 +1,10 @@
 <?php
 
 use App\Models\ContactMessage;
+use App\Models\SiteSetting;
 use App\Services\Frontend\SiteContentService;
 use Flux\Flux;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -12,8 +14,6 @@ new
 #[Title('Contacto')]
 class extends Component
 {
-    public ?object $header = null;
-
     public ?object $contactInfo = null;
 
     public string $name = '';
@@ -28,8 +28,13 @@ class extends Component
 
     public function mount(SiteContentService $content): void
     {
-        $this->header = $content->section('contact.header');
         $this->contactInfo = $content->section('contact.info');
+    }
+
+    #[Computed]
+    public function header(): ?SiteSetting
+    {
+        return app(SiteContentService::class)->section('contact.header');
     }
 
     public function submit(): void
@@ -52,8 +57,12 @@ class extends Component
 ?>
 
 <div>
-    @if ($header)
-        <x-frontend.page-header :title="$header->title" :subtitle="$header->subtitle" />
+    @if ($this->header)
+        <x-frontend.page-header
+            :title="$this->header->title"
+            :subtitle="$this->header->subtitle"
+            :image-url="$this->header->imageUrl()"
+        />
     @endif
 
     <section class="bg-white py-16">
