@@ -20,6 +20,19 @@ test('home page displays seeded hero content', function () {
     $response->assertSee('Contacto');
 });
 
+test('frontend header displays mail access options', function () {
+    $response = $this->get(route('home'));
+
+    $response->assertOk();
+    $response->assertSee('data-test="frontend-mail-access-trigger"', false);
+    $response->assertSee('Acceso al correo');
+    $response->assertSee(config('frontend.webmail_url'), false);
+    $response->assertSee('data-test="frontend-webmail-link"', false);
+    $response->assertSee('data-test="frontend-outlook-manual-trigger"', false);
+    $response->assertSee(config('frontend.mail_host'));
+    $response->assertSee('Outlook de escritorio');
+});
+
 test('about page displays mission content', function () {
     $response = $this->get(route('frontend.about'));
 

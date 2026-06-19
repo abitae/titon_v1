@@ -81,6 +81,7 @@
                 </nav>
 
                 <div class="hidden items-center gap-3 md:flex">
+                    <x-frontend.mail-access />
                     @auth
                         <flux:button :href="route('dashboard')" variant="primary" wire:navigate>
                             Panel
@@ -112,6 +113,7 @@
                     <a href="{{ route('frontend.about') }}" class="text-sm font-medium text-slate-700" wire:navigate>Nosotros</a>
                     <a href="{{ route('frontend.projects') }}" class="text-sm font-medium text-slate-700" wire:navigate>Proyectos</a>
                     <a href="{{ route('frontend.contact') }}" class="text-sm font-medium text-slate-700" wire:navigate>Contacto</a>
+                    <x-frontend.mail-access full-width />
                     @auth
                         <flux:button :href="route('dashboard')" variant="primary" class="w-full" wire:navigate>Panel</flux:button>
                     @else
