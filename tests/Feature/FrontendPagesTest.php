@@ -20,18 +20,30 @@ test('home page displays seeded hero content', function () {
     $response->assertSee('Contacto');
 });
 
-test('frontend header displays mail access options', function () {
+test('frontend footer displays mail access options', function () {
     $response = $this->get(route('home'));
 
     $response->assertOk();
+    $response->assertSee('Correo corporativo');
     $response->assertSee('data-test="frontend-mail-access-trigger"', false);
     $response->assertSee('Acceso al correo');
     $response->assertSee(config('frontend.webmail_url'), false);
     $response->assertSee('data-test="frontend-webmail-link"', false);
     $response->assertSee('data-test="frontend-outlook-manual-trigger"', false);
-    $response->assertSee(asset(config('frontend.outlook_manual_path')), false);
+    $response->assertSee(route('frontend.outlook-manual'), false);
     $response->assertSee('Manual de Outlook');
     $response->assertSee('data-test="frontend-outlook-manual-pdf"', false);
+});
+
+test('outlook manual is served inline for browser viewing', function () {
+    $response = $this->get(route('frontend.outlook-manual'));
+
+    $response->assertOk()
+        ->assertHeader('content-type', 'application/pdf');
+
+    expect($response->headers->get('content-disposition'))
+        ->toContain('inline')
+        ->toContain('Manual_Configuracion_Outlook_TITON.pdf');
 });
 
 test('about page displays mission content', function () {

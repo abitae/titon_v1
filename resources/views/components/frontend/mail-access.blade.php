@@ -1,24 +1,32 @@
 @props([
-    'fullWidth' => false,
+    'footer' => false,
 ])
 
 @php
     $webmailUrl = config('frontend.webmail_url');
-    $outlookManualUrl = asset(config('frontend.outlook_manual_path'));
+    $outlookManualUrl = route('frontend.outlook-manual');
 @endphp
 
 <flux:modal.trigger name="frontend-mail-access">
-    <flux:button
-        variant="ghost"
-        :class="$fullWidth ? 'w-full justify-center' : ''"
-        aria-label="Correo"
-        data-test="frontend-mail-access-trigger"
-    >
-        <flux:icon name="envelope" class="size-5" />
-        @if ($fullWidth)
-            <span>Correo</span>
-        @endif
-    </flux:button>
+    @if ($footer)
+        <button
+            type="button"
+            class="inline-flex items-center gap-2 transition hover:text-white"
+            aria-label="Correo"
+            data-test="frontend-mail-access-trigger"
+        >
+            <flux:icon name="envelope" class="size-4" />
+            <span>Correo corporativo</span>
+        </button>
+    @else
+        <flux:button
+            variant="ghost"
+            aria-label="Correo"
+            data-test="frontend-mail-access-trigger"
+        >
+            <flux:icon name="envelope" class="size-5" />
+        </flux:button>
+    @endif
 </flux:modal.trigger>
 
 @once
