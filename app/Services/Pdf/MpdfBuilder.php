@@ -2,6 +2,7 @@
 
 namespace App\Services\Pdf;
 
+use App\Models\User;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Support\Str;
 use Mpdf\Mpdf;
@@ -11,21 +12,30 @@ class MpdfBuilder implements PdfReportBuilder
 {
     public function __construct(
         protected Factory $viewFactory,
+        protected PdfBrandingResolver $brandingResolver,
     ) {}
 
     /**
      * @param  array<string, mixed>  $data
      */
-    public function buildFromView(string $view, array $data = [], string $title = 'Reporte'): string
+    public function buildFromView(string $view, array $data = [], string $title = 'Reporte', ?User $actor = null, ?PdfBrandingData $branding = null): string
     {
+        $branding ??= $this->brandingResolver->resolve($actor);
+
         return $this->buildHtml(
-            $this->viewFactory->make($view, $data)->render(),
+            $this->viewFactory->make($view, [
+                ...$data,
+                'pdfBranding' => $branding,
+            ])->render(),
             $title,
+            $branding,
         );
     }
 
-    public function buildHtml(string $html, string $title = 'Reporte'): string
+    public function buildHtml(string $html, string $title = 'Reporte', ?PdfBrandingData $branding = null): string
     {
+        $branding ??= $this->brandingResolver->resolve();
+
         $tempDir = storage_path('app/mpdf-temp');
 
         if (! is_dir($tempDir)) {
@@ -35,22 +45,33 @@ class MpdfBuilder implements PdfReportBuilder
         $mpdf = new Mpdf([
             'mode' => 'utf-8',
             'format' => 'A4',
-            'margin_left' => 12,
-            'margin_right' => 12,
-            'margin_top' => 14,
-            'margin_bottom' => 14,
+            'margin_left' => $branding->marginLeft,
+            'margin_right' => $branding->marginRight,
+            'margin_top' => $branding->marginTop,
+            'margin_bottom' => $branding->marginBottom,
             'tempDir' => $tempDir,
         ]);
 
         $mpdf->SetTitle($title);
-        $mpdf->SetAuthor(config('app.name'));
+        $mpdf->SetAuthor($branding->displayTitle());
         $mpdf->SetCreator(config('app.name'));
         $mpdf->SetDisplayMode('fullpage');
+
+        if ($branding->hasHeader()) {
+            $mpdf->SetHTMLHeader(
+                $this->viewFactory->make('reports.pdf.partials.mpdf-header', [
+                    'branding' => $branding,
+                ])->render(),
+            );
+        }
+
         $mpdf->SetHTMLFooter(
-            '<div style="border-top:1px solid #cbd5e1;color:#64748b;font-size:10px;padding-top:6px;text-align:right;">'
-            .e($title).' | {PAGENO}'
-            .'</div>'
+            $this->viewFactory->make('reports.pdf.partials.mpdf-footer', [
+                'branding' => $branding,
+                'title' => $title,
+            ])->render(),
         );
+
         $mpdf->WriteHTML($html);
 
         return $mpdf->Output(Str::slug($title).'.pdf', Destination::STRING_RETURN);

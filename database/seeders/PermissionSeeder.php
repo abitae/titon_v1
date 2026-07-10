@@ -95,6 +95,15 @@ class PermissionSeeder extends Seeder
             Permission::findOrCreate($permissionName, 'web');
         }
 
+        $pdfFormatGranular = [
+            'pdf-formats.ver',
+            'pdf-formats.editar',
+        ];
+
+        foreach ($pdfFormatGranular as $permissionName) {
+            Permission::findOrCreate($permissionName, 'web');
+        }
+
         $roles = [
             'Super Admin' => Permission::query()->pluck('name')->all(),
             'Gerencia' => [
@@ -140,6 +149,8 @@ class PermissionSeeder extends Seeder
                 'catalogs.crear',
                 'catalogs.editar',
                 'catalogs.eliminar',
+                'pdf-formats.ver',
+                'pdf-formats.editar',
                 'documents.ver',
                 'documents.crear',
                 'documents.editar',

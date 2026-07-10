@@ -43,66 +43,7 @@
                     <x-platform.status-badge :value="$order->status" size="xs" />
                 </td>
                 <td class="whitespace-nowrap px-1.5 py-1">
-                    <div class="flex items-center justify-end gap-0">
-                        <flux:tooltip content="{{ $order->hasAttachedQuotationPdf() ? 'Ver PDF con cotización adjunta' : 'Ver PDF' }}">
-                            <flux:button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                icon="eye"
-                                wire:click="openPdfModal({{ $order->id }})"
-                                class="!size-7 !min-h-0 !p-0 !text-cyan-700 hover:!text-cyan-800 dark:!text-cyan-300 dark:hover:!text-cyan-200"
-                                aria-label="Ver PDF"
-                            />
-                        </flux:tooltip>
-                        <flux:tooltip content="Gestionar">
-                            <flux:button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                icon="pencil-square"
-                                wire:click="openDetailModal({{ $order->id }})"
-                                class="!size-7 !min-h-0 !p-0"
-                                aria-label="Gestionar"
-                            />
-                        </flux:tooltip>
-                        @if ($order->accountsPayable)
-                            <flux:tooltip content="Cuenta por pagar">
-                                <flux:button
-                                    variant="ghost"
-                                    size="sm"
-                                    icon="banknotes"
-                                    href="{{ route('accounts-payable.show', $order->accountsPayable) }}"
-                                    wire:navigate
-                                    class="!size-7 !min-h-0 !p-0 !text-violet-700 hover:!text-violet-800 dark:!text-violet-300 dark:hover:!text-violet-200"
-                                    aria-label="Ver cuenta por pagar"
-                                />
-                            </flux:tooltip>
-                        @else
-                            <flux:tooltip content="Conformidad">
-                                <flux:button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    icon="clipboard-document-check"
-                                    wire:click="openConformityModal({{ $order->id }})"
-                                    class="!size-7 !min-h-0 !p-0 !text-emerald-600 hover:!text-emerald-700 dark:!text-emerald-400 dark:hover:!text-emerald-300"
-                                    aria-label="Conformidad"
-                                />
-                            </flux:tooltip>
-                        @endif
-                        <flux:tooltip content="Descargar PDF">
-                            <flux:button
-                                variant="ghost"
-                                size="sm"
-                                icon="arrow-down-tray"
-                                href="{{ route('purchases.orders.pdf', $order) }}"
-                                target="_blank"
-                                class="!size-7 !min-h-0 !p-0"
-                                aria-label="Descargar PDF"
-                            />
-                        </flux:tooltip>
-                    </div>
+                    <x-platform.action-buttons :edit="'openDetailModal('.$order->id.')'" />
                 </td>
             </tr>
         @empty

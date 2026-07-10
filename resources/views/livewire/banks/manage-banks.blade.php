@@ -43,15 +43,9 @@
                         <x-platform.status-badge :value="$account->is_active ? 'active' : 'inactive'" size="xs" />
                     </td>
                     <td class="whitespace-nowrap px-1.5 py-1 text-end">
-                        <div class="flex justify-end gap-1">
-                            @can('bancos.crear')
-                                <flux:button type="button" wire:click="openMovementModal({{ $account->id }}, 'deposit')" variant="ghost" size="sm" class="!h-7 !px-2 !text-[11px]">Depósito</flux:button>
-                                <flux:button type="button" wire:click="openMovementModal({{ $account->id }}, 'withdrawal')" variant="ghost" size="sm" class="!h-7 !px-2 !text-[11px]">Retiro</flux:button>
-                            @endcan
-                            @can('bancos.editar')
-                                <flux:button type="button" wire:click="openEditAccountModal({{ $account->id }})" variant="ghost" size="sm" class="!h-7 !px-2 !text-[11px]">Editar</flux:button>
-                            @endcan
-                        </div>
+                        @can('bancos.editar')
+                            <x-platform.action-buttons :edit="'openEditAccountModal('.$account->id.')'" />
+                        @endcan
                     </td>
                 </tr>
             @empty

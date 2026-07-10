@@ -22,7 +22,7 @@ class UserSeeder extends Seeder
 
         $admin = User::query()->create([
             'name' => 'Admin Titon',
-            'email' => 'admin@titon.com',
+            'email' => 'admin@open9.dev',
             'password' => Hash::make('password'),
         ]);
 

@@ -11,7 +11,7 @@
     }
 
     .hero {
-        background: linear-gradient(135deg, #0f172a 0%, #164e63 100%);
+        background: linear-gradient(135deg, {{ ($pdfBranding ?? null)?->primaryColor ?? '#0f172a' }} 0%, {{ ($pdfBranding ?? null)?->secondaryColor ?? '#164e63' }} 100%);
         border-radius: 16px;
         color: #f8fafc;
         margin-bottom: 18px;

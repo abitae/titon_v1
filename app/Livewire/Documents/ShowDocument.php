@@ -11,8 +11,8 @@ use App\Models\CatalogItem;
 use App\Models\Document;
 use App\Models\DocumentApproval;
 use App\Models\DocumentObservation;
-use App\Models\Project;
 use App\Services\Audit\UserAuditLogger;
+use App\Services\Documents\DocumentWorkflowActions;
 use App\Services\Documents\DocumentWorkflowTimeline;
 use Illuminate\Contracts\View\View;
 use Livewire\Component;
@@ -52,65 +52,65 @@ class ShowDocument extends Component
 
     public array $movementAttachments = [];
 
+    public ?string $actionModal = null;
+
+    /** @var list<string> */
+    protected array $documentRelations = [
+        'project',
+        'documentType',
+        'originArea',
+        'destinationArea',
+        'createdByUser',
+        'currentUser',
+        'movements.user',
+        'movements.fromArea',
+        'movements.toArea',
+        'movements.fromUser',
+        'movements.toUser',
+        'movements.media',
+        'movementObservations.user',
+        'approvals.user',
+        'media',
+        'company',
+    ];
+
     public function mount(Document $document): void
     {
-        $this->document = $document->load([
-            'project',
-            'documentType',
-            'originArea',
-            'destinationArea',
-            'createdByUser',
-            'currentUser',
-            'movements.user',
-            'movements.fromArea',
-            'movements.toArea',
-            'movements.fromUser',
-            'movements.toUser',
-            'movements.media',
-            'movementObservations.user',
-            'approvals.user',
-            'media',
-        ]);
+        $this->document = $document->load($this->documentRelations);
 
         $this->derive_destination_area_id = $this->document->destination_area_id;
         $this->derive_current_user_id = $this->document->current_user_id;
         $this->refreshExpiredDocument();
     }
 
-    public function render(DocumentWorkflowTimeline $documentWorkflowTimeline): View
+    public function render(DocumentWorkflowTimeline $documentWorkflowTimeline, DocumentWorkflowActions $workflowActions): View
     {
-        $this->document->load([
-            'project',
-            'documentType',
-            'originArea',
-            'destinationArea',
-            'createdByUser',
-            'currentUser',
-            'movements.user',
-            'movements.fromArea',
-            'movements.toArea',
-            'movements.fromUser',
-            'movements.toUser',
-            'movements.media',
-            'movementObservations.user',
-            'approvals.user',
-            'media',
-        ]);
-
         return view('livewire.documents.show-document', [
             'timeline' => $documentWorkflowTimeline->build($this->document),
-            'areas' => CatalogItem::query()->ofType(CatalogType::Area)->where('is_active', true)->orderBy('name')->get(),
-            'users' => $this->document->company?->users()->wherePivot('active', true)->orderBy('name')->get() ?? collect(),
-            'projects' => Project::query()->orderBy('name')->get(),
+            'workflowActions' => $workflowActions->available($this->document, auth()->user()),
+            'areas' => CatalogItem::query()->ofType(CatalogType::Area)->where('is_active', true)->orderBy('name')->get(['id', 'name']),
+            'users' => $this->document->company?->users()->wherePivot('active', true)->orderBy('name')->get(['users.id', 'users.name']) ?? collect(),
         ])->layout('layouts.app', ['title' => $this->title]);
     }
 
-    public function receiveDocument(TransitionDocument $transitionDocument): void
+    public function openActionModal(string $action, DocumentWorkflowActions $workflowActions): void
     {
-        abort_unless(auth()->user()->can('documents.editar'), 403);
+        abort_unless(in_array($action, $workflowActions->available($this->document, auth()->user()), true), 403);
+
+        $this->actionModal = $action;
+    }
+
+    public function closeActionModal(): void
+    {
+        $this->actionModal = null;
+    }
+
+    public function receiveDocument(TransitionDocument $transitionDocument, DocumentWorkflowActions $workflowActions): void
+    {
+        abort_unless(in_array('receive', $workflowActions->available($this->document, auth()->user()), true), 403);
         $this->validateMovementAttachments();
 
-        $this->document = $transitionDocument->handle(
+        $this->afterTransition($transitionDocument->handle(
             document: $this->document,
             actor: auth()->user(),
             action: DocumentMovementType::Received,
@@ -121,43 +121,49 @@ class ShowDocument extends Component
             ],
             notes: 'Documento recibido por el usuario actual.',
             attachments: $this->movementAttachments,
-        );
+        ));
 
         $this->movementAttachments = [];
+        $this->closeActionModal();
         $this->successToast('Documento recibido correctamente.');
     }
 
-    public function sendToReview(TransitionDocument $transitionDocument): void
+    public function sendToReview(TransitionDocument $transitionDocument, DocumentWorkflowActions $workflowActions): void
     {
-        abort_unless(auth()->user()->can('documents.editar'), 403);
+        abort_unless(in_array('process', $workflowActions->available($this->document, auth()->user()), true), 403);
         $this->validateMovementAttachments();
 
-        $this->document = $transitionDocument->handle(
+        $this->afterTransition($transitionDocument->handle(
             document: $this->document,
             actor: auth()->user(),
             action: DocumentMovementType::Derived,
             status: DocumentStatus::InProgress,
             notes: $this->process_notes !== '' ? $this->process_notes : 'Documento marcado en proceso.',
             attachments: $this->movementAttachments,
-        );
+        ));
 
         $this->process_notes = '';
         $this->movementAttachments = [];
+        $this->closeActionModal();
         $this->successToast('Documento enviado a revision correctamente.');
     }
 
-    public function deriveDocument(TransitionDocument $transitionDocument): void
+    public function deriveDocument(TransitionDocument $transitionDocument, DocumentWorkflowActions $workflowActions): void
     {
-        abort_unless(auth()->user()->can('documents.editar'), 403);
+        abort_unless(in_array('derive', $workflowActions->available($this->document, auth()->user()), true), 403);
         $this->validateMovementAttachments();
 
-        $validated = $this->validate([
+        $validated = $this->validateWithToastFeedback([
             'derive_destination_area_id' => ['required', 'integer', 'exists:catalog_items,id'],
             'derive_current_user_id' => ['required', 'integer', 'exists:users,id'],
             'derive_notes' => ['nullable', 'string'],
+        ], [], [
+            'derive_destination_area_id' => 'area destino',
+            'derive_current_user_id' => 'responsable',
+            'derive_notes' => 'nota',
         ]);
 
-        $this->document = $transitionDocument->handle(
+        $this->afterTransition($transitionDocument->handle(
             document: $this->document,
             actor: auth()->user(),
             action: DocumentMovementType::Derived,
@@ -169,20 +175,23 @@ class ShowDocument extends Component
             ],
             notes: $validated['derive_notes'] ?: 'Documento derivado a una nueva area.',
             attachments: $this->movementAttachments,
-        );
+        ));
 
         $this->derive_notes = '';
         $this->movementAttachments = [];
+        $this->closeActionModal();
         $this->successToast('Documento derivado correctamente.');
     }
 
-    public function observeDocument(TransitionDocument $transitionDocument): void
+    public function observeDocument(TransitionDocument $transitionDocument, DocumentWorkflowActions $workflowActions): void
     {
-        abort_unless(auth()->user()->can('documents.editar'), 403);
+        abort_unless(in_array('observe', $workflowActions->available($this->document, auth()->user()), true), 403);
         $this->validateMovementAttachments();
 
-        $validated = $this->validate([
+        $validated = $this->validateWithToastFeedback([
             'observation' => ['required', 'string'],
+        ], [], [
+            'observation' => 'observacion',
         ]);
 
         DocumentObservation::query()->create([
@@ -193,23 +202,24 @@ class ShowDocument extends Component
             'status_after' => DocumentStatus::Observed->value(),
         ]);
 
-        $this->document = $transitionDocument->handle(
+        $this->afterTransition($transitionDocument->handle(
             document: $this->document,
             actor: auth()->user(),
             action: DocumentMovementType::Observed,
             status: DocumentStatus::Observed,
             notes: $validated['observation'],
             attachments: $this->movementAttachments,
-        );
+        ));
 
         $this->observation = '';
         $this->movementAttachments = [];
+        $this->closeActionModal();
         $this->warningToast('Observacion registrada correctamente.');
     }
 
-    public function approveDocument(TransitionDocument $transitionDocument): void
+    public function approveDocument(TransitionDocument $transitionDocument, DocumentWorkflowActions $workflowActions): void
     {
-        abort_unless(auth()->user()->can('documents.aprobar'), 403);
+        abort_unless(in_array('approve', $workflowActions->available($this->document, auth()->user()), true), 403);
         $this->validateMovementAttachments();
 
         DocumentApproval::query()->create([
@@ -221,27 +231,30 @@ class ShowDocument extends Component
             'resolved_at' => now(),
         ]);
 
-        $this->document = $transitionDocument->handle(
+        $this->afterTransition($transitionDocument->handle(
             document: $this->document,
             actor: auth()->user(),
             action: DocumentMovementType::Approved,
             status: DocumentStatus::Approved,
             notes: $this->approval_comments ?: 'Documento aprobado.',
             attachments: $this->movementAttachments,
-        );
+        ));
 
         $this->approval_comments = '';
         $this->movementAttachments = [];
+        $this->closeActionModal();
         $this->successToast('Documento aprobado correctamente.');
     }
 
-    public function rejectDocument(TransitionDocument $transitionDocument): void
+    public function rejectDocument(TransitionDocument $transitionDocument, DocumentWorkflowActions $workflowActions): void
     {
-        abort_unless(auth()->user()->can('documents.aprobar'), 403);
+        abort_unless(in_array('reject', $workflowActions->available($this->document, auth()->user()), true), 403);
         $this->validateMovementAttachments();
 
-        $validated = $this->validate([
+        $validated = $this->validateWithToastFeedback([
             'rejection_comments' => ['required', 'string'],
+        ], [], [
+            'rejection_comments' => 'motivo de rechazo',
         ]);
 
         DocumentApproval::query()->create([
@@ -253,26 +266,27 @@ class ShowDocument extends Component
             'resolved_at' => now(),
         ]);
 
-        $this->document = $transitionDocument->handle(
+        $this->afterTransition($transitionDocument->handle(
             document: $this->document,
             actor: auth()->user(),
             action: DocumentMovementType::Rejected,
             status: DocumentStatus::Rejected,
             notes: $validated['rejection_comments'],
             attachments: $this->movementAttachments,
-        );
+        ));
 
         $this->rejection_comments = '';
         $this->movementAttachments = [];
+        $this->closeActionModal();
         $this->warningToast('Documento rechazado correctamente.');
     }
 
-    public function attendDocument(TransitionDocument $transitionDocument): void
+    public function attendDocument(TransitionDocument $transitionDocument, DocumentWorkflowActions $workflowActions): void
     {
-        abort_unless(auth()->user()->can('documents.editar'), 403);
+        abort_unless(in_array('attend', $workflowActions->available($this->document, auth()->user()), true), 403);
         $this->validateMovementAttachments();
 
-        $this->document = $transitionDocument->handle(
+        $this->afterTransition($transitionDocument->handle(
             document: $this->document,
             actor: auth()->user(),
             action: DocumentMovementType::Attended,
@@ -282,19 +296,20 @@ class ShowDocument extends Component
             ],
             notes: $this->process_notes !== '' ? $this->process_notes : 'Documento atendido.',
             attachments: $this->movementAttachments,
-        );
+        ));
 
         $this->process_notes = '';
         $this->movementAttachments = [];
+        $this->closeActionModal();
         $this->successToast('Documento atendido correctamente.');
     }
 
-    public function archiveDocument(TransitionDocument $transitionDocument): void
+    public function archiveDocument(TransitionDocument $transitionDocument, DocumentWorkflowActions $workflowActions): void
     {
-        abort_unless(auth()->user()->can('documents.editar'), 403);
+        abort_unless(in_array('archive', $workflowActions->available($this->document, auth()->user()), true), 403);
         $this->validateMovementAttachments();
 
-        $this->document = $transitionDocument->handle(
+        $this->afterTransition($transitionDocument->handle(
             document: $this->document,
             actor: auth()->user(),
             action: DocumentMovementType::Archived,
@@ -304,42 +319,46 @@ class ShowDocument extends Component
             ],
             notes: $this->archive_notes !== '' ? $this->archive_notes : 'Documento archivado.',
             attachments: $this->movementAttachments,
-        );
+        ));
 
         $this->archive_notes = '';
         $this->movementAttachments = [];
+        $this->closeActionModal();
         $this->successToast('Documento archivado correctamente.');
     }
 
-    public function reopenDocument(TransitionDocument $transitionDocument): void
+    public function reopenDocument(TransitionDocument $transitionDocument, DocumentWorkflowActions $workflowActions): void
     {
-        abort_unless(auth()->user()->can('documents.editar'), 403);
+        abort_unless(in_array('reopen', $workflowActions->available($this->document, auth()->user()), true), 403);
         $this->validateMovementAttachments();
 
-        $this->document = $transitionDocument->handle(
+        $this->afterTransition($transitionDocument->handle(
             document: $this->document,
             actor: auth()->user(),
             action: DocumentMovementType::Reopened,
             status: DocumentStatus::Received,
             notes: $this->reopen_notes !== '' ? $this->reopen_notes : 'Documento reabierto para seguimiento.',
             attachments: $this->movementAttachments,
-        );
+        ));
 
         $this->reopen_notes = '';
         $this->movementAttachments = [];
+        $this->closeActionModal();
         $this->successToast('Documento reabierto correctamente.');
     }
 
-    public function cancelDocument(TransitionDocument $transitionDocument): void
+    public function cancelDocument(TransitionDocument $transitionDocument, DocumentWorkflowActions $workflowActions): void
     {
-        abort_unless(auth()->user()->can('documents.editar'), 403);
+        abort_unless(in_array('cancel', $workflowActions->available($this->document, auth()->user()), true), 403);
         $this->validateMovementAttachments();
 
-        $validated = $this->validate([
+        $validated = $this->validateWithToastFeedback([
             'annulment_reason' => ['required', 'string'],
+        ], [], [
+            'annulment_reason' => 'motivo de anulacion',
         ]);
 
-        $this->document = $transitionDocument->handle(
+        $this->afterTransition($transitionDocument->handle(
             document: $this->document,
             actor: auth()->user(),
             action: DocumentMovementType::Cancelled,
@@ -350,29 +369,31 @@ class ShowDocument extends Component
             ],
             notes: $validated['annulment_reason'],
             attachments: $this->movementAttachments,
-        );
+        ));
 
         $this->annulment_reason = '';
         $this->movementAttachments = [];
+        $this->closeActionModal();
         $this->warningToast('Documento anulado correctamente.');
     }
 
-    public function closeDocument(TransitionDocument $transitionDocument): void
+    public function closeDocument(TransitionDocument $transitionDocument, DocumentWorkflowActions $workflowActions): void
     {
-        abort_unless(auth()->user()->can('documents.editar'), 403);
+        abort_unless(in_array('close', $workflowActions->available($this->document, auth()->user()), true), 403);
         $this->validateMovementAttachments();
 
-        $this->document = $transitionDocument->handle(
+        $this->afterTransition($transitionDocument->handle(
             document: $this->document,
             actor: auth()->user(),
             action: DocumentMovementType::Closed,
             status: DocumentStatus::Closed,
             notes: $this->close_notes ?: 'Documento cerrado.',
             attachments: $this->movementAttachments,
-        );
+        ));
 
         $this->close_notes = '';
         $this->movementAttachments = [];
+        $this->closeActionModal();
         $this->successToast('Documento cerrado correctamente.');
     }
 
@@ -380,8 +401,10 @@ class ShowDocument extends Component
     {
         abort_unless(auth()->user()->can('documents.editar'), 403);
 
-        $this->validate([
+        $this->validateWithToastFeedback([
             'newAttachments.*' => ['required', 'file', 'max:10240'],
+        ], [], [
+            'newAttachments.*' => 'adjunto',
         ]);
 
         foreach ($this->newAttachments as $uploadedFile) {
@@ -407,8 +430,21 @@ class ShowDocument extends Component
         );
 
         $this->newAttachments = [];
-        $this->document->refresh();
+        $this->document->load($this->documentRelations);
         $this->successToast('Adjuntos cargados correctamente.');
+    }
+
+    protected function refreshDocument(): void
+    {
+        $this->document->refresh();
+        $this->document->load($this->documentRelations);
+    }
+
+    protected function afterTransition(Document $document): Document
+    {
+        $this->document = $document->load($this->documentRelations);
+
+        return $this->document;
     }
 
     protected function refreshExpiredDocument(): void

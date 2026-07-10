@@ -1,7 +1,7 @@
 @php
-    $siteContent = app(\App\Services\Frontend\SiteContentService::class);
-    $applicationName = $siteName ?? $siteContent->brandName();
-    $resolvedFaviconUrl = $faviconUrl ?? $siteContent->brandFaviconUrl();
+    $branding = app(\App\Services\Branding\PlatformBranding::class);
+    $applicationName = $siteName ?? $branding->name();
+    $resolvedFaviconUrl = $faviconUrl ?? $branding->faviconUrl();
 @endphp
 
 <meta charset="utf-8" />

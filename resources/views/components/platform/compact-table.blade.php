@@ -1,4 +1,14 @@
-@props(['headers' => []])
+@props(['headers' => [], 'dense' => false])
+
+@php
+    $headerCellClass = $dense
+        ? 'px-2 py-1 text-[9px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400'
+        : 'px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400';
+
+    $bodyClass = $dense
+        ? 'divide-y divide-slate-200 dark:divide-slate-800 [&_td]:px-2 [&_td]:py-1 [&_td]:align-middle [&_td]:text-[11px] [&_td]:text-slate-700 dark:[&_td]:text-slate-200'
+        : 'divide-y divide-slate-200 dark:divide-slate-800 [&_td]:px-2.5 [&_td]:py-1.5 [&_td]:align-middle [&_td]:text-xs [&_td]:text-slate-700 dark:[&_td]:text-slate-200';
+@endphp
 
 <div {{ $attributes->class('overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900') }}>
     <div class="overflow-x-auto">
@@ -8,7 +18,7 @@
                     <tr class="text-left">
                         @foreach ($headers as $header)
                             <th @class([
-                                'px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400',
+                                $headerCellClass,
                                 'text-right' => $header === '' || str($header)->endsWith('.'),
                             ])>{{ $header }}</th>
                         @endforeach
@@ -16,7 +26,7 @@
                 </thead>
             @endif
 
-            <tbody class="divide-y divide-slate-200 dark:divide-slate-800 [&_td]:px-2.5 [&_td]:py-1.5 [&_td]:align-middle [&_td]:text-xs [&_td]:text-slate-700 dark:[&_td]:text-slate-200">
+            <tbody class="{{ $bodyClass }}">
                 {{ $slot }}
             </tbody>
         </table>

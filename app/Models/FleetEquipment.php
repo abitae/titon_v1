@@ -28,6 +28,7 @@ class FleetEquipment extends Model implements Auditable, HasMedia
         'work_project_id',
         'responsible_user_id',
         'internal_code',
+        'equipment_type_id',
         'equipment_type',
         'name',
         'brand',
@@ -55,6 +56,19 @@ class FleetEquipment extends Model implements Auditable, HasMedia
             'hour_meter' => 'decimal:2',
             'acquisition_date' => 'date',
         ];
+    }
+
+    /**
+     * @return BelongsTo<CatalogItem, $this>
+     */
+    public function equipmentType(): BelongsTo
+    {
+        return $this->belongsTo(CatalogItem::class, 'equipment_type_id');
+    }
+
+    public function typeLabel(): string
+    {
+        return $this->equipmentType?->name ?? $this->equipment_type ?? '—';
     }
 
     /**

@@ -62,7 +62,7 @@ class FleetEquipmentsExport implements FromCollection, WithHeadings, WithMapping
             $equipment->serial_number,
             $equipment->plate,
             $equipment->city,
-            $equipment->workProject?->code,
+            trim(($equipment->workProject?->code ?? '').($equipment->workProject?->name ? ' — '.$equipment->workProject->name : '')) ?: null,
             $equipment->responsibleUser?->name,
             $equipment->operational_status,
             $equipment->odometer_km !== null ? (string) $equipment->odometer_km : '',

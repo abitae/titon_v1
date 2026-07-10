@@ -138,6 +138,27 @@ class MechanicalDashboardAnalytics
                     ],
                 ],
             ],
+            'work_orders_by_status' => [
+                'type' => 'bar',
+                'data' => [
+                    'labels' => array_map(
+                        static fn (FleetWorkOrderStatus $status): string => $status->label(),
+                        FleetWorkOrderStatus::cases(),
+                    ),
+                    'datasets' => [
+                        [
+                            'label' => 'OT abiertas y cerradas',
+                            'data' => array_map(
+                                static fn (FleetWorkOrderStatus $status): int => FleetWorkOrder::query()
+                                    ->where('status', $status->value())
+                                    ->count(),
+                                FleetWorkOrderStatus::cases(),
+                            ),
+                            'backgroundColor' => '#38bdf8',
+                        ],
+                    ],
+                ],
+            ],
         ];
 
         return [

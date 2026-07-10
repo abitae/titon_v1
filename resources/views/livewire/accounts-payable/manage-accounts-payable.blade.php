@@ -41,19 +41,7 @@
                     <x-platform.status-badge :value="$account->status" size="xs" />
                 </td>
                 <td class="whitespace-nowrap px-1.5 py-1">
-                    <div class="flex items-center justify-end">
-                        <flux:tooltip content="Detalle">
-                            <flux:button
-                                variant="ghost"
-                                size="sm"
-                                icon="eye"
-                                href="{{ route('accounts-payable.show', $account) }}"
-                                wire:navigate
-                                class="!size-7 !min-h-0 !p-0 !text-cyan-700 hover:!text-cyan-800 dark:!text-cyan-300 dark:hover:!text-cyan-200"
-                                aria-label="Ver detalle"
-                            />
-                        </flux:tooltip>
-                    </div>
+                    <x-platform.action-buttons :edit-href="route('accounts-payable.show', $account)" />
                 </td>
             </tr>
         @empty

@@ -18,6 +18,7 @@ use App\Models\PurchaseRequest;
 use App\Models\Supplier;
 use App\Models\SupplierQuotation;
 use App\Services\Purchases\QuotationComparisonSummary;
+use App\Support\DefaultDate;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
@@ -88,7 +89,8 @@ class ManageSupplierQuotations extends Component
     {
         $this->purchaseRequest = $purchaseRequest->load(['project', 'items', 'comparison']);
         $this->bootWinningQuotationSelection($this->purchaseRequest);
-        $this->quotation_date = now()->toDateString();
+        $this->quotation_date = DefaultDate::today();
+        $this->valid_until = DefaultDate::daysAhead(30);
         $this->items = $this->itemsFromRequirement();
     }
 
@@ -374,7 +376,8 @@ class ManageSupplierQuotations extends Component
         $this->supplier_search = '';
 
         $this->capture_mode = QuotationCaptureMode::Form->value();
-        $this->quotation_date = now()->toDateString();
+        $this->quotation_date = DefaultDate::today();
+        $this->valid_until = DefaultDate::daysAhead(30);
         $this->currency = CurrencyCode::PEN->value();
         $this->tax = '0';
         $this->subtotal = '0';

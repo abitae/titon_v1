@@ -10,6 +10,7 @@ use App\Enums\SupplierContractStatus;
 use App\Models\PurchaseOrder;
 use App\Models\SupplierContract;
 use App\Services\Audit\UserAuditLogger;
+use App\Support\DefaultDate;
 use Illuminate\Contracts\View\View;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
@@ -71,6 +72,15 @@ class ManageSupplierContracts extends Component
         $this->selectedContract = SupplierContract::query()
             ->with(['project', 'supplier', 'purchaseOrder', 'media', 'approvedByUser', 'cancelledByUser'])
             ->findOrFail($supplierContractId);
+
+        if ($this->selectedContract->start_date === null) {
+            $this->selectedContract->start_date = DefaultDate::today();
+        }
+
+        if ($this->selectedContract->end_date === null) {
+            $this->selectedContract->end_date = DefaultDate::monthsAhead();
+        }
+
         $this->showDetailModal = true;
     }
 

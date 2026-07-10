@@ -12,6 +12,7 @@ use App\Concerns\ViewsPurchaseOrderPdf;
 use App\Enums\ConformityResult;
 use App\Enums\OrderStatus;
 use App\Models\PurchaseOrder;
+use App\Support\DefaultDate;
 use Illuminate\Contracts\View\View;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
@@ -77,6 +78,11 @@ class ManagePurchaseOrders extends Component
         $this->selectedOrder = PurchaseOrder::query()
             ->with(['project', 'supplier', 'quotation', 'items', 'contract', 'approvedByUser', 'cancelledByUser'])
             ->findOrFail($purchaseOrderId);
+
+        if ($this->selectedOrder->issue_date === null) {
+            $this->selectedOrder->issue_date = DefaultDate::today();
+        }
+
         $this->detailModalTab = 'datos';
         $this->showDetailModal = true;
     }
@@ -177,7 +183,7 @@ class ManagePurchaseOrders extends Component
 
         $this->conformity_result = $existingConformity?->result ?? ConformityResult::Conform->value();
         $this->conformity_observation = $existingConformity?->observation ?? '';
-        $this->conformity_date = $existingConformity?->conformity_date?->format('Y-m-d') ?? now()->toDateString();
+        $this->conformity_date = $existingConformity?->conformity_date?->format('Y-m-d') ?? DefaultDate::today();
         $this->conformity_confirmation = '';
         $this->showConformityModal = true;
     }
@@ -261,7 +267,7 @@ class ManagePurchaseOrders extends Component
         $this->conformityOrder = null;
         $this->conformity_result = ConformityResult::Conform->value();
         $this->conformity_observation = '';
-        $this->conformity_date = now()->toDateString();
+        $this->conformity_date = DefaultDate::today();
         $this->conformity_confirmation = '';
         $this->resetValidation([
             'conformity_result',

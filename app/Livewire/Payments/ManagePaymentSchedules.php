@@ -10,6 +10,7 @@ use App\Models\Company;
 use App\Models\ContractPaymentSchedule;
 use App\Models\SupplierContract;
 use App\Services\Correlatives\IssueCompanyCorrelativeCode;
+use App\Support\DefaultDate;
 use Illuminate\Contracts\View\View;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
@@ -39,7 +40,7 @@ class ManagePaymentSchedules extends Component
     public function mount(SupplierContract $supplierContract, RefreshPaymentScheduleStatus $refreshPaymentScheduleStatus): void
     {
         $this->supplierContract = $supplierContract->load(['project', 'supplier']);
-        $this->due_date = now()->toDateString();
+        $this->due_date = DefaultDate::today();
         $this->refreshScheduleStatuses($refreshPaymentScheduleStatus);
     }
 
@@ -152,7 +153,7 @@ class ManagePaymentSchedules extends Component
         ]);
 
         $this->installment_number = (string) ($this->supplierContract->paymentSchedules()->count() + 1);
-        $this->due_date = now()->toDateString();
+        $this->due_date = DefaultDate::today();
         $this->scheduled_amount = '0';
         $this->status = ContractPaymentScheduleStatus::Pending->value();
         $this->showFormModal = false;

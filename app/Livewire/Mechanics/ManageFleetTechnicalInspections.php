@@ -3,11 +3,14 @@
 namespace App\Livewire\Mechanics;
 
 use App\Actions\Companies\ResolveCurrentCompany;
+use App\Concerns\InteractsWithFleetEquipmentSearch;
 use App\Concerns\InteractsWithToast;
 use App\Enums\CorrelativeSubject;
+use App\Enums\FleetTechnicalInspectionStatus;
 use App\Models\FleetEquipment;
 use App\Models\FleetTechnicalInspection;
 use App\Services\Correlatives\IssueCompanyCorrelativeCode;
+use App\Support\DefaultDate;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -18,9 +21,13 @@ use Livewire\WithPagination;
 
 class ManageFleetTechnicalInspections extends Component
 {
-    use InteractsWithToast, WithFileUploads, WithPagination;
+    use InteractsWithFleetEquipmentSearch, InteractsWithToast, WithFileUploads, WithPagination;
 
     public string $title = 'Revisiones tecnicas';
+
+    public string $search = '';
+
+    public string $statusFilter = '';
 
     public bool $showFormModal = false;
 
@@ -47,15 +54,34 @@ class ManageFleetTechnicalInspections extends Component
         abort_unless(auth()->user()?->can('revisiones.ver'), 403);
     }
 
+    public function updatingSearch(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingStatusFilter(): void
+    {
+        $this->resetPage();
+    }
+
     public function render(): View
     {
         return view('livewire.mechanics.manage-fleet-technical-inspections', [
             'rows' => FleetTechnicalInspection::query()
                 ->with(['equipment', 'responsibleUser'])
+                ->when($this->search !== '', fn ($query) => $query->where(function ($query): void {
+                    $query->where('result', 'like', '%'.$this->search.'%')
+                        ->orWhere('inspection_center', 'like', '%'.$this->search.'%')
+                        ->orWhereHas('equipment', fn ($equipment) => $equipment
+                            ->where('internal_code', 'like', '%'.$this->search.'%')
+                            ->orWhere('name', 'like', '%'.$this->search.'%'));
+                }))
+                ->when($this->statusFilter !== '', fn ($query) => $query->where('status', $this->statusFilter))
                 ->latest('due_at')
                 ->paginate(12),
-            'equipments' => FleetEquipment::query()->orderBy('internal_code')->get(),
+            'equipmentOptions' => $this->fleetEquipmentSelectOptions(),
             'responsibleUsers' => $this->responsibleUsers(),
+            'statusOptions' => FleetTechnicalInspectionStatus::cases(),
         ])->layout('layouts.app', ['title' => $this->title]);
     }
 
@@ -70,6 +96,7 @@ class ManageFleetTechnicalInspections extends Component
             return;
         }
 
+        $this->syncFleetEquipmentSearch();
         $this->showFormModal = true;
     }
 
@@ -86,6 +113,7 @@ class ManageFleetTechnicalInspections extends Component
         $this->responsible_user_id = $row->responsible_user_id;
         $this->observations = (string) ($row->observations ?? '');
         $this->certificate_files = [];
+        $this->syncFleetEquipmentSearch();
         $this->showFormModal = true;
     }
 
@@ -154,6 +182,9 @@ class ManageFleetTechnicalInspections extends Component
     protected function resetForm(): void
     {
         $this->reset(['editingId', 'fleet_equipment_id', 'reviewed_at', 'due_at', 'result', 'inspection_center', 'responsible_user_id', 'observations', 'certificate_files']);
+        $this->reviewed_at = DefaultDate::today();
+        $this->due_at = DefaultDate::yearsAhead();
+        $this->resetFleetEquipmentSearch();
         $this->showFormModal = false;
     }
 

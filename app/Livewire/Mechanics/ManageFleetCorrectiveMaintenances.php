@@ -3,12 +3,14 @@
 namespace App\Livewire\Mechanics;
 
 use App\Actions\Companies\ResolveCurrentCompany;
+use App\Concerns\InteractsWithFleetEquipmentSearch;
 use App\Concerns\InteractsWithToast;
 use App\Enums\CorrelativeSubject;
 use App\Enums\FleetCorrectiveMaintenanceStatus;
 use App\Models\FleetCorrectiveMaintenance;
 use App\Models\FleetEquipment;
 use App\Services\Correlatives\IssueCompanyCorrelativeCode;
+use App\Support\DefaultDate;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -19,9 +21,13 @@ use Livewire\WithPagination;
 
 class ManageFleetCorrectiveMaintenances extends Component
 {
-    use InteractsWithToast, WithFileUploads, WithPagination;
+    use InteractsWithFleetEquipmentSearch, InteractsWithToast, WithFileUploads, WithPagination;
 
     public string $title = 'Mantenimiento correctivo';
+
+    public string $search = '';
+
+    public string $statusFilter = '';
 
     public bool $showFormModal = false;
 
@@ -57,14 +63,32 @@ class ManageFleetCorrectiveMaintenances extends Component
         $this->status = FleetCorrectiveMaintenanceStatus::Reported->value();
     }
 
+    public function updatingSearch(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingStatusFilter(): void
+    {
+        $this->resetPage();
+    }
+
     public function render(): View
     {
         return view('livewire.mechanics.manage-fleet-corrective-maintenances', [
             'rows' => FleetCorrectiveMaintenance::query()
                 ->with(['equipment', 'responsibleUser'])
+                ->when($this->search !== '', fn ($query) => $query->where(function ($query): void {
+                    $query->where('failure_description', 'like', '%'.$this->search.'%')
+                        ->orWhere('supplier_workshop', 'like', '%'.$this->search.'%')
+                        ->orWhereHas('equipment', fn ($equipment) => $equipment
+                            ->where('internal_code', 'like', '%'.$this->search.'%')
+                            ->orWhere('name', 'like', '%'.$this->search.'%'));
+                }))
+                ->when($this->statusFilter !== '', fn ($query) => $query->where('status', $this->statusFilter))
                 ->latest('failure_at')
                 ->paginate(12),
-            'equipments' => FleetEquipment::query()->orderBy('internal_code')->get(),
+            'equipmentOptions' => $this->fleetEquipmentSelectOptions(),
             'responsibleUsers' => $this->responsibleUsers(),
             'statuses' => FleetCorrectiveMaintenanceStatus::cases(),
         ])->layout('layouts.app', ['title' => $this->title]);
@@ -81,7 +105,8 @@ class ManageFleetCorrectiveMaintenances extends Component
             return;
         }
 
-        $this->failure_at = now()->format('Y-m-d\TH:i');
+        $this->failure_at = DefaultDate::nowDateTimeLocal();
+        $this->syncFleetEquipmentSearch();
         $this->showFormModal = true;
     }
 
@@ -102,6 +127,7 @@ class ManageFleetCorrectiveMaintenances extends Component
         $this->responsible_user_id = $row->responsible_user_id;
         $this->failure_photos = [];
         $this->documents = [];
+        $this->syncFleetEquipmentSearch();
         $this->showFormModal = true;
     }
 
@@ -196,6 +222,8 @@ class ManageFleetCorrectiveMaintenances extends Component
             'documents',
         ]);
         $this->status = FleetCorrectiveMaintenanceStatus::Reported->value();
+        $this->failure_at = DefaultDate::nowDateTimeLocal();
+        $this->resetFleetEquipmentSearch();
         $this->showFormModal = false;
     }
 

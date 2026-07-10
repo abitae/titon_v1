@@ -1,31 +1,77 @@
 @props([
-    'view' => null,
     'edit' => null,
+    'editHref' => null,
+    'editNavigate' => true,
     'delete' => null,
+    'deleteUrl' => null,
     'deleteConfirm' => '¿Eliminar este registro?',
 ])
 
-<div class="flex items-center justify-end gap-2 whitespace-nowrap">
-    @if ($view)
-        <button type="button" wire:click="{{ $view }}" class="rounded-lg px-2 py-1 text-sm font-medium text-cyan-700 hover:bg-cyan-50 hover:text-cyan-600 dark:text-cyan-300 dark:hover:bg-cyan-950/40">
-            Ver
-        </button>
-    @endif
-
-    @if ($edit)
-        <button type="button" wire:click="{{ $edit }}" class="rounded-lg px-2 py-1 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800">
-            Editar
-        </button>
+<div {{ $attributes->merge(['class' => 'flex items-center justify-end gap-0']) }}>
+    @if ($edit || $editHref)
+        <flux:tooltip content="Editar">
+            @if ($editHref)
+                @if ($editNavigate)
+                    <flux:button
+                        variant="ghost"
+                        size="sm"
+                        icon="pencil-square"
+                        href="{{ $editHref }}"
+                        wire:navigate
+                        class="!size-7 !min-h-0 !p-0"
+                        aria-label="Editar"
+                    ></flux:button>
+                @else
+                    <flux:button
+                        variant="ghost"
+                        size="sm"
+                        icon="pencil-square"
+                        href="{{ $editHref }}"
+                        class="!size-7 !min-h-0 !p-0"
+                        aria-label="Editar"
+                    ></flux:button>
+                @endif
+            @else
+                <flux:button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    icon="pencil-square"
+                    wire:click="{{ $edit }}"
+                    class="!size-7 !min-h-0 !p-0"
+                    aria-label="Editar"
+                />
+            @endif
+        </flux:tooltip>
     @endif
 
     @if ($delete)
-        <button
-            type="button"
-            wire:click="{{ $delete }}"
-            wire:confirm="{{ $deleteConfirm }}"
-            class="rounded-lg px-2 py-1 text-sm font-medium text-rose-700 hover:bg-rose-50 hover:text-rose-600 dark:text-rose-300 dark:hover:bg-rose-950/40"
-        >
-            Eliminar
-        </button>
+        <flux:tooltip content="Eliminar">
+            <flux:button
+                type="button"
+                variant="ghost"
+                size="sm"
+                icon="trash"
+                wire:click="{{ $delete }}"
+                wire:confirm="{{ $deleteConfirm }}"
+                class="!size-7 !min-h-0 !p-0 !text-rose-600 hover:!text-rose-700 dark:!text-rose-400 dark:hover:!text-rose-300"
+                aria-label="Eliminar"
+            />
+        </flux:tooltip>
+    @elseif ($deleteUrl)
+        <form method="POST" action="{{ $deleteUrl }}" class="inline" onsubmit="return confirm(@js($deleteConfirm))">
+            @csrf
+            @method('DELETE')
+            <flux:tooltip content="Eliminar">
+                <flux:button
+                    type="submit"
+                    variant="ghost"
+                    size="sm"
+                    icon="trash"
+                    class="!size-7 !min-h-0 !p-0 !text-rose-600 hover:!text-rose-700 dark:!text-rose-400 dark:hover:!text-rose-300"
+                    aria-label="Eliminar"
+                />
+            </flux:tooltip>
+        </form>
     @endif
 </div>

@@ -3,6 +3,7 @@
 namespace App\Livewire\Mechanics;
 
 use App\Actions\Companies\ResolveCurrentCompany;
+use App\Concerns\InteractsWithFleetEquipmentSearch;
 use App\Concerns\InteractsWithToast;
 use App\Enums\CorrelativeSubject;
 use App\Enums\DocumentPriority;
@@ -10,6 +11,7 @@ use App\Enums\FleetPreventiveMaintenanceStatus;
 use App\Models\FleetEquipment;
 use App\Models\FleetPreventiveMaintenance;
 use App\Services\Correlatives\IssueCompanyCorrelativeCode;
+use App\Support\DefaultDate;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -19,9 +21,13 @@ use Livewire\WithPagination;
 
 class ManageFleetPreventiveMaintenances extends Component
 {
-    use InteractsWithToast, WithPagination;
+    use InteractsWithFleetEquipmentSearch, InteractsWithToast, WithPagination;
 
     public string $title = 'Mantenimiento preventivo';
+
+    public string $search = '';
+
+    public string $statusFilter = '';
 
     public bool $showFormModal = false;
 
@@ -54,14 +60,31 @@ class ManageFleetPreventiveMaintenances extends Component
         $this->status = FleetPreventiveMaintenanceStatus::Scheduled->value();
     }
 
+    public function updatingSearch(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingStatusFilter(): void
+    {
+        $this->resetPage();
+    }
+
     public function render(): View
     {
         return view('livewire.mechanics.manage-fleet-preventive-maintenances', [
             'rows' => FleetPreventiveMaintenance::query()
                 ->with(['equipment', 'responsibleUser'])
+                ->when($this->search !== '', fn ($query) => $query->where(function ($query): void {
+                    $query->where('maintenance_type', 'like', '%'.$this->search.'%')
+                        ->orWhereHas('equipment', fn ($equipment) => $equipment
+                            ->where('internal_code', 'like', '%'.$this->search.'%')
+                            ->orWhere('name', 'like', '%'.$this->search.'%'));
+                }))
+                ->when($this->statusFilter !== '', fn ($query) => $query->where('status', $this->statusFilter))
                 ->latest('scheduled_date')
                 ->paginate(12),
-            'equipments' => FleetEquipment::query()->orderBy('internal_code')->get(),
+            'equipmentOptions' => $this->fleetEquipmentSelectOptions(),
             'responsibleUsers' => $this->responsibleUsers(),
             'statuses' => FleetPreventiveMaintenanceStatus::cases(),
             'priorities' => DocumentPriority::cases(),
@@ -79,6 +102,7 @@ class ManageFleetPreventiveMaintenances extends Component
             return;
         }
 
+        $this->syncFleetEquipmentSearch();
         $this->showFormModal = true;
     }
 
@@ -97,6 +121,7 @@ class ManageFleetPreventiveMaintenances extends Component
         $this->cost = (string) ($row->cost ?? '');
         $this->observations = (string) ($row->observations ?? '');
         $this->responsible_user_id = $row->responsible_user_id;
+        $this->syncFleetEquipmentSearch();
         $this->showFormModal = true;
     }
 
@@ -155,6 +180,8 @@ class ManageFleetPreventiveMaintenances extends Component
     protected function resetForm(): void
     {
         $this->reset(['editingId', 'fleet_equipment_id', 'maintenance_type', 'scheduled_date', 'scheduled_odometer', 'scheduled_hour_meter', 'cost', 'observations', 'responsible_user_id']);
+        $this->scheduled_date = DefaultDate::today();
+        $this->resetFleetEquipmentSearch();
         $this->priority = DocumentPriority::Medium->value();
         $this->status = FleetPreventiveMaintenanceStatus::Scheduled->value();
         $this->showFormModal = false;

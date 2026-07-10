@@ -11,6 +11,7 @@ use App\Models\Project;
 use App\Models\User;
 use App\Models\WarehouseMovement;
 use App\Models\WarehouseStockItem;
+use App\Support\DefaultDate;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\Component;
@@ -67,8 +68,16 @@ class ManageWarehouse extends Component
     public function mount(): void
     {
         abort_unless(auth()->user()?->can('almacen.ver'), 403);
-        $this->outbound_date = now()->toDateString();
-        $this->transfer_date = now()->toDateString();
+        $this->applyDefaultDates();
+    }
+
+    public function applyDefaultDates(): void
+    {
+        $range = DefaultDate::filterRange();
+        $this->filter_date_from = $range['from'];
+        $this->filter_date_to = $range['to'];
+        $this->outbound_date = DefaultDate::today();
+        $this->transfer_date = DefaultDate::today();
     }
 
     public function updatedFilterWorkProjectId(): void
@@ -131,8 +140,7 @@ class ManageWarehouse extends Component
         $this->filter_source = '';
         $this->filter_transfer_code = '';
         $this->filter_order_code = '';
-        $this->filter_date_from = null;
-        $this->filter_date_to = null;
+        $this->applyDefaultDates();
         $this->resetPage();
     }
 
@@ -142,7 +150,7 @@ class ManageWarehouse extends Component
         $this->selected_stock_item_id = $stockItemId;
         $this->outbound_quantity = '1';
         $this->outbound_reference = '';
-        $this->outbound_date = now()->toDateString();
+        $this->outbound_date = DefaultDate::today();
         $this->showOutboundModal = true;
     }
 
@@ -153,7 +161,7 @@ class ManageWarehouse extends Component
         $this->transfer_destination_project_id = null;
         $this->transfer_quantity = '1';
         $this->transfer_reference = '';
-        $this->transfer_date = now()->toDateString();
+        $this->transfer_date = DefaultDate::today();
         $this->showTransferModal = true;
     }
 

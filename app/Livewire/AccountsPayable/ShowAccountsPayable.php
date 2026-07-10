@@ -11,6 +11,7 @@ use App\Models\AccountsPayable;
 use App\Models\BankAccount;
 use App\Models\CatalogItem;
 use App\Models\PayableDocument;
+use App\Support\DefaultDate;
 use Illuminate\Contracts\View\View;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
@@ -52,6 +53,8 @@ class ShowAccountsPayable extends Component
 
     public string $operation_number = '';
 
+    public bool $showPaymentModal = false;
+
     /**
      * @var array<int, TemporaryUploadedFile|null>
      */
@@ -60,7 +63,7 @@ class ShowAccountsPayable extends Component
     public function mount(AccountsPayable $accountsPayable): void
     {
         $this->accountsPayable = $this->loadAccountsPayableRelations($accountsPayable);
-        $this->payment_date = now()->toDateString();
+        $this->payment_date = DefaultDate::today();
         $this->payment_amount = (string) $accountsPayable->balance;
         $this->concept = 'Pago '.$accountsPayable->code;
     }
@@ -154,6 +157,20 @@ class ShowAccountsPayable extends Component
         $this->successToast('Documento subido correctamente.');
     }
 
+    public function openPaymentModal(): void
+    {
+        abort_unless(auth()->user()->can('cuentas_pagar.pagar') || auth()->user()->can('payments.crear'), 403);
+
+        $this->resetPaymentForm();
+        $this->showPaymentModal = true;
+    }
+
+    public function closePaymentModal(): void
+    {
+        $this->showPaymentModal = false;
+        $this->resetPaymentForm();
+    }
+
     public function registerPayment(RegisterAccountsPayablePayment $registerPayment): void
     {
         abort_unless(auth()->user()->can('cuentas_pagar.pagar') || auth()->user()->can('payments.crear'), 403);
@@ -221,11 +238,7 @@ class ShowAccountsPayable extends Component
         ], auth()->user());
 
         $this->accountsPayable = $this->loadAccountsPayableRelations($this->accountsPayable->fresh());
-        $this->payment_amount = (string) $this->accountsPayable->balance;
-        $this->payment_method_id = null;
-        $this->bank_account_id = null;
-        $this->operation_type_id = null;
-        $this->operation_number = '';
+        $this->closePaymentModal();
 
         $this->successToast('Pago registrado.');
     }
@@ -269,5 +282,17 @@ class ShowAccountsPayable extends Component
             'payments.payer',
             'payments.bankMovement',
         ]);
+    }
+
+    protected function resetPaymentForm(): void
+    {
+        $this->resetErrorBag();
+        $this->payment_date = DefaultDate::today();
+        $this->payment_amount = (string) $this->accountsPayable->balance;
+        $this->concept = 'Pago '.$this->accountsPayable->code;
+        $this->payment_method_id = null;
+        $this->bank_account_id = null;
+        $this->operation_type_id = null;
+        $this->operation_number = '';
     }
 }

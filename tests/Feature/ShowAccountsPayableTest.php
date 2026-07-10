@@ -132,6 +132,18 @@ test('required documents are not considered loaded without an uploaded file', fu
     expect($this->accountsPayable->fresh()->requiredDocumentsUploaded())->toBeFalse();
 });
 
+test('payment registration modal can be opened and closed', function () {
+    uploadRequiredDocuments($this->accountsPayable);
+
+    Livewire::test(ShowAccountsPayable::class, ['accountsPayable' => $this->accountsPayable->fresh()])
+        ->assertSet('showPaymentModal', false)
+        ->call('openPaymentModal')
+        ->assertSet('showPaymentModal', true)
+        ->assertSet('payment_amount', '1500')
+        ->call('closePaymentModal')
+        ->assertSet('showPaymentModal', false);
+});
+
 test('banking payment method requires account operation type and operation number', function () {
     uploadRequiredDocuments($this->accountsPayable);
 
@@ -147,12 +159,15 @@ test('cash payment can be registered after required documents are uploaded', fun
     uploadRequiredDocuments($this->accountsPayable);
 
     Livewire::test(ShowAccountsPayable::class, ['accountsPayable' => $this->accountsPayable->fresh()])
+        ->call('openPaymentModal')
+        ->assertSet('showPaymentModal', true)
         ->set('payment_method_id', $this->cashPaymentMethod->id)
         ->set('bank_account_id', $this->cashAccount->id)
         ->set('payment_amount', '1500')
         ->set('payment_date', now()->toDateString())
         ->call('registerPayment')
-        ->assertHasNoErrors();
+        ->assertHasNoErrors()
+        ->assertSet('showPaymentModal', false);
 
     $this->accountsPayable->refresh();
     $this->cashAccount->refresh();

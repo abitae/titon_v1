@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,
             CatalogSeeder::class,
             DemoOperationalSeeder::class,
+            MechanicsSeeder::class,
         ]);
     }
 }

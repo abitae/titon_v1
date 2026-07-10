@@ -123,8 +123,23 @@
 
     @if ($accountsPayable->payments->isNotEmpty())
         <div class="rounded-xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-            <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-200">Pagos registrados</h2>
-            <p class="mt-1 text-[11px] text-slate-500 dark:text-slate-400">Cada pago descuenta saldo de la cuenta configurada en Bancos.</p>
+            <div class="flex flex-wrap items-start justify-between gap-2">
+                <div>
+                    <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-200">Pagos registrados</h2>
+                    <p class="mt-1 text-[11px] text-slate-500 dark:text-slate-400">Cada pago descuenta saldo de la cuenta configurada en Bancos.</p>
+                </div>
+                @canany(['cuentas_pagar.pagar', 'payments.crear'])
+                    <flux:button
+                        type="button"
+                        variant="primary"
+                        size="sm"
+                        wire:click="openPaymentModal"
+                        :disabled="! $this->canRegisterPayment()"
+                    >
+                        Registrar pago
+                    </flux:button>
+                @endcanany
+            </div>
 
             <x-platform.compact-table dense :headers="['Fecha', 'Monto', 'Cuenta origen', 'Método', 'Operación', 'Concepto']" class="mt-2">
                 @foreach ($accountsPayable->payments as $payment)
@@ -155,25 +170,47 @@
         </div>
     @endif
 
-    @canany(['cuentas_pagar.pagar', 'payments.crear'])
+        </div>
+    @elseif (auth()->user()->can('cuentas_pagar.pagar') || auth()->user()->can('payments.crear'))
         <div class="rounded-xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-            <div class="flex flex-wrap items-start justify-between gap-2">
+            <div class="flex flex-wrap items-center justify-between gap-2">
                 <div>
-                    <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-200">Registrar pago</h2>
-                    <p class="mt-1 text-[11px] text-slate-500 dark:text-slate-400">El pago se registra contra una cuenta de <strong>Operación → Bancos</strong> ({{ $accountsPayable->currency }}).</p>
+                    <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-200">Pagos</h2>
+                    <p class="mt-1 text-[11px] text-slate-500 dark:text-slate-400">Aún no hay pagos registrados para esta cuenta.</p>
                 </div>
-                @can('bancos.ver')
-                    <flux:button variant="outline" href="{{ route('modules.banks') }}" wire:navigate size="sm">Gestionar cuentas</flux:button>
-                @endcan
+                <flux:button
+                    type="button"
+                    variant="primary"
+                    size="sm"
+                    wire:click="openPaymentModal"
+                    :disabled="! $this->canRegisterPayment()"
+                >
+                    Registrar pago
+                </flux:button>
+            </div>
+        </div>
+    @endif
+
+    @canany(['cuentas_pagar.pagar', 'payments.crear'])
+        <x-platform.modal compact :show="$showPaymentModal" max-width="max-w-2xl">
+            <div class="flex items-start justify-between gap-2">
+                <div class="min-w-0">
+                    <h2 class="text-base font-semibold text-slate-950 dark:text-white">Registrar pago</h2>
+                    <p class="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
+                        Saldo pendiente: <strong class="text-slate-700 dark:text-slate-200">{{ number_format((float) $accountsPayable->balance, 2) }} {{ $accountsPayable->currency }}</strong>
+                        · Cuenta en <strong>Operación → Bancos</strong> ({{ $accountsPayable->currency }})
+                    </p>
+                </div>
+                <flux:button variant="ghost" size="sm" wire:click="closePaymentModal" type="button">Cerrar</flux:button>
             </div>
 
             @if ($configuredCashAccounts === 0 && $configuredBankAccounts === 0)
-                <div class="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-2 py-1 text-[11px] text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-200">
+                <div class="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-2 py-1.5 text-[11px] text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-200">
                     No hay cuentas activas en {{ $accountsPayable->currency }}. Configure al menos una caja o cuenta bancaria antes de pagar.
                 </div>
             @endif
 
-            <form wire:submit="registerPayment" class="mt-2 grid gap-2 sm:grid-cols-2">
+            <form wire:submit="registerPayment" class="mt-3 grid gap-2 sm:grid-cols-2">
                 <div>
                     <label class="block text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Monto</label>
                     <input wire:model="payment_amount" type="number" step="0.01" class="mt-1 block h-8 w-full rounded-lg border border-slate-300 bg-white px-2.5 text-xs dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
@@ -240,13 +277,21 @@
                     @error('concept') <p class="mt-0.5 text-[11px] text-rose-600">{{ $message }}</p> @enderror
                 </div>
 
-                <div class="sm:col-span-2 flex justify-end">
-                    <flux:button type="submit" variant="primary" size="sm" :disabled="! $this->canRegisterPayment()">
-                        Registrar pago
-                    </flux:button>
+                <div class="sm:col-span-2 flex flex-wrap items-center justify-between gap-2 pt-1">
+                    @can('bancos.ver')
+                        <flux:button variant="outline" href="{{ route('modules.banks') }}" wire:navigate size="sm">Gestionar cuentas</flux:button>
+                    @else
+                        <span></span>
+                    @endcan
+                    <div class="flex items-center gap-2">
+                        <flux:button type="button" variant="outline" size="sm" wire:click="closePaymentModal">Cancelar</flux:button>
+                        <flux:button type="submit" variant="primary" size="sm" :disabled="! $this->canRegisterPayment()">
+                            Registrar pago
+                        </flux:button>
+                    </div>
                 </div>
             </form>
-        </div>
+        </x-platform.modal>
     @endcanany
 
     <x-platform.pdf-viewer-modal

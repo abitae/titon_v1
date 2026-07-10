@@ -6,16 +6,26 @@ use App\Actions\Companies\ResolveCurrentCompany;
 use App\Concerns\InteractsWithToast;
 use App\Enums\CatalogType;
 use App\Models\CatalogItem;
+use App\Services\Application\ApplicationSettingsManager;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
+use Livewire\WithFileUploads;
 use Livewire\WithPagination;
 
 class ManageCatalogs extends Component
 {
-    use InteractsWithToast, WithPagination;
+    use InteractsWithToast, WithFileUploads, WithPagination;
 
     public string $title = 'Configuracion General';
+
+    public string $application_name = '';
+
+    public ?TemporaryUploadedFile $application_logo = null;
+
+    public ?string $currentApplicationLogoUrl = null;
 
     public string $selectedType = 'cities';
 
@@ -39,10 +49,54 @@ class ManageCatalogs extends Component
 
     public int $sort_order = 0;
 
-    public function mount(): void
+    public function mount(ApplicationSettingsManager $applicationSettings): void
     {
         $this->selectedType = CatalogType::City->value();
         $this->selectedGroup = CatalogType::City->group();
+        $this->loadApplicationBranding($applicationSettings);
+    }
+
+    public function saveApplicationBranding(ApplicationSettingsManager $applicationSettings): void
+    {
+        abort_unless(auth()->user()->can('catalogs.editar'), 403);
+
+        $validated = $this->validateWithToastFeedback([
+            'application_name' => ['required', 'string', 'max:120'],
+            'application_logo' => ['nullable', 'image', 'mimes:png,jpg,jpeg,webp,svg', 'max:2048'],
+        ], [], [
+            'application_name' => 'nombre de la aplicacion',
+            'application_logo' => 'icono de la aplicacion',
+        ]);
+
+        $settings = $applicationSettings->current();
+        $logoPath = $settings->logo_path;
+
+        if ($this->application_logo instanceof TemporaryUploadedFile) {
+            if (filled($logoPath) && Storage::disk('public')->exists($logoPath)) {
+                Storage::disk('public')->delete($logoPath);
+            }
+
+            $logoPath = $this->application_logo->store('application-settings', 'public');
+        }
+
+        $applicationSettings->update([
+            'application_name' => $validated['application_name'],
+            'logo_path' => $logoPath,
+        ]);
+
+        $this->application_logo = null;
+        $this->loadApplicationBranding($applicationSettings);
+        $this->successToast('Identidad de la aplicacion actualizada.');
+    }
+
+    public function removeApplicationLogo(ApplicationSettingsManager $applicationSettings): void
+    {
+        abort_unless(auth()->user()->can('catalogs.editar'), 403);
+
+        $applicationSettings->removeLogo();
+        $this->application_logo = null;
+        $this->loadApplicationBranding($applicationSettings);
+        $this->warningToast('Icono de la aplicacion eliminado.');
     }
 
     public function render(): View
@@ -180,5 +234,13 @@ class ManageCatalogs extends Component
         $this->is_active = true;
         $this->sort_order = 0;
         $this->showFormModal = false;
+    }
+
+    protected function loadApplicationBranding(ApplicationSettingsManager $applicationSettings): void
+    {
+        $settings = $applicationSettings->current();
+
+        $this->application_name = $settings->application_name;
+        $this->currentApplicationLogoUrl = $settings->logoUrl();
     }
 }

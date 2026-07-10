@@ -12,6 +12,7 @@ use App\Enums\RequirementStatus;
 use App\Models\CostType;
 use App\Models\Project;
 use App\Models\PurchaseRequest;
+use App\Support\DefaultDate;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -73,7 +74,7 @@ class ManagePurchaseRequests extends Component
 
     public function mount(): void
     {
-        $this->request_date = now()->toDateString();
+        $this->request_date = DefaultDate::today();
         $this->requested_by = auth()->id();
     }
 
@@ -313,7 +314,7 @@ class ManagePurchaseRequests extends Component
 
         $this->requested_by = auth()->id();
         $this->priority = DocumentPriority::Medium->value();
-        $this->request_date = now()->toDateString();
+        $this->request_date = DefaultDate::today();
         $this->status = RequirementStatus::Draft->value();
         $this->showFormModal = false;
         $this->closeItemModal();

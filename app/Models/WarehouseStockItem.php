@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Concerns\AuditableWithContext;
 use App\Concerns\BelongsToActiveCompany;
+use App\Support\Decimal;
 use Database\Factories\WarehouseStockItemFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -58,6 +59,6 @@ class WarehouseStockItem extends Model implements Auditable
 
     public function hasAvailableStock(string $quantity): bool
     {
-        return bccomp((string) $this->stock_quantity, $quantity, 3) >= 0;
+        return Decimal::compare($this->stock_quantity, $quantity, 3) >= 0;
     }
 }

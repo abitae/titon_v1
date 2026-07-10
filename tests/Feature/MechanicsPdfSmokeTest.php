@@ -1,11 +1,23 @@
 <?php
 
-use App\Livewire\Mechanics\ShowMechanicalDashboard;
+use App\Livewire\Mechanics\ShowMechanicalReports;
+use Livewire\Livewire;
 
-test('mechanical dashboard pdf preview routes respond with inline pdf', function () {
+test('mechanics dashboard renders graphical kpis and charts', function () {
     authenticateWithCompany();
 
-    $this->get(route('modules.mechanics'))->assertOk();
+    $this->get(route('modules.mechanics'))
+        ->assertOk()
+        ->assertSee('Panel de mecánica')
+        ->assertSee('Equipos por estado')
+        ->assertSee('Órdenes de trabajo por estado')
+        ->assertSee('data-chart-root', false);
+});
+
+test('mechanical reports page opens pdf preview in modal', function () {
+    authenticateWithCompany();
+
+    $this->get(route('mechanics.reports'))->assertOk();
 
     $previewRoutes = [
         'mechanics.report.equipments.pdf',
@@ -25,8 +37,8 @@ test('mechanical dashboard pdf preview routes respond with inline pdf', function
         expect(str_starts_with($response->getContent(), '%PDF'))->toBeTrue();
     }
 
-    Livewire::test(ShowMechanicalDashboard::class)
-        ->call('openRoutePdfModal', 'mechanics.report.work-orders.pdf', 'Órdenes de trabajo')
+    Livewire::test(ShowMechanicalReports::class)
+        ->call('openMechanicsReportPdf', 'mechanics.report.work-orders.pdf', 'Ordenes de trabajo')
         ->assertSet('showPdfModal', true)
         ->assertSeeHtml('iframe');
 });

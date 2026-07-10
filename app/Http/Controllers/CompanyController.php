@@ -9,6 +9,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Support\Facades\Storage;
 
 class CompanyController extends Controller implements HasMiddleware
 {
@@ -42,7 +43,10 @@ class CompanyController extends Controller implements HasMiddleware
     {
         $this->authorize('create', Company::class);
 
-        Company::query()->create($request->validated());
+        Company::query()->create([
+            ...$request->safe()->except('logo'),
+            'logo' => $this->storeLogo($request),
+        ]);
 
         Toast::flashSuccess('Empresa creada correctamente.');
 
@@ -62,7 +66,10 @@ class CompanyController extends Controller implements HasMiddleware
     {
         $this->authorize('update', $company);
 
-        $company->update($request->validated());
+        $company->update([
+            ...$request->safe()->except('logo'),
+            'logo' => $this->storeLogo($request, $company),
+        ]);
 
         Toast::flashSuccess('Empresa actualizada correctamente.');
 
@@ -78,5 +85,18 @@ class CompanyController extends Controller implements HasMiddleware
         Toast::flashWarning('Empresa eliminada correctamente.');
 
         return redirect()->route('companies.index');
+    }
+
+    protected function storeLogo(SaveCompanyRequest $request, ?Company $company = null): ?string
+    {
+        if (! $request->hasFile('logo')) {
+            return $company?->logo;
+        }
+
+        if ($company !== null && filled($company->logo) && Storage::disk('public')->exists($company->logo)) {
+            Storage::disk('public')->delete($company->logo);
+        }
+
+        return $request->file('logo')->store('companies/logos', 'public');
     }
 }

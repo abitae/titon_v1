@@ -72,7 +72,6 @@
                 <td class="px-2.5 py-1.5">S/ {{ number_format((float) $project->estimated_budget, 2) }}</td>
                 <td class="px-2.5 py-1.5">
                     <x-platform.action-buttons
-                        :view="'openDetailModal('.$project->id.')'"
                         :edit="'openEditModal('.$project->id.')'"
                         :delete="'deleteProject('.$project->id.')'"
                         delete-confirm="¿Eliminar esta obra?"

@@ -93,34 +93,11 @@
                 <td class="whitespace-nowrap px-2.5 py-1.5 tabular-nums">{{ $quotation->currency }} {{ number_format((float) $quotation->total, 2) }}</td>
                 <td class="whitespace-nowrap px-2.5 py-1.5 tabular-nums">{{ $quotation->delivery_time_days }} d</td>
                 <td class="whitespace-nowrap px-1.5 py-1">
-                    <div class="flex items-center justify-end gap-0">
-                        <flux:tooltip content="Ver PDF">
-                            <flux:button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                icon="document"
-                                wire:click="openPdfModal({{ $quotation->id }})"
-                                class="!size-7 !min-h-0 !p-0"
-                                aria-label="Ver PDF"
-                            />
-                        </flux:tooltip>
-                        <flux:tooltip content="Editar">
-                            <flux:button type="button" variant="ghost" size="sm" icon="pencil-square" wire:click="openEditModal({{ $quotation->id }})" class="!size-7 !min-h-0 !p-0" aria-label="Editar" />
-                        </flux:tooltip>
-                        <flux:tooltip content="Eliminar">
-                            <flux:button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                icon="trash"
-                                wire:click="deleteQuotation({{ $quotation->id }})"
-                                wire:confirm="¿Eliminar esta cotización?"
-                                class="!size-7 !min-h-0 !p-0 !text-rose-600 hover:!text-rose-700 dark:!text-rose-400 dark:hover:!text-rose-300"
-                                aria-label="Eliminar"
-                            />
-                        </flux:tooltip>
-                    </div>
+                    <x-platform.action-buttons
+                        :edit="'openEditModal('.$quotation->id.')'"
+                        :delete="'deleteQuotation('.$quotation->id.')'"
+                        delete-confirm="¿Eliminar esta cotización?"
+                    />
                 </td>
             </tr>
         @empty

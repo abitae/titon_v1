@@ -21,7 +21,7 @@
                 <td class="px-2.5 py-1.5">{{ $supplierContract->currency }} {{ number_format((float) $schedule->balance, 2) }}</td>
                 <td class="px-2.5 py-1.5"><x-platform.status-badge :value="$schedule->status" /></td>
                 <td class="px-2.5 py-1.5">
-                    <button type="button" wire:click="openEditModal({{ $schedule->id }})" class="rounded-lg px-2 py-1 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200">Editar</button>
+                    <x-platform.action-buttons :edit="'openEditModal('.$schedule->id.')'" />
                 </td>
             </tr>
         @empty

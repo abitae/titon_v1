@@ -15,6 +15,7 @@ use App\Models\SupplierContract;
 use App\Models\SupplierPayment;
 use App\Services\Audit\UserAuditLogger;
 use App\Services\Payments\SupplierAccountSummary;
+use App\Support\DefaultDate;
 use Illuminate\Contracts\View\View;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
@@ -70,7 +71,7 @@ class ManageSupplierPayments extends Component
 
     public function mount(): void
     {
-        $this->payment_date = now()->toDateString();
+        $this->payment_date = DefaultDate::today();
         $this->responsible_user_id = auth()->id();
     }
 
@@ -254,7 +255,7 @@ class ManageSupplierPayments extends Component
             'voucher',
         ]);
 
-        $this->payment_date = now()->toDateString();
+        $this->payment_date = DefaultDate::today();
         $this->responsible_user_id = auth()->id();
         $this->currency = 'PEN';
         $this->showFormModal = false;

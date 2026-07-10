@@ -3,9 +3,9 @@
 ])
 
 @php
-    $siteContent = app(\App\Services\Frontend\SiteContentService::class);
-    $applicationName = $siteContent->brandName();
-    $applicationLogo = $siteContent->brandLogoUrl();
+    $branding = app(\App\Services\Branding\PlatformBranding::class);
+    $applicationName = $branding->name();
+    $applicationLogo = $branding->logoUrl();
 @endphp
 
 @if($sidebar)

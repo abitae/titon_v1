@@ -4,6 +4,7 @@ use App\Enums\PlatformModule;
 use App\Http\Controllers\ActiveCompanyController;
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\MechanicsReportDownloadController;
+use App\Http\Controllers\PdfFormatPreviewController;
 use App\Http\Controllers\PurchaseComparisonDownloadController;
 use App\Http\Controllers\ReportDownloadController;
 use App\Http\Controllers\UserController;
@@ -23,11 +24,13 @@ use App\Livewire\Frontend\ManageShowcaseProjects;
 use App\Livewire\Frontend\ManageSiteContent;
 use App\Livewire\Mechanics\ManageFleetCorrectiveMaintenances;
 use App\Livewire\Mechanics\ManageFleetEquipments;
+use App\Livewire\Mechanics\ManageFleetEquipmentTypes;
 use App\Livewire\Mechanics\ManageFleetPreventiveMaintenances;
 use App\Livewire\Mechanics\ManageFleetSpareParts;
 use App\Livewire\Mechanics\ManageFleetTechnicalInspections;
 use App\Livewire\Mechanics\ManageFleetWorkOrders;
 use App\Livewire\Mechanics\ShowMechanicalDashboard;
+use App\Livewire\Mechanics\ShowMechanicalReports;
 use App\Livewire\Payments\ManagePaymentSchedules;
 use App\Livewire\Payments\ManageSupplierPayments;
 use App\Livewire\Projects\ManageProjects;
@@ -40,6 +43,7 @@ use App\Livewire\Requirements\SendRequirementToSuppliers;
 use App\Livewire\Settings\ManageCatalogs;
 use App\Livewire\Settings\ManageCorrelativeFormats;
 use App\Livewire\Settings\ManageCostTypes;
+use App\Livewire\Settings\ManagePdfFormats;
 use App\Livewire\Suppliers\ManageSuppliers;
 use App\Livewire\Warehouse\ManageWarehouse;
 use Illuminate\Support\Facades\Route;
@@ -70,6 +74,12 @@ Route::middleware(['auth', 'verified', 'active.company.context'])->group(functio
         Route::get('settings/correlatives', ManageCorrelativeFormats::class)
             ->middleware('permission:catalogs.ver')
             ->name('settings.correlatives');
+        Route::get('settings/pdf-formats', ManagePdfFormats::class)
+            ->middleware('permission:pdf-formats.ver')
+            ->name('settings.pdf-formats');
+        Route::get('settings/pdf-formats/preview', PdfFormatPreviewController::class)
+            ->middleware('permission:pdf-formats.ver')
+            ->name('settings.pdf-formats.preview');
         Route::get('settings/cost-types', ManageCostTypes::class)
             ->middleware('permission:catalogs.ver')
             ->name('settings.cost-types');
@@ -162,7 +172,9 @@ Route::middleware(['auth', 'verified', 'active.company.context'])->group(functio
 
         Route::prefix('mecanica')->group(function () {
             Route::get('/', ShowMechanicalDashboard::class)->middleware('permission:mecanica.ver')->name('modules.mechanics');
+            Route::get('/reportes', ShowMechanicalReports::class)->middleware('permission:mecanica.ver')->name('mechanics.reports');
             Route::get('/equipos', ManageFleetEquipments::class)->middleware('permission:equipos.ver')->name('mechanics.equipments');
+            Route::get('/tipos-equipo', ManageFleetEquipmentTypes::class)->middleware('permission:equipos.ver')->name('mechanics.equipment-types');
             Route::get('/revisiones', ManageFleetTechnicalInspections::class)->middleware('permission:revisiones.ver')->name('mechanics.inspections');
             Route::get('/preventivo', ManageFleetPreventiveMaintenances::class)->middleware('permission:mantenimientos.ver')->name('mechanics.preventive');
             Route::get('/correctivo', ManageFleetCorrectiveMaintenances::class)->middleware('permission:mantenimientos.ver')->name('mechanics.corrective');

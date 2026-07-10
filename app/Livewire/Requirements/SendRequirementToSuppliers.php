@@ -6,6 +6,7 @@ use App\Actions\Requirements\SendRequirementToSuppliers as SendRequirementToSupp
 use App\Concerns\InteractsWithToast;
 use App\Models\PurchaseRequest;
 use App\Models\Supplier;
+use App\Support\DefaultDate;
 use Illuminate\Contracts\View\View;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
@@ -28,7 +29,7 @@ class SendRequirementToSuppliers extends Component
     public function mount(PurchaseRequest $purchaseRequest): void
     {
         $this->purchaseRequest = $purchaseRequest->load(['project', 'invitations.supplier']);
-        $this->response_deadline = now()->addDays(7)->toDateString();
+        $this->response_deadline = DefaultDate::daysAhead(7);
     }
 
     public function render(): View
@@ -60,6 +61,7 @@ class SendRequirementToSuppliers extends Component
 
         $this->purchaseRequest->refresh();
         $this->reset('supplier_ids', 'message');
+        $this->response_deadline = DefaultDate::daysAhead(7);
         $this->successToast('Requerimiento enviado a proveedores.');
     }
 }

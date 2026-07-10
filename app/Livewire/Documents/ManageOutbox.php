@@ -24,6 +24,26 @@ class ManageOutbox extends Component
 
     public string $projectFilter = '';
 
+    public function updatedSearch(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedStatusFilter(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedPriorityFilter(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedProjectFilter(): void
+    {
+        $this->resetPage();
+    }
+
     public function render(): View
     {
         $documents = Document::query()

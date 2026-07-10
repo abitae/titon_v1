@@ -76,16 +76,8 @@
                     <td>{{ $item->description }} <span class="text-slate-500">({{ $item->unit }})</span></td>
                     <td class="tabular-nums font-medium">{{ $item->stock_quantity }} {{ $item->unit }}</td>
                     <td class="tabular-nums">S/ {{ number_format((float) $item->unit_cost, 4) }}</td>
-                    <td class="!px-1.5 !py-1 space-x-2 text-end">
-                        <button type="button" wire:click="openKardexModal({{ $item->id }})" class="text-[11px] font-medium text-cyan-700">Kardex</button>
-                        @if ($item->item_type === 'material' && (float) $item->stock_quantity > 0)
-                            @can('almacen.mover')
-                                <button type="button" wire:click="openOutboundModal({{ $item->id }})" class="text-[11px] font-medium">Salida</button>
-                            @endcan
-                            @can('almacen.transferir')
-                                <button type="button" wire:click="openTransferModal({{ $item->id }})" class="text-[11px] font-medium">Transferir</button>
-                            @endcan
-                        @endif
+                    <td class="!px-1.5 !py-1">
+                        <x-platform.action-buttons :edit="'openKardexModal('.$item->id.')'" />
                     </td>
                 </tr>
             @empty

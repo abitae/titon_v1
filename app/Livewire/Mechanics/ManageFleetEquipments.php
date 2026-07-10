@@ -5,11 +5,14 @@ namespace App\Livewire\Mechanics;
 use App\Actions\Companies\ResolveCurrentCompany;
 use App\Concerns\InteractsWithToast;
 use App\Concerns\ViewsPdfInModal;
+use App\Enums\CatalogType;
 use App\Enums\CorrelativeSubject;
 use App\Enums\FleetEquipmentOperationalStatus;
+use App\Models\CatalogItem;
 use App\Models\FleetEquipment;
 use App\Models\Project;
 use App\Services\Correlatives\IssueCompanyCorrelativeCode;
+use App\Support\DefaultDate;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -44,6 +47,8 @@ class ManageFleetEquipments extends Component
 
     public string $statusFilter = '';
 
+    public string $projectFilter = '';
+
     public ?int $editingEquipmentId = null;
 
     public bool $showFormModal = false;
@@ -58,7 +63,7 @@ class ManageFleetEquipments extends Component
 
     public string $internal_code = '';
 
-    public string $equipment_type = '';
+    public ?int $equipment_type_id = null;
 
     public string $name = '';
 
@@ -99,15 +104,21 @@ class ManageFleetEquipments extends Component
     public function render(): View
     {
         $equipment = FleetEquipment::query()
-            ->with(['workProject', 'responsibleUser', 'media'])
+            ->with(['workProject', 'responsibleUser', 'equipmentType', 'media'])
             ->when($this->search !== '', function ($query): void {
                 $query->where(function ($nested): void {
                     $nested->where('internal_code', 'like', '%'.$this->search.'%')
                         ->orWhere('name', 'like', '%'.$this->search.'%')
-                        ->orWhere('plate', 'like', '%'.$this->search.'%');
+                        ->orWhere('plate', 'like', '%'.$this->search.'%')
+                        ->orWhereHas('workProject', function ($projectQuery): void {
+                            $projectQuery
+                                ->where('code', 'like', '%'.$this->search.'%')
+                                ->orWhere('name', 'like', '%'.$this->search.'%');
+                        });
                 });
             })
             ->when($this->statusFilter !== '', fn ($query) => $query->where('operational_status', $this->statusFilter))
+            ->when($this->projectFilter !== '', fn ($query) => $query->where('work_project_id', (int) $this->projectFilter))
             ->latest()
             ->paginate(12);
 
@@ -116,6 +127,12 @@ class ManageFleetEquipments extends Component
             'projects' => Project::query()->select(['id', 'code', 'name'])->orderBy('code')->get(),
             'responsibleUsers' => $this->responsibleUsers(),
             'statusOptions' => FleetEquipmentOperationalStatus::cases(),
+            'equipmentTypes' => CatalogItem::query()
+                ->ofType(CatalogType::EquipmentType)
+                ->where('is_active', true)
+                ->orderBy('sort_order')
+                ->orderBy('name')
+                ->get(),
         ])->layout('layouts.app', ['title' => $this->title]);
     }
 
@@ -129,10 +146,31 @@ class ManageFleetEquipments extends Component
         $this->resetPage();
     }
 
+    public function updatedProjectFilter(): void
+    {
+        $this->resetPage();
+    }
+
     public function openCreateModal(): void
     {
         abort_unless(auth()->user()?->can('equipos.crear'), 403);
+
+        if (! CatalogItem::query()
+            ->ofType(CatalogType::EquipmentType)
+            ->where('is_active', true)
+            ->exists()) {
+            $this->dangerToast('Registre primero un tipo de equipo en Tipos de equipo.', 'Sin tipos disponibles');
+
+            return;
+        }
+
         $this->resetForm();
+        $this->equipment_type_id = CatalogItem::query()
+            ->ofType(CatalogType::EquipmentType)
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->value('id');
         $this->showFormModal = true;
     }
 
@@ -142,7 +180,7 @@ class ManageFleetEquipments extends Component
         $equipment = FleetEquipment::query()->findOrFail($equipmentId);
         $this->editingEquipmentId = $equipment->id;
         $this->internal_code = $equipment->internal_code;
-        $this->equipment_type = $equipment->equipment_type;
+        $this->equipment_type_id = $equipment->equipment_type_id;
         $this->name = $equipment->name;
         $this->brand = (string) ($equipment->brand ?? '');
         $this->model = (string) ($equipment->model ?? '');
@@ -166,7 +204,16 @@ class ManageFleetEquipments extends Component
     public function openDetailModal(int $equipmentId): void
     {
         $this->selectedEquipment = FleetEquipment::query()
-            ->with(['workProject', 'responsibleUser', 'media'])
+            ->with([
+                'workProject',
+                'responsibleUser',
+                'equipmentType',
+                'media',
+                'technicalInspections' => fn ($query) => $query
+                    ->with('responsibleUser')
+                    ->orderByDesc('reviewed_at')
+                    ->orderByDesc('due_at'),
+            ])
             ->findOrFail($equipmentId);
 
         $this->showDetailModal = true;
@@ -178,22 +225,34 @@ class ManageFleetEquipments extends Component
         abort_if($company === null, 403);
         abort_unless(auth()->user()->can($this->editingEquipmentId ? 'equipos.editar' : 'equipos.crear'), 403);
 
-        $validated = $this->validate($this->rules($company->id));
+        $activeCompanyUserIds = $company->users()
+            ->wherePivot('active', true)
+            ->pluck('users.id')
+            ->all();
+
+        $validated = $this->validateWithToastFeedback(
+            $this->rules($company->id, $activeCompanyUserIds),
+            $this->validationMessages(),
+            $this->validationAttributes(),
+        );
         $wasEditing = $this->editingEquipmentId !== null;
 
+        $equipmentType = CatalogItem::query()
+            ->ofType(CatalogType::EquipmentType)
+            ->where('company_id', $company->id)
+            ->findOrFail($validated['equipment_type_id']);
+
         if ($wasEditing) {
-            $internalCode = trim((string) $validated['internal_code']);
+            $internalCode = FleetEquipment::query()->findOrFail($this->editingEquipmentId)->internal_code;
         } else {
-            $incoming = trim((string) ($validated['internal_code'] ?? ''));
-            $internalCode = $incoming !== ''
-                ? $incoming
-                : app(IssueCompanyCorrelativeCode::class)->issue($company, CorrelativeSubject::FleetEquipment);
+            $internalCode = app(IssueCompanyCorrelativeCode::class)->issue($company, CorrelativeSubject::FleetEquipment);
         }
 
         $payload = [
             'company_id' => $company->id,
             'internal_code' => $internalCode,
-            'equipment_type' => $validated['equipment_type'],
+            'equipment_type_id' => $equipmentType->id,
+            'equipment_type' => $equipmentType->name,
             'name' => $validated['name'],
             'brand' => $validated['brand'] !== '' ? $validated['brand'] : null,
             'model' => $validated['model'] !== '' ? $validated['model'] : null,
@@ -224,15 +283,21 @@ class ManageFleetEquipments extends Component
 
         $this->storeMedia($equipment);
         $this->resetForm();
-        $this->successToast($wasEditing ? 'Equipo actualizado.' : 'Equipo registrado.');
+        $this->successToast(
+            $wasEditing ? 'Equipo actualizado correctamente.' : 'Equipo registrado correctamente.',
+            $wasEditing ? 'Cambios guardados' : 'Registro exitoso',
+        );
     }
 
     public function deleteEquipment(int $equipmentId): void
     {
         abort_unless(auth()->user()?->can('equipos.eliminar'), 403);
-        FleetEquipment::query()->findOrFail($equipmentId)->delete();
+
+        $equipment = FleetEquipment::query()->findOrFail($equipmentId);
+        $label = $equipment->internal_code;
+        $equipment->delete();
         $this->resetPage();
-        $this->warningToast('Equipo eliminado.');
+        $this->warningToast("Se elimino el equipo {$label}.", 'Equipo eliminado');
     }
 
     public function closeModals(): void
@@ -243,41 +308,99 @@ class ManageFleetEquipments extends Component
     }
 
     /**
+     * @param  list<int>  $activeCompanyUserIds
      * @return array<string, mixed>
      */
-    protected function rules(int $companyId): array
+    protected function rules(int $companyId, array $activeCompanyUserIds): array
     {
+        $currentYear = (int) now()->format('Y');
+
         return [
-            'internal_code' => [
-                Rule::requiredIf($this->editingEquipmentId !== null),
-                'nullable',
-                'string',
-                'max:50',
-                Rule::unique('fleet_equipments', 'internal_code')
-                    ->where(fn ($query) => $query->where('company_id', $companyId))
-                    ->ignore($this->editingEquipmentId),
+            'equipment_type_id' => [
+                'required',
+                'integer',
+                Rule::exists('catalog_items', 'id')->where(fn ($query) => $query
+                    ->where('company_id', $companyId)
+                    ->where('type', CatalogType::EquipmentType->value())
+                    ->where('is_active', true)),
             ],
-            'equipment_type' => ['required', 'string', 'max:120'],
             'name' => ['required', 'string', 'max:255'],
             'brand' => ['nullable', 'string', 'max:120'],
             'model' => ['nullable', 'string', 'max:120'],
             'serial_number' => ['nullable', 'string', 'max:120'],
             'plate' => ['nullable', 'string', 'max:24'],
-            'year' => ['nullable', 'numeric'],
+            'year' => ['nullable', 'integer', 'min:1900', 'max:'.($currentYear + 1)],
             'color' => ['nullable', 'string', 'max:64'],
             'city' => ['nullable', 'string', 'max:120'],
             'work_project_id' => [
                 'nullable',
+                'integer',
                 Rule::exists('projects', 'id')->where(fn ($query) => $query->where('company_id', $companyId)),
             ],
-            'responsible_user_id' => ['nullable', 'exists:users,id'],
+            'responsible_user_id' => ['nullable', 'integer', Rule::in($activeCompanyUserIds)],
             'operational_status' => ['required', Rule::in(FleetEquipmentOperationalStatus::values())],
             'odometer_km' => ['nullable', 'numeric', 'min:0'],
             'hour_meter' => ['nullable', 'numeric', 'min:0'],
             'acquisition_date' => ['nullable', 'date'],
-            'observations' => ['nullable', 'string'],
-            'equipment_photos.*' => ['nullable', 'file', 'max:10240'],
-            'equipment_documents.*' => ['nullable', 'file', 'max:10240'],
+            'observations' => ['nullable', 'string', 'max:2000'],
+            'equipment_photos.*' => ['nullable', 'file', 'max:10240', 'mimes:jpg,jpeg,png,webp,gif'],
+            'equipment_documents.*' => ['nullable', 'file', 'max:10240', 'mimes:pdf,jpg,jpeg,png'],
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    protected function validationMessages(): array
+    {
+        return [
+            'equipment_type_id.required' => 'Seleccione un tipo de equipo.',
+            'equipment_type_id.exists' => 'El tipo de equipo seleccionado no es valido o esta inactivo.',
+            'name.required' => 'Ingrese el nombre del equipo.',
+            'name.max' => 'El nombre no puede superar los 255 caracteres.',
+            'year.integer' => 'El año debe ser un numero entero.',
+            'year.min' => 'El año debe ser 1900 o posterior.',
+            'year.max' => 'El año no puede ser mayor al proximo año calendario.',
+            'work_project_id.exists' => 'La obra seleccionada no pertenece a la empresa activa.',
+            'responsible_user_id.in' => 'El responsable debe ser un usuario activo de la empresa.',
+            'operational_status.required' => 'Seleccione el estado operativo.',
+            'operational_status.in' => 'El estado operativo seleccionado no es valido.',
+            'odometer_km.numeric' => 'El kilometraje debe ser un numero.',
+            'odometer_km.min' => 'El kilometraje no puede ser negativo.',
+            'hour_meter.numeric' => 'El horometro debe ser un numero.',
+            'hour_meter.min' => 'El horometro no puede ser negativo.',
+            'acquisition_date.date' => 'La fecha de adquisicion no es valida.',
+            'equipment_photos.*.max' => 'Cada foto no puede superar los 10 MB.',
+            'equipment_photos.*.mimes' => 'Las fotos deben ser JPG, PNG, WEBP o GIF.',
+            'equipment_documents.*.max' => 'Cada documento no puede superar los 10 MB.',
+            'equipment_documents.*.mimes' => 'Los documentos deben ser PDF o imagen (JPG/PNG).',
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    protected function validationAttributes(): array
+    {
+        return [
+            'equipment_type_id' => 'tipo de equipo',
+            'name' => 'nombre',
+            'brand' => 'marca',
+            'model' => 'modelo',
+            'serial_number' => 'serie',
+            'plate' => 'placa',
+            'year' => 'año',
+            'color' => 'color',
+            'city' => 'ciudad',
+            'work_project_id' => 'obra',
+            'responsible_user_id' => 'responsable',
+            'operational_status' => 'estado operativo',
+            'odometer_km' => 'kilometraje',
+            'hour_meter' => 'horometro',
+            'acquisition_date' => 'fecha de adquisicion',
+            'observations' => 'observaciones',
+            'equipment_photos.*' => 'foto',
+            'equipment_documents.*' => 'documento',
         ];
     }
 
@@ -288,7 +411,7 @@ class ManageFleetEquipments extends Component
             'equipment_photos',
             'equipment_documents',
             'internal_code',
-            'equipment_type',
+            'equipment_type_id',
             'name',
             'brand',
             'model',
@@ -304,24 +427,32 @@ class ManageFleetEquipments extends Component
             'acquisition_date',
             'observations',
         ]);
+        $this->acquisition_date = DefaultDate::today();
         $this->operational_status = FleetEquipmentOperationalStatus::Operational->value();
         $this->showFormModal = false;
     }
 
     protected function storeMedia(FleetEquipment $equipment): void
     {
-        foreach ($this->equipment_photos as $uploadedFile) {
-            $equipment->addMedia($uploadedFile->getRealPath())
-                ->usingFileName($uploadedFile->getClientOriginalName())
-                ->usingName(pathinfo($uploadedFile->getClientOriginalName(), PATHINFO_FILENAME))
-                ->toMediaCollection('equipment_photos', 'public');
-        }
+        try {
+            foreach ($this->equipment_photos as $uploadedFile) {
+                $equipment->addMedia($uploadedFile->getRealPath())
+                    ->usingFileName($uploadedFile->getClientOriginalName())
+                    ->usingName(pathinfo($uploadedFile->getClientOriginalName(), PATHINFO_FILENAME))
+                    ->toMediaCollection('equipment_photos', 'public');
+            }
 
-        foreach ($this->equipment_documents as $uploadedFile) {
-            $equipment->addMedia($uploadedFile->getRealPath())
-                ->usingFileName($uploadedFile->getClientOriginalName())
-                ->usingName(pathinfo($uploadedFile->getClientOriginalName(), PATHINFO_FILENAME))
-                ->toMediaCollection('equipment_documents', 'public');
+            foreach ($this->equipment_documents as $uploadedFile) {
+                $equipment->addMedia($uploadedFile->getRealPath())
+                    ->usingFileName($uploadedFile->getClientOriginalName())
+                    ->usingName(pathinfo($uploadedFile->getClientOriginalName(), PATHINFO_FILENAME))
+                    ->toMediaCollection('equipment_documents', 'public');
+            }
+        } catch (\Throwable $exception) {
+            $this->dangerToast('No se pudieron guardar algunos archivos adjuntos.', 'Error al subir archivos');
+            report($exception);
+
+            return;
         }
 
         $this->equipment_photos = [];

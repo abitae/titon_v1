@@ -25,6 +25,8 @@ class ManageFleetSpareParts extends Component
 
     public string $title = 'Inventario de repuestos';
 
+    public string $search = '';
+
     public bool $showPartModal = false;
 
     public bool $showMovementModal = false;
@@ -70,10 +72,23 @@ class ManageFleetSpareParts extends Component
         $this->movement_direction = FleetSparePartMovementDirection::Inbound->value();
     }
 
+    public function updatingSearch(): void
+    {
+        $this->resetPage();
+    }
+
     public function render(): View
     {
         return view('livewire.mechanics.manage-fleet-spare-parts', [
-            'parts' => FleetSparePart::query()->with(['supplier', 'warehouseProject', 'movements' => fn ($q) => $q->latest()->limit(5)])->paginate(12),
+            'parts' => FleetSparePart::query()
+                ->with(['supplier', 'warehouseProject', 'movements' => fn ($query) => $query->latest()->limit(5)])
+                ->when($this->search !== '', fn ($query) => $query->where(function ($query): void {
+                    $query->where('code', 'like', '%'.$this->search.'%')
+                        ->orWhere('name', 'like', '%'.$this->search.'%')
+                        ->orWhere('category', 'like', '%'.$this->search.'%');
+                }))
+                ->orderBy('code')
+                ->paginate(12),
             'suppliers' => Supplier::query()->orderBy('business_name')->get(['id', 'business_name']),
             'projects' => Project::query()->select(['id', 'code', 'name'])->orderBy('code')->get(),
             'workOrders' => FleetWorkOrder::query()->orderByDesc('id')->limit(100)->get(),

@@ -31,6 +31,10 @@ class AppNavigation
                 ),
             ],
             [
+                'heading' => 'Mecanica',
+                'items' => $this->mechanicsItems(),
+            ],
+            [
                 'heading' => 'Seguridad',
                 'items' => [
                     [
@@ -77,6 +81,14 @@ class AppNavigation
                         'route' => 'settings.correlatives',
                         'href' => route('settings.correlatives'),
                         'current' => request()->routeIs('settings.correlatives'),
+                    ],
+                    [
+                        'label' => 'Formatos PDF',
+                        'description' => 'Membrete, logo y colores de exportaciones PDF.',
+                        'icon' => 'document-text',
+                        'route' => 'settings.pdf-formats',
+                        'href' => route('settings.pdf-formats'),
+                        'current' => request()->routeIs('settings.pdf-formats*'),
                     ],
                     [
                         'label' => 'Tipos de costo',
@@ -166,6 +178,90 @@ class AppNavigation
                 'route' => 'accounts-payable.index',
                 'href' => route('accounts-payable.index'),
                 'current' => request()->routeIs('accounts-payable.*'),
+            ],
+        ];
+    }
+
+    /**
+     * @return array<int, array<string, string|bool>>
+     */
+    protected function mechanicsItems(): array
+    {
+        return [
+            [
+                'label' => 'Panel',
+                'description' => 'Graficos e indicadores visuales de mecanica.',
+                'icon' => 'chart-bar',
+                'route' => 'modules.mechanics',
+                'href' => route('modules.mechanics'),
+                'current' => request()->routeIs('modules.mechanics'),
+            ],
+            [
+                'label' => 'Reportes',
+                'description' => 'Exportaciones PDF y Excel del modulo.',
+                'icon' => 'document-chart-bar',
+                'route' => 'mechanics.reports',
+                'href' => route('mechanics.reports'),
+                'current' => request()->routeIs('mechanics.reports') || request()->routeIs('mechanics.report.*'),
+            ],
+            [
+                'label' => 'Equipos',
+                'description' => 'Registro y estado de maquinaria por empresa.',
+                'icon' => 'truck',
+                'route' => 'mechanics.equipments',
+                'href' => route('mechanics.equipments'),
+                'current' => request()->routeIs([
+                    'mechanics.equipments',
+                    'mechanics.equipment-types',
+                ]),
+            ],
+            [
+                'label' => 'Tipos de equipo',
+                'description' => 'Catalogo de clasificacion de maquinaria.',
+                'icon' => 'tag',
+                'route' => 'mechanics.equipment-types',
+                'href' => route('mechanics.equipment-types'),
+                'current' => request()->routeIs('mechanics.equipment-types'),
+            ],
+            [
+                'label' => 'Revisiones tecnicas',
+                'description' => 'Inspecciones programadas y vencimientos.',
+                'icon' => 'clipboard-document-check',
+                'route' => 'mechanics.inspections',
+                'href' => route('mechanics.inspections'),
+                'current' => request()->routeIs('mechanics.inspections'),
+            ],
+            [
+                'label' => 'Mantenimiento preventivo',
+                'description' => 'Planes y ejecucion de mantenimiento programado.',
+                'icon' => 'calendar-days',
+                'route' => 'mechanics.preventive',
+                'href' => route('mechanics.preventive'),
+                'current' => request()->routeIs('mechanics.preventive'),
+            ],
+            [
+                'label' => 'Mantenimiento correctivo',
+                'description' => 'Intervenciones por falla o averia.',
+                'icon' => 'wrench',
+                'route' => 'mechanics.corrective',
+                'href' => route('mechanics.corrective'),
+                'current' => request()->routeIs('mechanics.corrective'),
+            ],
+            [
+                'label' => 'Ordenes de trabajo',
+                'description' => 'OT abiertas, tecnicos, costos y seguimiento.',
+                'icon' => 'clipboard-document-list',
+                'route' => 'mechanics.work-orders',
+                'href' => route('mechanics.work-orders'),
+                'current' => request()->routeIs('mechanics.work-orders'),
+            ],
+            [
+                'label' => 'Repuestos',
+                'description' => 'Stock, movimientos y consumo de repuestos.',
+                'icon' => 'cube',
+                'route' => 'mechanics.spare-parts',
+                'href' => route('mechanics.spare-parts'),
+                'current' => request()->routeIs('mechanics.spare-parts'),
             ],
         ];
     }

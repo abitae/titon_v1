@@ -65,64 +65,11 @@
                 <td class="px-2.5 py-1.5 text-center tabular-nums">{{ $purchaseRequest->items_count }}</td>
                 <td class="px-2.5 py-1.5 text-center tabular-nums">{{ $purchaseRequest->quotations_count }}</td>
                 <td class="whitespace-nowrap px-1.5 py-1">
-                    <div class="flex items-center justify-end gap-0">
-                        <flux:tooltip content="Enviar a proveedores">
-                            <flux:button
-                                variant="ghost"
-                                size="sm"
-                                icon="paper-airplane"
-                                href="{{ route('purchases.send-suppliers', $purchaseRequest) }}"
-                                wire:navigate
-                                class="!size-7 !min-h-0 !p-0 !text-emerald-600 hover:!text-emerald-700 dark:!text-emerald-400 dark:hover:!text-emerald-300"
-                                aria-label="Enviar a proveedores"
-                            />
-                        </flux:tooltip>
-                        <flux:tooltip content="Cotizaciones">
-                            <flux:button
-                                variant="ghost"
-                                size="sm"
-                                icon="document-text"
-                                href="{{ route('purchases.quotations', $purchaseRequest) }}"
-                                wire:navigate
-                                class="!size-7 !min-h-0 !p-0 !text-cyan-700 hover:!text-cyan-800 dark:!text-cyan-300 dark:hover:!text-cyan-200"
-                                aria-label="Cotizaciones"
-                            />
-                        </flux:tooltip>
-                        <flux:tooltip content="Comparar">
-                            <flux:button
-                                variant="ghost"
-                                size="sm"
-                                icon="scale"
-                                href="{{ route('purchases.comparison', $purchaseRequest) }}"
-                                wire:navigate
-                                class="!size-7 !min-h-0 !p-0"
-                                aria-label="Comparar cotizaciones"
-                            />
-                        </flux:tooltip>
-                        <flux:tooltip content="Editar">
-                            <flux:button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                icon="pencil-square"
-                                wire:click="openEditModal({{ $purchaseRequest->id }})"
-                                class="!size-7 !min-h-0 !p-0"
-                                aria-label="Editar solicitud"
-                            />
-                        </flux:tooltip>
-                        <flux:tooltip content="Eliminar">
-                            <flux:button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                icon="trash"
-                                wire:click="deletePurchaseRequest({{ $purchaseRequest->id }})"
-                                wire:confirm="¿Eliminar esta solicitud?"
-                                class="!size-7 !min-h-0 !p-0 !text-rose-600 hover:!text-rose-700 dark:!text-rose-400 dark:hover:!text-rose-300"
-                                aria-label="Eliminar solicitud"
-                            />
-                        </flux:tooltip>
-                    </div>
+                    <x-platform.action-buttons
+                        :edit="'openEditModal('.$purchaseRequest->id.')'"
+                        :delete="'deletePurchaseRequest('.$purchaseRequest->id.')'"
+                        delete-confirm="¿Eliminar esta solicitud?"
+                    />
                 </td>
             </tr>
         @empty

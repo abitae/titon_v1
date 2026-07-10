@@ -11,6 +11,7 @@ enum CatalogType
     case OperationType;
     case DocumentType;
     case DocumentStatus;
+    case EquipmentType;
 
     public function value(): string
     {
@@ -22,6 +23,7 @@ enum CatalogType
             self::OperationType => 'operation_types',
             self::DocumentType => 'document_types',
             self::DocumentStatus => 'document_statuses',
+            self::EquipmentType => 'equipment_types',
         };
     }
 
@@ -35,6 +37,7 @@ enum CatalogType
             self::OperationType => 'Tipos de operacion',
             self::DocumentType => 'Tipos de documento',
             self::DocumentStatus => 'Estados documentarios',
+            self::EquipmentType => 'Tipos de equipo',
         };
     }
 
@@ -44,6 +47,7 @@ enum CatalogType
             self::City, self::Area => 'general',
             self::Bank, self::PaymentMethod, self::OperationType => 'finance',
             self::DocumentType, self::DocumentStatus => 'documents',
+            self::EquipmentType => 'mechanics',
         };
     }
 
@@ -56,6 +60,7 @@ enum CatalogType
             'general' => 'General',
             'finance' => 'Finanzas y pagos',
             'documents' => 'Documentos',
+            'mechanics' => 'Mecanica',
         ];
     }
 

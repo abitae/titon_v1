@@ -112,7 +112,6 @@ enum PlatformModule
             self::Contracts,
             self::Banks,
             self::Warehouse,
-            self::Mechanics,
         ];
     }
 }

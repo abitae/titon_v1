@@ -32,6 +32,13 @@ class CatalogSeeder extends Seeder
                 ['name' => 'Arequipa', 'code' => 'AQP'],
                 ['name' => 'Trujillo', 'code' => 'TRU'],
             ],
+            CatalogType::EquipmentType->value() => [
+                ['name' => 'Retroexcavadora', 'code' => 'RETRO'],
+                ['name' => 'Camion', 'code' => 'CAM'],
+                ['name' => 'Generador', 'code' => 'GEN'],
+                ['name' => 'Equipo menor', 'code' => 'MENOR'],
+                ['name' => 'Compactacion', 'code' => 'COMP'],
+            ],
         ];
 
         Company::query()->each(function (Company $company) use ($catalogs): void {

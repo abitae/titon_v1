@@ -3,6 +3,7 @@
 namespace App\Livewire\Mechanics;
 
 use App\Actions\Companies\ResolveCurrentCompany;
+use App\Concerns\InteractsWithFleetEquipmentSearch;
 use App\Concerns\InteractsWithToast;
 use App\Concerns\ViewsPdfInModal;
 use App\Enums\CorrelativeSubject;
@@ -17,7 +18,9 @@ use App\Models\FleetWorkOrder;
 use App\Models\Project;
 use App\Models\User;
 use App\Services\Correlatives\IssueCompanyCorrelativeCode;
+use App\Services\Mechanics\FleetWorkOrderBoardAnalytics;
 use App\Services\Mechanics\FleetWorkOrderBoardQuery;
+use App\Support\DefaultDate;
 use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
@@ -30,7 +33,7 @@ use Livewire\WithPagination;
 
 class ManageFleetWorkOrders extends Component
 {
-    use InteractsWithToast, ViewsPdfInModal, WithFileUploads, WithPagination;
+    use InteractsWithFleetEquipmentSearch, InteractsWithToast, ViewsPdfInModal, WithFileUploads, WithPagination;
 
     public function openWorkOrdersReportPdf(string $report): void
     {
@@ -53,8 +56,8 @@ class ManageFleetWorkOrders extends Component
 
     public string $title = 'Ordenes de trabajo';
 
-    /** @var 'kanban'|'list'|'resources'|'calendar' */
-    public string $viewTab = 'kanban';
+    /** @var 'graficos'|'kanban'|'list'|'resources'|'calendar' */
+    public string $viewTab = 'graficos';
 
     /** ISO date (Y-m-d) prefilled when creating OT from calendar. */
     public string $calendarPrefillDate = '';
@@ -146,8 +149,14 @@ class ManageFleetWorkOrders extends Component
         $this->type = FleetWorkOrderType::Preventive->value();
         $this->priority = DocumentPriority::Medium->value();
         $this->status = FleetWorkOrderStatus::Generated->value();
-        $this->issued_at = now()->toDateString();
+        $this->issued_at = DefaultDate::today();
+        $this->scheduled_date = DefaultDate::today();
         $this->calendarMonth = now()->format('Y-m');
+        $range = DefaultDate::filterRange();
+        $this->filter_scheduled_from = $range['from'];
+        $this->filter_scheduled_to = $range['to'];
+        $this->filter_closed_from = $range['from'];
+        $this->filter_closed_to = $range['to'];
     }
 
     public function updatedSearch(): void
@@ -163,6 +172,12 @@ class ManageFleetWorkOrders extends Component
     }
 
     public function updatedFilterEquipmentId(): void
+    {
+        $this->syncFilterFleetEquipmentSearch();
+        $this->afterFilterFleetEquipmentChanged();
+    }
+
+    protected function afterFilterFleetEquipmentChanged(): void
     {
         $this->resetPage();
         $this->selectedIds = [];
@@ -228,7 +243,7 @@ class ManageFleetWorkOrders extends Component
 
     public function setTab(string $tab): void
     {
-        if (! in_array($tab, ['kanban', 'list', 'resources', 'calendar'], true)) {
+        if (! in_array($tab, ['graficos', 'kanban', 'list', 'resources', 'calendar'], true)) {
             return;
         }
 
@@ -254,6 +269,11 @@ class ManageFleetWorkOrders extends Component
         $this->resetPage();
     }
 
+    public function updatedSortColumn(): void
+    {
+        $this->resetPage();
+    }
+
     public function resetFilters(): void
     {
         $this->reset([
@@ -270,6 +290,7 @@ class ManageFleetWorkOrders extends Component
             'filter_closed_to',
         ]);
         $this->filter_overdue_only = false;
+        $this->filter_equipment_search = '';
         $this->selectedIds = [];
         $this->resetPage();
     }
@@ -425,22 +446,10 @@ class ManageFleetWorkOrders extends Component
         ], fn (mixed $v): bool => $v !== null && $v !== '' && $v !== false);
     }
 
-    public function render(): View
+    public function render(FleetWorkOrderBoardAnalytics $boardAnalytics): View
     {
         $equipmentId = $this->fleet_equipment_id;
-
         $base = $this->filteredBaseQuery();
-
-        $kanbanOrders = (clone $base)
-            ->with(['equipment', 'workProject', 'responsibleUser'])
-            ->orderByRaw("CASE priority WHEN 'critica' THEN 1 WHEN 'alta' THEN 2 WHEN 'media' THEN 3 ELSE 4 END")
-            ->orderByDesc('issued_at')
-            ->limit(400)
-            ->get();
-
-        $kanbanGrouped = Collection::wrap(FleetWorkOrderStatus::cases())
-            ->mapWithKeys(fn (FleetWorkOrderStatus $status): array => [$status->value() => $kanbanOrders->where('status', $status->value())->values()])
-            ->all();
 
         $kpis = [
             'open' => (clone $base)->whereIn('status', FleetWorkOrderStatus::openStatuses())->count(),
@@ -453,13 +462,13 @@ class ManageFleetWorkOrders extends Component
             'total_cost_period' => (float) (clone $base)->sum('total_cost'),
         ];
 
+        $avgAttentionDays = $this->averageAttentionDays();
+
         $statsFilters = $this->filterPayload();
         $statsFilters['responsible_user_id'] = null;
 
-        $topLoadsBuilder = FleetWorkOrder::query();
-        FleetWorkOrderBoardQuery::apply($topLoadsBuilder, $statsFilters);
-
-        $topLoadRows = (clone $topLoadsBuilder)
+        $topLoadRows = (clone FleetWorkOrder::query())
+            ->tap(fn (Builder $query) => FleetWorkOrderBoardQuery::apply($query, $statsFilters))
             ->selectRaw('responsible_user_id, COUNT(*) as open_count')
             ->whereNotNull('responsible_user_id')
             ->whereIn('status', FleetWorkOrderStatus::openStatuses())
@@ -486,69 +495,134 @@ class ManageFleetWorkOrders extends Component
             ->filter()
             ->values();
 
-        $avgAttentionDays = $this->averageAttentionDays();
+        $kanbanGrouped = [];
+        $kanbanStatuses = FleetWorkOrderStatus::cases();
 
-        $technicianStats = $this->responsibleUsers()->map(function (User $user) use ($statsFilters): array {
-            $openQuery = FleetWorkOrder::query()->where('responsible_user_id', $user->id);
-            FleetWorkOrderBoardQuery::apply($openQuery, $statsFilters);
-            $open = (clone $openQuery)->whereIn('status', FleetWorkOrderStatus::openStatuses())->count();
-
-            $overdueQuery = FleetWorkOrder::query()->where('responsible_user_id', $user->id);
-            FleetWorkOrderBoardQuery::apply($overdueQuery, $statsFilters);
-            $overdue = (clone $overdueQuery)->scheduledOverdue()->count();
-
-            $pendingQuery = FleetWorkOrder::query()->where('responsible_user_id', $user->id);
-            FleetWorkOrderBoardQuery::apply($pendingQuery, $statsFilters);
-
-            /** @var Collection<int, FleetWorkOrder> $pending */
-            $pending = (clone $pendingQuery)
-                ->whereIn('status', FleetWorkOrderStatus::openStatuses())
-                ->with(['equipment', 'workProject'])
-                ->orderBy('scheduled_date')
-                ->limit(8)
+        if ($this->viewTab === 'kanban') {
+            $kanbanOrders = (clone $base)
+                ->with(['equipment', 'workProject', 'responsibleUser'])
+                ->orderByRaw("CASE priority WHEN 'critica' THEN 1 WHEN 'alta' THEN 2 WHEN 'media' THEN 3 ELSE 4 END")
+                ->orderByDesc('issued_at')
+                ->limit(400)
                 ->get();
 
-            return compact('user', 'open', 'overdue', 'pending');
-        });
-
-        $parts = explode('-', $this->calendarMonth);
-        if (count($parts) !== 2) {
-            $this->calendarMonth = now()->format('Y-m');
-            $parts = explode('-', $this->calendarMonth);
+            $kanbanGrouped = Collection::wrap($kanbanStatuses)
+                ->mapWithKeys(fn (FleetWorkOrderStatus $status): array => [$status->value() => $kanbanOrders->where('status', $status->value())->values()])
+                ->all();
         }
 
-        $calendarYear = (int) ($parts[0] ?? now()->year);
-        $calendarMonthNum = (int) ($parts[1] ?? now()->month);
+        $listRows = $this->viewTab === 'list'
+            ? $this->listRowsQuery()->paginate(15)
+            : null;
 
-        $calendarStart = Carbon::create($calendarYear, $calendarMonthNum, 1)->startOfMonth();
-        $calendarEnd = (clone $calendarStart)->endOfMonth();
+        $boardCharts = $this->viewTab === 'graficos'
+            ? $boardAnalytics->charts($base, $topLoads)
+            : [];
 
-        $calendarWorkOrders = (clone $base)
-            ->with(['equipment', 'responsibleUser'])
-            ->whereNotNull('scheduled_date')
-            ->whereBetween('scheduled_date', [$calendarStart->toDateString(), $calendarEnd->toDateString()])
-            ->orderBy('scheduled_date')
-            ->get();
+        $totalFiltered = (int) (clone $base)->count();
+        $kpiPercents = [
+            'open' => $totalFiltered > 0 ? round(($kpis['open'] / $totalFiltered) * 100, 1) : 0,
+            'in_progress' => $totalFiltered > 0 ? round(($kpis['in_progress'] / $totalFiltered) * 100, 1) : 0,
+            'overdue' => $totalFiltered > 0 ? round(($kpis['overdue'] / $totalFiltered) * 100, 1) : 0,
+            'finished_closed' => $totalFiltered > 0 ? round(($kpis['finished_closed'] / $totalFiltered) * 100, 1) : 0,
+        ];
 
-        $calendarPreventive = FleetPreventiveMaintenance::query()
-            ->with('equipment')
-            ->whereBetween('scheduled_date', [$calendarStart->toDateString(), $calendarEnd->toDateString()])
-            ->orderBy('scheduled_date')
-            ->get();
+        $technicianStats = collect();
 
-        $calendarInspections = FleetTechnicalInspection::query()
-            ->with('equipment')
-            ->whereBetween('due_at', [$calendarStart->toDateString(), $calendarEnd->toDateString()])
-            ->orderBy('due_at')
-            ->get();
+        if ($this->viewTab === 'resources') {
+            $technicianStats = $this->responsibleUsers()->map(function (User $user) use ($statsFilters): array {
+                $openQuery = FleetWorkOrder::query()->where('responsible_user_id', $user->id);
+                FleetWorkOrderBoardQuery::apply($openQuery, $statsFilters);
+                $open = (clone $openQuery)->whereIn('status', FleetWorkOrderStatus::openStatuses())->count();
 
-        $listRows = $this->listRowsQuery()->paginate(15);
+                $overdueQuery = FleetWorkOrder::query()->where('responsible_user_id', $user->id);
+                FleetWorkOrderBoardQuery::apply($overdueQuery, $statsFilters);
+                $overdue = (clone $overdueQuery)->scheduledOverdue()->count();
+
+                $pendingQuery = FleetWorkOrder::query()->where('responsible_user_id', $user->id);
+                FleetWorkOrderBoardQuery::apply($pendingQuery, $statsFilters);
+
+                /** @var Collection<int, FleetWorkOrder> $pending */
+                $pending = (clone $pendingQuery)
+                    ->whereIn('status', FleetWorkOrderStatus::openStatuses())
+                    ->with(['equipment', 'workProject'])
+                    ->orderBy('scheduled_date')
+                    ->limit(8)
+                    ->get();
+
+                return compact('user', 'open', 'overdue', 'pending');
+            });
+        }
+
+        $calendarWorkOrders = collect();
+        $calendarPreventive = collect();
+        $calendarInspections = collect();
+        $calendarStart = now()->startOfMonth();
+        $calendarEnd = now()->endOfMonth();
+
+        if ($this->viewTab === 'calendar') {
+            $parts = explode('-', $this->calendarMonth);
+            if (count($parts) !== 2) {
+                $this->calendarMonth = now()->format('Y-m');
+                $parts = explode('-', $this->calendarMonth);
+            }
+
+            $calendarYear = (int) ($parts[0] ?? now()->year);
+            $calendarMonthNum = (int) ($parts[1] ?? now()->month);
+
+            $calendarStart = Carbon::create($calendarYear, $calendarMonthNum, 1)->startOfMonth();
+            $calendarEnd = (clone $calendarStart)->endOfMonth();
+
+            $calendarWorkOrders = (clone $base)
+                ->with(['equipment', 'responsibleUser'])
+                ->whereNotNull('scheduled_date')
+                ->whereBetween('scheduled_date', [$calendarStart->toDateString(), $calendarEnd->toDateString()])
+                ->orderBy('scheduled_date')
+                ->get();
+
+            $calendarPreventive = FleetPreventiveMaintenance::query()
+                ->with('equipment')
+                ->whereBetween('scheduled_date', [$calendarStart->toDateString(), $calendarEnd->toDateString()])
+                ->orderBy('scheduled_date')
+                ->get();
+
+            $calendarInspections = FleetTechnicalInspection::query()
+                ->with('equipment')
+                ->whereBetween('due_at', [$calendarStart->toDateString(), $calendarEnd->toDateString()])
+                ->orderBy('due_at')
+                ->get();
+        }
+
+        $preventives = collect();
+        $correctives = collect();
+        $inspections = collect();
+
+        if ($this->showFormModal && $equipmentId) {
+            $preventives = FleetPreventiveMaintenance::query()
+                ->where('fleet_equipment_id', $equipmentId)
+                ->latest()
+                ->limit(40)
+                ->get();
+            $correctives = FleetCorrectiveMaintenance::query()
+                ->where('fleet_equipment_id', $equipmentId)
+                ->latest()
+                ->limit(40)
+                ->get();
+            $inspections = FleetTechnicalInspection::query()
+                ->where('fleet_equipment_id', $equipmentId)
+                ->latest()
+                ->limit(40)
+                ->get();
+        }
 
         return view('livewire.mechanics.manage-fleet-work-orders', [
             'exportParams' => $this->exportQueryParams(),
             'kanbanGrouped' => $kanbanGrouped,
-            'kanbanStatuses' => FleetWorkOrderStatus::cases(),
+            'kanbanStatuses' => $kanbanStatuses,
             'kpis' => $kpis,
+            'kpiPercents' => $kpiPercents,
+            'totalFiltered' => $totalFiltered,
+            'boardCharts' => $boardCharts,
             'topTechnicianLoads' => $topLoads,
             'avgAttentionDays' => $avgAttentionDays,
             'technicianStats' => $technicianStats,
@@ -558,21 +632,16 @@ class ManageFleetWorkOrders extends Component
             'calendarStart' => $calendarStart,
             'calendarEnd' => $calendarEnd,
             'listRows' => $listRows,
-            'equipments' => FleetEquipment::query()->orderBy('internal_code')->get(),
+            'equipmentFormOptions' => $this->fleetEquipmentSelectOptions(),
+            'equipmentFilterOptions' => $this->fleetEquipmentFilterOptions(),
             'projects' => Project::query()->select(['id', 'code', 'name'])->orderBy('code')->get(),
             'responsibleUsers' => $this->responsibleUsers(),
             'types' => FleetWorkOrderType::cases(),
             'statuses' => FleetWorkOrderStatus::cases(),
             'priorities' => DocumentPriority::cases(),
-            'preventives' => $equipmentId
-                ? FleetPreventiveMaintenance::query()->where('fleet_equipment_id', $equipmentId)->latest()->limit(40)->get()
-                : collect(),
-            'correctives' => $equipmentId
-                ? FleetCorrectiveMaintenance::query()->where('fleet_equipment_id', $equipmentId)->latest()->limit(40)->get()
-                : collect(),
-            'inspections' => $equipmentId
-                ? FleetTechnicalInspection::query()->where('fleet_equipment_id', $equipmentId)->latest()->limit(40)->get()
-                : collect(),
+            'preventives' => $preventives,
+            'correctives' => $correctives,
+            'inspections' => $inspections,
         ])->layout('layouts.app', ['title' => $this->title]);
     }
 
@@ -590,7 +659,8 @@ class ManageFleetWorkOrders extends Component
         }
 
         $this->code = app(IssueCompanyCorrelativeCode::class)->peek($company, CorrelativeSubject::FleetWorkOrder);
-        $this->issued_at = now()->toDateString();
+        $this->issued_at = DefaultDate::today();
+        $this->syncFleetEquipmentSearch();
         if ($this->calendarPrefillDate !== '') {
             $this->scheduled_date = $this->calendarPrefillDate;
             $this->calendarPrefillDate = '';
@@ -621,6 +691,7 @@ class ManageFleetWorkOrders extends Component
         $this->fleet_corrective_maintenance_id = $row->fleet_corrective_maintenance_id;
         $this->fleet_technical_inspection_id = $row->fleet_technical_inspection_id;
         $this->attachments = [];
+        $this->syncFleetEquipmentSearch();
         $this->showFormModal = true;
     }
 
@@ -836,7 +907,9 @@ class ManageFleetWorkOrders extends Component
         $this->type = FleetWorkOrderType::Preventive->value();
         $this->priority = DocumentPriority::Medium->value();
         $this->status = FleetWorkOrderStatus::Generated->value();
-        $this->issued_at = now()->toDateString();
+        $this->issued_at = DefaultDate::today();
+        $this->scheduled_date = DefaultDate::today();
+        $this->resetFleetEquipmentSearch();
         $this->showFormModal = false;
     }
 

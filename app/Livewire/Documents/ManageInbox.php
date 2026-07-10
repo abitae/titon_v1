@@ -16,7 +16,9 @@ use App\Models\Project;
 use App\Services\Audit\UserAuditLogger;
 use App\Services\Correlatives\IssueCompanyCorrelativeCode;
 use App\Services\Documents\GenerateDocumentCode;
+use App\Support\DefaultDate;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
@@ -71,9 +73,13 @@ class ManageInbox extends Component
 
     public function mount(GenerateDocumentCode $generateDocumentCode): void
     {
-        $this->issue_date = now()->toDateString();
-        $this->reception_date = now()->toDateString();
+        abort_unless(auth()->user()?->can('documents.ver'), 403);
+
+        $this->issue_date = DefaultDate::today();
+        $this->reception_date = DefaultDate::today();
+        $this->due_date = DefaultDate::daysAhead(30);
         $this->current_user_id = auth()->id();
+        $this->refreshExpiredDocuments();
 
         $company = app(ResolveCurrentCompany::class)->handle(auth()->user());
 
@@ -84,43 +90,17 @@ class ManageInbox extends Component
 
     public function render(): View
     {
-        $this->refreshExpiredDocuments();
-
-        $documents = Document::query()
-            ->with(['project', 'documentType', 'originArea', 'destinationArea', 'createdByUser'])
-            ->where('current_user_id', auth()->id())
-            ->when($this->search !== '', function ($query): void {
-                $query->where(function ($nestedQuery): void {
-                    $nestedQuery
-                        ->where('code', 'like', '%'.$this->search.'%')
-                        ->orWhere('subject', 'like', '%'.$this->search.'%');
-                });
-            })
-            ->when($this->statusFilter !== '', fn ($query) => $query->where('status', $this->statusFilter))
-            ->when($this->priorityFilter !== '', fn ($query) => $query->where('priority', $this->priorityFilter))
-            ->when($this->projectFilter !== '', fn ($query) => $query->where('work_project_id', $this->projectFilter))
+        $documents = $this->inboxQuery()
+            ->with(['project', 'documentType', 'originArea', 'destinationArea', 'currentUser', 'createdByUser'])
             ->latest()
             ->paginate(10);
 
-        $summary = [
-            'total' => Document::query()->where('current_user_id', auth()->id())->count(),
-            'pending' => Document::query()->where('current_user_id', auth()->id())->whereIn('status', [
-                DocumentStatus::Registered->value(),
-                DocumentStatus::InProgress->value(),
-                DocumentStatus::Derived->value(),
-                DocumentStatus::Received->value(),
-                DocumentStatus::InReview->value(),
-                DocumentStatus::Observed->value(),
-            ])->count(),
-            'expired' => Document::query()->where('current_user_id', auth()->id())->where('status', DocumentStatus::Expired->value())->count(),
-        ];
-
         return view('livewire.documents.manage-inbox', [
             'documents' => $documents,
-            'summary' => $summary,
-            'projects' => Project::query()->orderBy('name')->get(),
-            'documentTypes' => CatalogItem::query()->ofType(CatalogType::DocumentType)->where('is_active', true)->orderBy('name')->get(),
-            'areas' => CatalogItem::query()->ofType(CatalogType::Area)->where('is_active', true)->orderBy('name')->get(),
+            'summary' => $this->inboxSummary(),
+            'projects' => Project::query()->orderBy('name')->get(['id', 'name']),
+            'documentTypes' => CatalogItem::query()->ofType(CatalogType::DocumentType)->where('is_active', true)->orderBy('name')->get(['id', 'name']),
+            'areas' => CatalogItem::query()->ofType(CatalogType::Area)->where('is_active', true)->orderBy('name')->get(['id', 'name']),
             'users' => $this->companyUsers(),
             'statusOptions' => DocumentStatus::cases(),
             'priorityOptions' => DocumentPriority::cases(),
@@ -149,6 +129,8 @@ class ManageInbox extends Component
 
     public function openCreateModal(GenerateDocumentCode $generateDocumentCode): void
     {
+        abort_unless(auth()->user()->can('documents.crear'), 403);
+
         $this->resetForm();
         $company = app(ResolveCurrentCompany::class)->handle(auth()->user());
 
@@ -171,7 +153,7 @@ class ManageInbox extends Component
         abort_if($company === null, 403);
         abort_unless(auth()->user()->can('documents.crear'), 403);
 
-        $validated = $this->validate([
+        $validated = $this->validateWithToastFeedback([
             'document_number' => ['nullable', 'string', 'max:100'],
             'work_project_id' => ['nullable', 'integer', 'exists:projects,id'],
             'document_type_id' => ['nullable', 'integer', 'exists:catalog_items,id'],
@@ -186,6 +168,14 @@ class ManageInbox extends Component
             'due_date' => ['nullable', 'date', 'after_or_equal:issue_date'],
             'observations' => ['nullable', 'string'],
             'attachments.*' => ['nullable', 'file', 'max:10240'],
+        ], [], [
+            'subject' => 'asunto',
+            'document_type_id' => 'tipo de documento',
+            'work_project_id' => 'obra',
+            'issue_date' => 'fecha de emision',
+            'reception_date' => 'fecha de recepcion',
+            'due_date' => 'fecha de vencimiento',
+            'attachments.*' => 'adjunto',
         ]);
 
         $document = DB::transaction(function () use ($validated, $company, $recordDocumentMovement, $userAuditLogger): Document {
@@ -212,6 +202,56 @@ class ManageInbox extends Component
         $this->resetForm();
         $this->flashSuccessToast('Documento registrado correctamente.');
         $this->redirectRoute('documents.show', $document);
+    }
+
+    protected function inboxQuery(): Builder
+    {
+        return $this->inboxBaseQuery()
+            ->when($this->search !== '', function (Builder $query): void {
+                $query->where(function (Builder $nestedQuery): void {
+                    $nestedQuery
+                        ->where('code', 'like', '%'.$this->search.'%')
+                        ->orWhere('subject', 'like', '%'.$this->search.'%')
+                        ->orWhere('document_number', 'like', '%'.$this->search.'%');
+                });
+            })
+            ->when($this->statusFilter !== '', fn (Builder $query) => $query->where('status', $this->statusFilter))
+            ->when($this->priorityFilter !== '', fn (Builder $query) => $query->where('priority', $this->priorityFilter))
+            ->when($this->projectFilter !== '', fn (Builder $query) => $query->where('work_project_id', $this->projectFilter));
+    }
+
+    protected function inboxBaseQuery(): Builder
+    {
+        return Document::query()->where('current_user_id', auth()->id());
+    }
+
+    /**
+     * @return array{total: int, pending: int, expired: int}
+     */
+    protected function inboxSummary(): array
+    {
+        $pendingStatuses = [
+            DocumentStatus::Registered->value(),
+            DocumentStatus::InProgress->value(),
+            DocumentStatus::Derived->value(),
+            DocumentStatus::Received->value(),
+            DocumentStatus::InReview->value(),
+            DocumentStatus::Observed->value(),
+        ];
+
+        $placeholders = implode(', ', array_fill(0, count($pendingStatuses), '?'));
+
+        $summary = $this->inboxBaseQuery()
+            ->selectRaw('count(*) as total')
+            ->selectRaw("sum(case when status in ({$placeholders}) then 1 else 0 end) as pending", $pendingStatuses)
+            ->selectRaw('sum(case when status = ? then 1 else 0 end) as expired', [DocumentStatus::Expired->value()])
+            ->first();
+
+        return [
+            'total' => (int) ($summary->total ?? 0),
+            'pending' => (int) ($summary->pending ?? 0),
+            'expired' => (int) ($summary->expired ?? 0),
+        ];
     }
 
     protected function persistInboxDocumentMediaAndMovement(
@@ -283,8 +323,9 @@ class ManageInbox extends Component
         ]);
 
         $this->priority = DocumentPriority::Medium->value();
-        $this->issue_date = now()->toDateString();
-        $this->reception_date = now()->toDateString();
+        $this->issue_date = DefaultDate::today();
+        $this->reception_date = DefaultDate::today();
+        $this->due_date = DefaultDate::daysAhead(30);
         $this->current_user_id = auth()->id();
         $this->showCreateModal = false;
     }
@@ -293,12 +334,13 @@ class ManageInbox extends Component
     {
         $company = app(ResolveCurrentCompany::class)->handle(auth()->user());
 
-        return $company?->users()->wherePivot('active', true)->orderBy('name')->get() ?? collect();
+        return $company?->users()->wherePivot('active', true)->orderBy('name')->get(['users.id', 'users.name']) ?? collect();
     }
 
     protected function refreshExpiredDocuments(): void
     {
         Document::query()
+            ->where('current_user_id', auth()->id())
             ->whereDate('due_date', '<', today())
             ->whereNotIn('status', [
                 DocumentStatus::Attended->value(),

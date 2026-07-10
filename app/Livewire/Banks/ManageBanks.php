@@ -10,6 +10,7 @@ use App\Enums\CatalogType;
 use App\Models\BankAccount;
 use App\Models\BankMovement;
 use App\Models\CatalogItem;
+use App\Support\DefaultDate;
 use Illuminate\Contracts\View\View;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
@@ -63,7 +64,7 @@ class ManageBanks extends Component
 
     public function mount(): void
     {
-        $this->movement_date = now()->toDateString();
+        $this->movement_date = DefaultDate::today();
     }
 
     public function render(): View
@@ -237,7 +238,7 @@ class ManageBanks extends Component
                 app(RecordBankMovement::class)->handle($account, auth()->user(), [
                     'type' => BankMovementType::Deposit->value(),
                     'amount' => $openingBalance,
-                    'movement_date' => now()->toDateString(),
+                    'movement_date' => DefaultDate::today(),
                     'concept' => 'Saldo inicial',
                     'reference' => 'Apertura de cuenta',
                 ]);
@@ -256,7 +257,7 @@ class ManageBanks extends Component
         $this->movement_kind = $kind;
         $this->movement_bank_account_id = $accountId;
         $this->movement_amount = '';
-        $this->movement_date = now()->toDateString();
+        $this->movement_date = DefaultDate::today();
         $this->movement_concept = $kind === 'deposit' ? 'Depósito' : 'Retiro';
         $this->movement_reference = '';
         $this->showMovementModal = true;

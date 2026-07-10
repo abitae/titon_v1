@@ -45,6 +45,23 @@
         <input id="address" name="address" value="{{ old('address', $company->address ?? '') }}" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
         @error('address') <p class="mt-1 text-sm text-rose-600">{{ $message }}</p> @enderror
     </div>
+    <div class="md:col-span-2">
+        <label for="logo" class="block text-sm font-medium text-slate-700 dark:text-slate-200">Logotipo / icono</label>
+        <div class="mt-2 flex items-start gap-4">
+            <div class="flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-950">
+                @if (isset($company) && $company->logoUrl())
+                    <img src="{{ $company->logoUrl() }}" alt="{{ $company->name }}" class="size-full object-contain p-2" />
+                @else
+                    <x-app-logo-icon class="size-10 fill-current text-slate-700 dark:text-slate-100" />
+                @endif
+            </div>
+            <div class="min-w-0 flex-1">
+                <input id="logo" name="logo" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" class="block w-full text-sm text-slate-700 file:me-3 file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-2 file:text-sm file:font-medium file:text-slate-700 hover:file:bg-slate-200 dark:text-slate-200 dark:file:bg-slate-800 dark:file:text-slate-100 dark:hover:file:bg-slate-700" />
+                <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Se usa en el login y en la identidad visual de la plataforma. PNG, JPG, WEBP o SVG. Máx. 2 MB.</p>
+                @error('logo') <p class="mt-1 text-sm text-rose-600">{{ $message }}</p> @enderror
+            </div>
+        </div>
+    </div>
     <div>
         <label for="primary_color" class="block text-sm font-medium text-slate-700 dark:text-slate-200">Color primario</label>
         <input id="primary_color" name="primary_color" value="{{ old('primary_color', $company->primary_color ?? '#0f172a') }}" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white" />

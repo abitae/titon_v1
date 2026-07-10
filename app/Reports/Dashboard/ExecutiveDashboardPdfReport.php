@@ -20,6 +20,6 @@ class ExecutiveDashboardPdfReport
         return $this->mpdfBuilder->buildFromView('reports.pdf.dashboard.executive-summary', [
             'user' => $user,
             'analytics' => $analytics,
-        ], 'Resumen ejecutivo');
+        ], 'Resumen ejecutivo', $user);
     }
 }

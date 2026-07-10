@@ -47,7 +47,7 @@
                 <td class="px-2.5 py-1.5">{{ $document->currentUser?->name ?? 'Sin responsable' }}</td>
                 <td class="px-2.5 py-1.5"><x-platform.status-badge :value="$document->status" /></td>
                 <td class="px-2.5 py-1.5">
-                    <a href="{{ route('documents.timeline', $document) }}" class="rounded-lg px-2 py-1 text-sm font-medium text-cyan-700 hover:bg-cyan-50 hover:text-cyan-600 dark:text-cyan-300">Ver timeline</a>
+                    <x-platform.action-buttons :edit-href="route('documents.show', $document)" />
                 </td>
             </tr>
         @empty

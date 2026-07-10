@@ -2,11 +2,57 @@
     <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
             <h1 class="text-2xl font-semibold text-slate-950 dark:text-white">Configuración general</h1>
-            <p class="mt-1 text-sm text-slate-600 dark:text-slate-300">Administra ciudades, bancos, métodos de pago y catálogos operativos por empresa.</p>
+            <p class="mt-1 text-sm text-slate-600 dark:text-slate-300">Personaliza la aplicación y administra catálogos operativos por empresa.</p>
         </div>
         <button type="button" wire:click="openCreateModal" class="inline-flex items-center justify-center rounded-xl bg-slate-950 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 dark:bg-cyan-500 dark:text-slate-950 dark:hover:bg-cyan-400">
             Nuevo ítem
         </button>
+    </div>
+
+    <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <div class="border-b border-slate-200 px-4 py-4 dark:border-slate-800 sm:px-6">
+            <h2 class="text-sm font-semibold text-slate-950 dark:text-white">Personalización de la aplicación</h2>
+            <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                El icono y nombre se muestran en el login y el menú lateral. Los logotipos de empresa se usan solo en formatos PDF.
+            </p>
+
+            <form wire:submit="saveApplicationBranding" class="mt-4 flex flex-col gap-4 lg:flex-row lg:items-end">
+                <div class="flex items-start gap-3">
+                    <div class="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-950">
+                        @if ($application_logo)
+                            <img src="{{ $application_logo->temporaryUrl() }}" alt="Vista previa del icono" class="size-full object-cover" />
+                        @elseif ($currentApplicationLogoUrl)
+                            <img src="{{ $currentApplicationLogoUrl }}" alt="{{ $application_name }}" class="size-full object-cover" />
+                        @else
+                            <x-app-logo-icon class="size-8 fill-current text-slate-700 dark:text-slate-100" />
+                        @endif
+                    </div>
+                    <div class="min-w-0 space-y-2">
+                        <div>
+                            <label class="block text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Nombre de la aplicación</label>
+                            <input wire:model="application_name" class="mt-1 block h-8 w-full min-w-[14rem] rounded-lg border border-slate-300 bg-white px-2.5 text-xs dark:border-slate-700 dark:bg-slate-950 dark:text-white" @disabled(! auth()->user()->can('catalogs.editar')) />
+                            @error('application_name') <p class="mt-0.5 text-[11px] text-rose-600">{{ $message }}</p> @enderror
+                        </div>
+                        @can('catalogs.editar')
+                            <div>
+                                <label class="block text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Icono de la aplicación</label>
+                                <input wire:model="application_logo" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" class="mt-1 block w-full text-[11px] text-slate-600 file:me-2 file:rounded-md file:border-0 file:bg-slate-100 file:px-2 file:py-1 file:text-[11px] dark:text-slate-300 dark:file:bg-slate-800" />
+                                @error('application_logo') <p class="mt-0.5 text-[11px] text-rose-600">{{ $message }}</p> @enderror
+                            </div>
+                        @endcan
+                    </div>
+                </div>
+
+                @can('catalogs.editar')
+                    <div class="flex flex-wrap items-center gap-2">
+                        @if ($currentApplicationLogoUrl || $application_logo)
+                            <flux:button type="button" variant="ghost" size="sm" wire:click="removeApplicationLogo">Quitar icono</flux:button>
+                        @endif
+                        <flux:button type="submit" variant="primary" size="sm">Guardar aplicación</flux:button>
+                    </div>
+                @endcan
+            </form>
+        </div>
     </div>
 
     <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">

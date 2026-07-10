@@ -31,22 +31,11 @@
                         <p class="text-[10px] text-slate-500 dark:text-slate-400">{{ $company->phone ?? 'Sin telefono' }}</p>
                     </td>
                     <td class="!px-1.5 !py-1">
-                        <div class="flex items-center justify-end gap-2">
-                            @can('companies.editar')
-                                <a href="{{ route('companies.edit', $company) }}" class="text-[11px] font-medium text-cyan-700 hover:text-cyan-600 dark:text-cyan-300 dark:hover:text-cyan-200">
-                                    Editar
-                                </a>
-                            @endcan
-                            @can('companies.eliminar')
-                                <form method="POST" action="{{ route('companies.destroy', $company) }}">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="text-[11px] font-medium text-rose-700 hover:text-rose-600 dark:text-rose-300 dark:hover:text-rose-200">
-                                        Eliminar
-                                    </button>
-                                </form>
-                            @endcan
-                        </div>
+                        <x-platform.action-buttons
+                            :edit-href="auth()->user()->can('update', $company) ? route('companies.edit', $company) : null"
+                            :delete-url="auth()->user()->can('delete', $company) ? route('companies.destroy', $company) : null"
+                            delete-confirm="¿Eliminar esta empresa?"
+                        />
                     </td>
                 </tr>
             @endforeach

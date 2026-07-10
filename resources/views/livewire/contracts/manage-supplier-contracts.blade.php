@@ -32,14 +32,7 @@
                 <td class="px-2.5 py-1.5">{{ $contract->currency }} {{ number_format((float) $contract->total_amount, 2) }}</td>
                 <td class="px-2.5 py-1.5"><x-platform.status-badge :value="$contract->status" /></td>
                 <td class="px-2.5 py-1.5">
-                    <div class="flex flex-wrap gap-2 justify-end">
-                        <button type="button" wire:click="openDetailModal({{ $contract->id }})" class="rounded-lg px-2 py-1 text-sm font-medium text-cyan-700 hover:bg-cyan-50 dark:text-cyan-300">Ver</button>
-                        <button
-                            type="button"
-                            wire:click="openRoutePdfModal('contracts.pdf', 'Contrato {{ $contract->contract_number }}', {{ json_encode(['supplierContract' => $contract->id]) }})"
-                            class="rounded-lg px-2 py-1 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200"
-                        >PDF</button>
-                    </div>
+                    <x-platform.action-buttons :edit="'openDetailModal('.$contract->id.')'" />
                 </td>
             </tr>
         @empty

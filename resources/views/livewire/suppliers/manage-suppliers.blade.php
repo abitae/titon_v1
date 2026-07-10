@@ -62,7 +62,6 @@
                 <td class="px-2.5 py-1.5">{{ $supplier->bank_name ?: 'Sin banco' }}</td>
                 <td class="px-2.5 py-1.5">
                     <x-platform.action-buttons
-                        :view="'openDetailModal('.$supplier->id.')'"
                         :edit="'openEditModal('.$supplier->id.')'"
                         :delete="'deleteSupplier('.$supplier->id.')'"
                         delete-confirm="¿Eliminar este proveedor?"

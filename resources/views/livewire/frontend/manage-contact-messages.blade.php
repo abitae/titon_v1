@@ -32,7 +32,11 @@
                     <x-platform.status-badge :value="$message->read_at ? 'active' : 'pendiente'" />
                 </td>
                 <td class="px-2.5 py-1.5">
-                    <button type="button" wire:click="openDetailModal({{ $message->id }})" class="text-cyan-700 hover:text-cyan-600">Ver</button>
+                    <x-platform.action-buttons
+                        :edit="'openDetailModal('.$message->id.')'"
+                        :delete="'deleteMessage('.$message->id.')'"
+                        delete-confirm="¿Eliminar este mensaje?"
+                    />
                 </td>
             </tr>
         @empty

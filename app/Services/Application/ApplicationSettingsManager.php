@@ -43,6 +43,11 @@ class ApplicationSettingsManager
         return $this->current()->logoUrl();
     }
 
+    public function logoPath(): ?string
+    {
+        return $this->current()->logo_path;
+    }
+
     /**
      * @param  array{application_name: string, logo_path?: string|null}  $attributes
      */

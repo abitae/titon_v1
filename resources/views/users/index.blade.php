@@ -30,24 +30,11 @@
                         </div>
                     </td>
                     <td class="!px-1.5 !py-1">
-                        <div class="flex items-center justify-end gap-2">
-                            @can('users.editar')
-                                <a href="{{ route('users.edit', $user) }}" class="text-[11px] font-medium text-cyan-700 hover:text-cyan-600 dark:text-cyan-300 dark:hover:text-cyan-200">
-                                    Editar
-                                </a>
-                            @endcan
-                            @can('users.eliminar')
-                                @if (auth()->id() !== $user->id)
-                                    <form method="POST" action="{{ route('users.destroy', $user) }}">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="text-[11px] font-medium text-rose-700 hover:text-rose-600 dark:text-rose-300 dark:hover:text-rose-200">
-                                            Eliminar
-                                        </button>
-                                    </form>
-                                @endif
-                            @endcan
-                        </div>
+                        <x-platform.action-buttons
+                            :edit-href="auth()->user()->can('update', $user) ? route('users.edit', $user) : null"
+                            :delete-url="(auth()->id() !== $user->id && auth()->user()->can('delete', $user)) ? route('users.destroy', $user) : null"
+                            delete-confirm="¿Eliminar este usuario?"
+                        />
                     </td>
                 </tr>
             @endforeach

@@ -10,6 +10,7 @@ use App\Enums\CorrelativeSubject;
 use App\Enums\ProjectStatus;
 use App\Models\CatalogItem;
 use App\Models\Project;
+use App\Support\DefaultDate;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -243,6 +244,8 @@ class ManageProjects extends Component
             'description',
         ]);
 
+        $this->start_date = DefaultDate::today();
+        $this->estimated_end_date = DefaultDate::monthsAhead();
         $this->status = ProjectStatus::Planned->value();
         $this->showFormModal = false;
     }

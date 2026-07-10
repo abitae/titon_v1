@@ -102,14 +102,6 @@
                     <p class="text-slate-500 dark:text-slate-400">{{ $payment->operation_number ?: 'Sin operacion' }}</p>
                 </td>
                 <td class="px-2.5 py-1.5">
-                    <div class="flex flex-wrap gap-2 justify-end">
-                        @if ($payment->supplierContract)
-                            <a href="{{ route('payments.schedules', $payment->supplierContract) }}" class="rounded-lg px-2 py-1 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200">Cronograma</a>
-                        @endif
-                        @if ($payment->getFirstMediaUrl('voucher'))
-                            <a href="{{ $payment->getFirstMediaUrl('voucher') }}" target="_blank" class="rounded-lg px-2 py-1 text-sm font-medium text-cyan-700 hover:bg-cyan-50 dark:text-cyan-300">Voucher</a>
-                        @endif
-                    </div>
                 </td>
             </tr>
         @empty

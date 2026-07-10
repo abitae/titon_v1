@@ -1,39 +1,41 @@
-<div class="space-y-6">
-    <section class="grid gap-4 md:grid-cols-3">
-        <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-            <p class="text-sm text-slate-500 dark:text-slate-400">Documentos en entrada</p>
-            <p class="mt-2 text-3xl font-semibold text-slate-950 dark:text-white">{{ number_format($summary['total']) }}</p>
+<div class="space-y-4">
+    <div class="grid gap-2 sm:grid-cols-3">
+        <div class="rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">En entrada</p>
+            <p class="mt-0.5 text-xl font-semibold tabular-nums text-slate-950 dark:text-white">{{ number_format($summary['total']) }}</p>
         </div>
-        <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-            <p class="text-sm text-slate-500 dark:text-slate-400">Pendientes de atencion</p>
-            <p class="mt-2 text-3xl font-semibold text-slate-950 dark:text-white">{{ number_format($summary['pending']) }}</p>
+        <div class="rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Pendientes</p>
+            <p class="mt-0.5 text-xl font-semibold tabular-nums text-slate-950 dark:text-white">{{ number_format($summary['pending']) }}</p>
         </div>
-        <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-            <p class="text-sm text-slate-500 dark:text-slate-400">Vencidos</p>
-            <p class="mt-2 text-3xl font-semibold text-slate-950 dark:text-white">{{ number_format($summary['expired']) }}</p>
+        <div class="rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Vencidos</p>
+            <p class="mt-0.5 text-xl font-semibold tabular-nums text-rose-600 dark:text-rose-400">{{ number_format($summary['expired']) }}</p>
         </div>
-    </section>
+    </div>
 
-    <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+    <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
-            <h1 class="text-2xl font-semibold text-slate-950 dark:text-white">Bandeja de entrada</h1>
-            <p class="mt-1 text-sm text-slate-600 dark:text-slate-300">Registra documentos, revisa vencimientos y entra al detalle operativo con timeline y trazabilidad.</p>
+            <h1 class="text-lg font-semibold text-slate-950 dark:text-white">Bandeja de entrada</h1>
+            <p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">Documentos asignados a ti con seguimiento y trazabilidad.</p>
         </div>
-        <div class="flex flex-wrap gap-3">
-            <a href="{{ route('documents.outbox') }}" class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 dark:border-slate-700 dark:text-slate-200">Bandeja de salida</a>
-            <a href="{{ route('documents.projects') }}" class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 dark:border-slate-700 dark:text-slate-200">Documentos por obra</a>
-            <button type="button" wire:click="openCreateModal" class="rounded-xl bg-slate-950 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 dark:bg-cyan-500 dark:text-slate-950">Registrar documento</button>
+        <div class="flex flex-wrap gap-2">
+            <flux:button variant="outline" href="{{ route('documents.outbox') }}" wire:navigate size="sm">Salida</flux:button>
+            <flux:button variant="outline" href="{{ route('documents.projects') }}" wire:navigate size="sm">Por obra</flux:button>
+            @can('documents.crear')
+                <flux:button type="button" variant="primary" wire:click="openCreateModal" size="sm">Registrar documento</flux:button>
+            @endcan
         </div>
     </div>
 
     <x-platform.filter-bar>
         <div>
-            <label class="block text-xs font-medium uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Buscar</label>
-            <input wire:model.live.debounce.300ms="search" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" placeholder="Codigo o asunto" />
+            <label class="block text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Buscar</label>
+            <input wire:model.live.debounce.300ms="search" class="mt-1 block h-8 w-full rounded-lg border border-slate-300 bg-white px-2.5 text-xs dark:border-slate-700 dark:bg-slate-950 dark:text-white" placeholder="Codigo, asunto o numero" />
         </div>
         <div>
-            <label class="block text-xs font-medium uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Estado</label>
-            <select wire:model.live="statusFilter" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white">
+            <label class="block text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Estado</label>
+            <select wire:model.live="statusFilter" class="mt-1 block h-8 w-full rounded-lg border border-slate-300 bg-white px-2 text-xs dark:border-slate-700 dark:bg-slate-950 dark:text-white">
                 <option value="">Todos</option>
                 @foreach ($statusOptions as $statusOption)
                     <option value="{{ $statusOption->value() }}">{{ $statusOption->label() }}</option>
@@ -41,8 +43,8 @@
             </select>
         </div>
         <div>
-            <label class="block text-xs font-medium uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Prioridad</label>
-            <select wire:model.live="priorityFilter" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white">
+            <label class="block text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Prioridad</label>
+            <select wire:model.live="priorityFilter" class="mt-1 block h-8 w-full rounded-lg border border-slate-300 bg-white px-2 text-xs dark:border-slate-700 dark:bg-slate-950 dark:text-white">
                 <option value="">Todas</option>
                 @foreach ($priorityOptions as $priorityOption)
                     <option value="{{ $priorityOption->value() }}">{{ $priorityOption->label() }}</option>
@@ -50,8 +52,8 @@
             </select>
         </div>
         <div>
-            <label class="block text-xs font-medium uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Obra</label>
-            <select wire:model.live="projectFilter" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white">
+            <label class="block text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Obra</label>
+            <select wire:model.live="projectFilter" class="mt-1 block h-8 w-full rounded-lg border border-slate-300 bg-white px-2 text-xs dark:border-slate-700 dark:bg-slate-950 dark:text-white">
                 <option value="">Todas</option>
                 @foreach ($projects as $project)
                     <option value="{{ $project->id }}">{{ $project->name }}</option>
@@ -60,161 +62,145 @@
         </div>
     </x-platform.filter-bar>
 
-    <x-platform.compact-table :headers="['Expediente', 'Asunto', 'Ubicacion', 'Plazo', 'Estado', 'Prioridad', 'Acciones']">
+    <x-platform.compact-table dense :headers="['Expediente', 'Asunto', 'Ubicacion', 'Plazo', 'Estado', 'Prioridad', '']">
         @forelse ($documents as $document)
             <tr class="text-xs text-slate-700 dark:text-slate-200" wire:key="inbox-document-{{ $document->id }}">
-                <td class="px-2.5 py-1.5">
+                <td class="px-2 py-1">
                     <p class="font-medium text-slate-950 dark:text-white">{{ $document->code }}</p>
-                    <p class="text-slate-500 dark:text-slate-400">{{ $document->document_number ?: 'Sin numero' }}</p>
+                    <p class="text-[10px] text-slate-500 dark:text-slate-400">{{ $document->document_number ?: 'Sin numero' }}</p>
                 </td>
-                <td class="px-2.5 py-1.5">
+                <td class="px-2 py-1">
                     <p class="font-medium text-slate-950 dark:text-white">{{ $document->subject }}</p>
-                    <p class="text-slate-500 dark:text-slate-400">{{ $document->documentType?->name ?? 'Sin tipo' }}</p>
+                    <p class="text-[10px] text-slate-500 dark:text-slate-400">{{ $document->documentType?->name ?? 'Sin tipo' }}</p>
                 </td>
-                <td class="px-2.5 py-1.5">
+                <td class="px-2 py-1">
                     <p>{{ $document->currentLocationLabel() }}</p>
-                    <p class="text-slate-500 dark:text-slate-400">{{ $document->currentUser?->name ?? 'Sin responsable' }}</p>
+                    <p class="text-[10px] text-slate-500 dark:text-slate-400">{{ $document->currentUser?->name ?? 'Sin responsable' }}</p>
                 </td>
-                <td class="px-2.5 py-1.5">
+                <td class="px-2 py-1 whitespace-nowrap">
                     <p>{{ $document->due_date?->format('d/m/Y') ?? 'Sin plazo' }}</p>
-                    <p class="text-slate-500 dark:text-slate-400">{{ $document->pendingHours() }} h pendientes</p>
+                    <p class="text-[10px] text-slate-500 dark:text-slate-400">{{ $document->pendingHours() }} h</p>
                 </td>
-                <td class="px-2.5 py-1.5"><x-platform.status-badge :value="$document->status" /></td>
-                <td class="px-2.5 py-1.5"><x-platform.status-badge :value="$document->priority" /></td>
-                <td class="px-2.5 py-1.5">
-                    <a href="{{ route('documents.show', $document) }}" class="rounded-lg px-2 py-1 text-sm font-medium text-cyan-700 hover:bg-cyan-50 hover:text-cyan-600 dark:text-cyan-300">Abrir</a>
+                <td class="px-2 py-1"><x-platform.status-badge :value="$document->status" size="xs" /></td>
+                <td class="px-2 py-1"><x-platform.status-badge :value="$document->priority" size="xs" /></td>
+                <td class="!px-1.5 !py-1">
+                    <x-platform.action-buttons :edit-href="route('documents.show', $document)" :edit-navigate="false" />
                 </td>
             </tr>
         @empty
             <tr>
-                <td colspan="7" class="px-6 py-10 text-center text-sm text-slate-500 dark:text-slate-400">No hay documentos en la bandeja de entrada.</td>
+                <td colspan="7" class="px-4 py-8 text-center text-xs text-slate-500 dark:text-slate-400">No hay documentos en tu bandeja de entrada.</td>
             </tr>
         @endforelse
     </x-platform.compact-table>
 
-    <div class="rounded-3xl border border-slate-200 bg-white px-2.5 py-1.5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+    <div class="rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm dark:border-slate-800 dark:bg-slate-900">
         {{ $documents->links() }}
     </div>
 
-    <x-platform.modal :show="$showCreateModal" max-width="max-w-4xl">
-        <div class="flex items-center justify-between gap-4">
+    <x-platform.modal compact :show="$showCreateModal" max-width="max-w-3xl">
+        <div class="flex items-center justify-between gap-2">
             <div>
-                <h2 class="text-xl font-semibold text-slate-950 dark:text-white">Registrar documento</h2>
-                <p class="mt-1 text-sm text-slate-600 dark:text-slate-300">Captura datos principales, responsable actual y adjuntos usando Media Library.</p>
+                <h2 class="text-base font-semibold text-slate-950 dark:text-white">Registrar documento</h2>
+                <p class="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">Codigo {{ $code }} · se confirma al guardar.</p>
             </div>
-            <button type="button" wire:click="closeModal" class="rounded-lg px-2 py-1 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800">Cerrar</button>
+            <flux:button variant="ghost" size="sm" wire:click="closeModal" type="button">Cerrar</flux:button>
         </div>
 
-        <div class="mt-6 grid gap-4 md:grid-cols-2">
+        <div class="mt-3 grid gap-2 md:grid-cols-2">
             <div>
-                <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Codigo (automatico)</label>
-                <input wire:model="code" readonly class="mt-2 block w-full cursor-not-allowed rounded-xl border border-slate-200 bg-slate-50 px-2 py-1 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300" />
-                <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Se confirma al guardar usando la configuracion de correlativos de la empresa.</p>
+                <label class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Numero de documento</label>
+                <input wire:model="document_number" class="mt-1 h-8 w-full rounded-lg border border-slate-300 bg-white px-2.5 text-xs dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
+                @error('document_number') <p class="mt-0.5 text-[11px] text-rose-600">{{ $message }}</p> @enderror
             </div>
             <div>
-                <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Numero de documento</label>
-                <input wire:model="document_number" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
-                @error('document_number') <p class="mt-1 text-sm text-rose-600">{{ $message }}</p> @enderror
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Tipo de documento</label>
-                <select wire:model="document_type_id" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white">
+                <label class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Tipo</label>
+                <select wire:model="document_type_id" class="mt-1 h-8 w-full rounded-lg border border-slate-300 bg-white px-2 text-xs dark:border-slate-700 dark:bg-slate-950 dark:text-white">
                     <option value="">Seleccionar</option>
                     @foreach ($documentTypes as $documentType)
                         <option value="{{ $documentType->id }}">{{ $documentType->name }}</option>
                     @endforeach
                 </select>
-                @error('document_type_id') <p class="mt-1 text-sm text-rose-600">{{ $message }}</p> @enderror
+                @error('document_type_id') <p class="mt-0.5 text-[11px] text-rose-600">{{ $message }}</p> @enderror
             </div>
             <div class="md:col-span-2">
-                <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Asunto</label>
-                <input wire:model="subject" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
-                @error('subject') <p class="mt-1 text-sm text-rose-600">{{ $message }}</p> @enderror
+                <label class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Asunto</label>
+                <input wire:model="subject" class="mt-1 h-8 w-full rounded-lg border border-slate-300 bg-white px-2.5 text-xs dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
+                @error('subject') <p class="mt-0.5 text-[11px] text-rose-600">{{ $message }}</p> @enderror
             </div>
             <div class="md:col-span-2">
-                <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Descripcion</label>
-                <textarea wire:model="description" rows="4" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white"></textarea>
-                @error('description') <p class="mt-1 text-sm text-rose-600">{{ $message }}</p> @enderror
+                <label class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Descripcion</label>
+                <textarea wire:model="description" rows="2" class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950 dark:text-white"></textarea>
             </div>
             <div>
-                <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Obra</label>
-                <select wire:model="work_project_id" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white">
+                <label class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Obra</label>
+                <select wire:model="work_project_id" class="mt-1 h-8 w-full rounded-lg border border-slate-300 bg-white px-2 text-xs dark:border-slate-700 dark:bg-slate-950 dark:text-white">
                     <option value="">Sin obra</option>
                     @foreach ($projects as $project)
                         <option value="{{ $project->id }}">{{ $project->name }}</option>
                     @endforeach
                 </select>
-                @error('work_project_id') <p class="mt-1 text-sm text-rose-600">{{ $message }}</p> @enderror
             </div>
             <div>
-                <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Prioridad</label>
-                <select wire:model="priority" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white">
+                <label class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Prioridad</label>
+                <select wire:model="priority" class="mt-1 h-8 w-full rounded-lg border border-slate-300 bg-white px-2 text-xs dark:border-slate-700 dark:bg-slate-950 dark:text-white">
                     @foreach ($priorityOptions as $priorityOption)
                         <option value="{{ $priorityOption->value() }}">{{ $priorityOption->label() }}</option>
                     @endforeach
                 </select>
-                @error('priority') <p class="mt-1 text-sm text-rose-600">{{ $message }}</p> @enderror
             </div>
             <div>
-                <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Area origen</label>
-                <select wire:model="origin_area_id" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white">
+                <label class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Area origen</label>
+                <select wire:model="origin_area_id" class="mt-1 h-8 w-full rounded-lg border border-slate-300 bg-white px-2 text-xs dark:border-slate-700 dark:bg-slate-950 dark:text-white">
                     <option value="">Seleccionar</option>
                     @foreach ($areas as $area)
                         <option value="{{ $area->id }}">{{ $area->name }}</option>
                     @endforeach
                 </select>
-                @error('origin_area_id') <p class="mt-1 text-sm text-rose-600">{{ $message }}</p> @enderror
             </div>
             <div>
-                <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Area destino</label>
-                <select wire:model="destination_area_id" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white">
+                <label class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Area destino</label>
+                <select wire:model="destination_area_id" class="mt-1 h-8 w-full rounded-lg border border-slate-300 bg-white px-2 text-xs dark:border-slate-700 dark:bg-slate-950 dark:text-white">
                     <option value="">Seleccionar</option>
                     @foreach ($areas as $area)
                         <option value="{{ $area->id }}">{{ $area->name }}</option>
                     @endforeach
                 </select>
-                @error('destination_area_id') <p class="mt-1 text-sm text-rose-600">{{ $message }}</p> @enderror
             </div>
             <div>
-                <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Responsable actual</label>
-                <select wire:model="current_user_id" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white">
-                    <option value="">Seleccionar</option>
+                <label class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Responsable</label>
+                <select wire:model="current_user_id" class="mt-1 h-8 w-full rounded-lg border border-slate-300 bg-white px-2 text-xs dark:border-slate-700 dark:bg-slate-950 dark:text-white">
                     @foreach ($users as $user)
                         <option value="{{ $user->id }}">{{ $user->name }}</option>
                     @endforeach
                 </select>
-                @error('current_user_id') <p class="mt-1 text-sm text-rose-600">{{ $message }}</p> @enderror
             </div>
             <div>
-                <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Emision</label>
-                <input wire:model="issue_date" type="date" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
-                @error('issue_date') <p class="mt-1 text-sm text-rose-600">{{ $message }}</p> @enderror
+                <label class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Emision</label>
+                <input wire:model="issue_date" type="date" class="mt-1 h-8 w-full rounded-lg border border-slate-300 bg-white px-2 text-xs dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
             </div>
             <div>
-                <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Recepcion</label>
-                <input wire:model="reception_date" type="date" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
-                @error('reception_date') <p class="mt-1 text-sm text-rose-600">{{ $message }}</p> @enderror
+                <label class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Recepcion</label>
+                <input wire:model="reception_date" type="date" class="mt-1 h-8 w-full rounded-lg border border-slate-300 bg-white px-2 text-xs dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
             </div>
             <div>
-                <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Vencimiento</label>
-                <input wire:model="due_date" type="date" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
-                @error('due_date') <p class="mt-1 text-sm text-rose-600">{{ $message }}</p> @enderror
+                <label class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Vencimiento</label>
+                <input wire:model="due_date" type="date" class="mt-1 h-8 w-full rounded-lg border border-slate-300 bg-white px-2 text-xs dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
             </div>
             <div class="md:col-span-2">
-                <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Observaciones</label>
-                <textarea wire:model="observations" rows="3" class="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white"></textarea>
-                @error('observations') <p class="mt-1 text-sm text-rose-600">{{ $message }}</p> @enderror
+                <label class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Observaciones</label>
+                <textarea wire:model="observations" rows="2" class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950 dark:text-white"></textarea>
             </div>
             <div class="md:col-span-2">
-                <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Adjuntos</label>
-                <input wire:model="attachments" type="file" multiple class="mt-2 block w-full rounded-xl border border-dashed border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
-                @error('attachments.*') <p class="mt-1 text-sm text-rose-600">{{ $message }}</p> @enderror
+                <label class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Adjuntos</label>
+                <input wire:model="attachments" type="file" multiple class="mt-1 block w-full text-xs text-slate-600 file:me-2 file:rounded-md file:border-0 file:bg-slate-100 file:px-2 file:py-1 file:text-[11px] dark:text-slate-300 dark:file:bg-slate-800" />
+                @error('attachments.*') <p class="mt-0.5 text-[11px] text-rose-600">{{ $message }}</p> @enderror
             </div>
         </div>
 
-        <div class="mt-6 flex items-center justify-end gap-3">
-            <button type="button" wire:click="closeModal" class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 dark:border-slate-700 dark:text-slate-200">Cancelar</button>
-            <button type="button" wire:click="saveDocument" class="rounded-xl bg-slate-950 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 dark:bg-cyan-500 dark:text-slate-950">Guardar</button>
+        <div class="mt-4 flex justify-end gap-2">
+            <flux:button type="button" variant="outline" size="sm" wire:click="closeModal">Cancelar</flux:button>
+            <flux:button type="button" variant="primary" size="sm" wire:click="saveDocument">Guardar</flux:button>
         </div>
     </x-platform.modal>
 </div>

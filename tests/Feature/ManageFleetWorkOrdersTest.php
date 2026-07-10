@@ -113,3 +113,40 @@ test('start create from calendar pre fills scheduled date when opening modal', f
         ->assertSet('showFormModal', true)
         ->assertSet('scheduled_date', '2026-06-10');
 });
+
+test('work order form modal opens with compact layout', function () {
+    Livewire::test(ManageFleetWorkOrders::class)
+        ->call('openCreate')
+        ->assertSet('showFormModal', true)
+        ->assertSee('Nueva orden de trabajo')
+        ->assertSee('Detalle y vinculaciones');
+});
+
+test('work order equipment select is searchable', function () {
+    Livewire::test(ManageFleetWorkOrders::class)
+        ->set('filter_equipment_search', 'EQ-WO')
+        ->call('selectFilterFleetEquipment', $this->equipment->id)
+        ->assertSet('filter_equipment_id', $this->equipment->id)
+        ->assertSee('EQ-WO');
+});
+
+test('work orders board defaults to graficos tab with chart panels', function () {
+    FleetWorkOrder::withoutGlobalScopes()->create([
+        'company_id' => $this->company->id,
+        'fleet_equipment_id' => $this->equipment->id,
+        'code' => 'OT-G-1',
+        'type' => FleetWorkOrderType::Preventive->value(),
+        'issued_at' => now()->toDateString(),
+        'priority' => 'media',
+        'status' => FleetWorkOrderStatus::Generated->value(),
+        'labor_cost' => 100,
+        'spare_parts_cost' => 50,
+        'total_cost' => 150,
+    ]);
+
+    Livewire::test(ManageFleetWorkOrders::class)
+        ->assertSet('viewTab', 'graficos')
+        ->assertSee('OT por estado')
+        ->assertSee('Composición de costos')
+        ->assertSee('data-chart-root', false);
+});

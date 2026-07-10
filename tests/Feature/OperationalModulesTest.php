@@ -11,9 +11,11 @@ use App\Models\Company;
 use App\Models\Project;
 use App\Models\Supplier;
 use App\Models\User;
+use App\Services\Application\ApplicationSettingsManager;
 use App\Services\Companies\CompanyContext;
 use Database\Seeders\PermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Role;
 
@@ -118,6 +120,22 @@ test('catalogs module can switch tab groups and types', function () {
         ->assertSet('selectedType', CatalogType::PaymentMethod->value());
 });
 
+test('catalogs module can update application branding', function () {
+    Storage::fake('public');
+
+    Livewire::test(ManageCatalogs::class)
+        ->set('application_name', 'Titon Plataforma')
+        ->set('application_logo', UploadedFile::fake()->image('icon.png', 128, 128))
+        ->call('saveApplicationBranding')
+        ->assertHasNoErrors();
+
+    $settings = app(ApplicationSettingsManager::class)->current();
+
+    expect($settings->application_name)->toBe('Titon Plataforma');
+    expect($settings->logo_path)->not->toBeNull();
+    Illuminate\Support\Facades\Storage::disk('public')->assertExists($settings->logo_path);
+});
+
 test('catalogs module can create company scoped items', function () {
     Livewire::test(ManageCatalogs::class)
         ->call('selectType', CatalogType::Bank->value())
@@ -142,6 +160,7 @@ test('operational module pages render for authorized users', function () {
     $this->get(route('settings.catalogs'))
         ->assertOk()
         ->assertSee('Configuración general')
+        ->assertSee('Personalización de la aplicación')
         ->assertSee('Finanzas y pagos')
         ->assertSee('Documentos');
 });

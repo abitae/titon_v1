@@ -9,6 +9,7 @@ use App\Models\Company;
 use App\Models\User;
 use App\Reports\Audit\UserAuditPdfReport;
 use App\Services\Audit\UserAuditLogger;
+use App\Support\DefaultDate;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\Component;
@@ -34,6 +35,13 @@ class ManageUserAudits extends Component
     public string $dateFrom = '';
 
     public string $dateTo = '';
+
+    public function mount(): void
+    {
+        $range = DefaultDate::filterRange();
+        $this->dateFrom = $range['from'];
+        $this->dateTo = $range['to'];
+    }
 
     public function render(): View
     {

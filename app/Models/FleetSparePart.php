@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Concerns\AuditableWithContext;
 use App\Concerns\BelongsToActiveCompany;
+use App\Support\Decimal;
 use Database\Factories\FleetSparePartFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -73,6 +74,6 @@ class FleetSparePart extends Model implements Auditable
 
     public function isBelowMinStock(): bool
     {
-        return bccomp((string) $this->stock_quantity, (string) $this->min_stock, 3) < 1;
+        return Decimal::compare($this->stock_quantity, $this->min_stock, 3) < 1;
     }
 }

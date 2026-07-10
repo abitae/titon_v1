@@ -2,7 +2,9 @@
 
 namespace Database\Factories;
 
+use App\Enums\CatalogType;
 use App\Enums\FleetEquipmentOperationalStatus;
+use App\Models\CatalogItem;
 use App\Models\Company;
 use App\Models\FleetEquipment;
 use App\Models\Project;
@@ -23,6 +25,7 @@ class FleetEquipmentFactory extends Factory
             'work_project_id' => null,
             'responsible_user_id' => null,
             'internal_code' => 'EQ-'.fake()->unique()->numerify('####'),
+            'equipment_type_id' => null,
             'equipment_type' => fake()->randomElement(['Retroexcavadora', 'Camión', 'Generador', 'Andamio']),
             'name' => fake()->words(3, true),
             'brand' => fake()->company(),
@@ -38,6 +41,36 @@ class FleetEquipmentFactory extends Factory
             'acquisition_date' => fake()->date(),
             'observations' => fake()->optional()->sentence(),
         ];
+    }
+
+    public function configure(): static
+    {
+        return $this->afterMaking(function (FleetEquipment $equipment): void {
+            if ($equipment->equipment_type_id !== null) {
+                return;
+            }
+
+            $companyId = $equipment->company_id;
+
+            if ($companyId === null) {
+                return;
+            }
+
+            $type = CatalogItem::withoutGlobalScopes()->firstOrCreate(
+                [
+                    'company_id' => $companyId,
+                    'type' => CatalogType::EquipmentType->value(),
+                    'name' => $equipment->equipment_type ?: 'Equipo demo',
+                ],
+                [
+                    'code' => 'TIPO',
+                    'is_active' => true,
+                ],
+            );
+
+            $equipment->equipment_type_id = $type->id;
+            $equipment->equipment_type = $type->name;
+        });
     }
 
     public function forCompany(Company $company): static
