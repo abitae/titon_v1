@@ -8,6 +8,7 @@ use App\Concerns\ViewsPdfInModal;
 use App\Enums\CatalogType;
 use App\Enums\CorrelativeSubject;
 use App\Enums\FleetEquipmentOperationalStatus;
+use App\Enums\FleetWorkOrderType;
 use App\Models\CatalogItem;
 use App\Models\FleetEquipment;
 use App\Models\Project;
@@ -28,6 +29,18 @@ class ManageFleetEquipments extends Component
     public function openEquipmentsReportPdf(): void
     {
         $this->openRoutePdfModal('mechanics.report.equipments.pdf', 'Equipos y maquinarias');
+    }
+
+    public function openEquipmentHistoryPdf(int $equipmentId): void
+    {
+        $equipment = FleetEquipment::query()->findOrFail($equipmentId);
+
+        $this->openRoutePdfModal(
+            'mechanics.equipments.history.pdf',
+            'Historial '.$equipment->internal_code,
+            ['fleetEquipment' => $equipment],
+            'Historial completo del equipo',
+        );
     }
 
     public function openEquipmentDocument(string $url, string $name, string $mimeType): void
@@ -213,6 +226,15 @@ class ManageFleetEquipments extends Component
                     ->with('responsibleUser')
                     ->orderByDesc('reviewed_at')
                     ->orderByDesc('due_at'),
+                'preventiveMaintenances' => fn ($query) => $query
+                    ->with('responsibleUser')
+                    ->orderByDesc('scheduled_date'),
+                'correctiveMaintenances' => fn ($query) => $query
+                    ->with('responsibleUser')
+                    ->orderByDesc('failure_at'),
+                'workOrders' => fn ($query) => $query
+                    ->with(['responsibleUser', 'workProject'])
+                    ->orderByDesc('issued_at'),
             ])
             ->findOrFail($equipmentId);
 
@@ -464,5 +486,22 @@ class ManageFleetEquipments extends Component
         $company = app(ResolveCurrentCompany::class)->handle(auth()->user());
 
         return $company?->users()->wherePivot('active', true)->orderBy('name')->get() ?? collect();
+    }
+
+    public function preventiveCreateUrl(int $equipmentId): string
+    {
+        return route('mechanics.preventive', ['create' => 1, 'equipment' => $equipmentId]);
+    }
+
+    public function correctiveCreateUrl(int $equipmentId): string
+    {
+        return route('mechanics.corrective', ['create' => 1, 'equipment' => $equipmentId]);
+    }
+
+    public function workOrderCreateUrl(int $equipmentId, string $type = 'preventivo'): string
+    {
+        $type = in_array($type, FleetWorkOrderType::values(), true) ? $type : FleetWorkOrderType::Preventive->value();
+
+        return route('mechanics.work-orders', ['create' => 1, 'equipment' => $equipmentId, 'type' => $type]);
     }
 }

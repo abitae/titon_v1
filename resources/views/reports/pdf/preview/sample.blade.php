@@ -15,7 +15,7 @@
         <div class="section">
             <h2>Encabezado corporativo</h2>
             <p class="muted">
-                El logotipo y los datos de la empresa activa se muestran en el encabezado de todas las exportaciones PDF
+                El logotipo y los datos de la empresa seleccionada se muestran en el encabezado de todas las exportaciones PDF
                 (compras, mecanica, dashboard, auditoria y contratos).
             </p>
         </div>
@@ -30,7 +30,7 @@
             <tbody>
                 <tr>
                     <td>Logotipo de empresa</td>
-                    <td>{{ $pdfBranding->showLogo ? 'Visible' : 'Oculto' }}</td>
+                    <td>{{ $pdfBranding->showLogo ? 'Visible' : 'Oculto' }} · {{ $pdfBranding->logoWidth }} x {{ $pdfBranding->logoHeight }} mm · {{ $pdfBranding->logoPosition === 'right' ? 'Derecha' : 'Izquierda' }}</td>
                 </tr>
                 <tr>
                     <td>Layout de encabezado</td>
@@ -49,7 +49,7 @@
 
         <p class="summary-note" style="margin-top:16px;">
             Configure margenes, colores y datos visibles en Configuracion → Formatos PDF.
-            El logo se toma de la ficha de la empresa activa.
+            El logo se toma de la ficha de la empresa seleccionada.
         </p>
     </div>
 </body>

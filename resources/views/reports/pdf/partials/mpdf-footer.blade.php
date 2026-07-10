@@ -1,7 +1,8 @@
 @php
     /** @var \App\Services\Pdf\PdfBrandingData $branding */
+    $borderStyle = $branding->showFooterBorder ? 'border-top:1px solid #cbd5e1;' : '';
 @endphp
-<div style="border-top:1px solid #cbd5e1;color:#64748b;font-family:DejaVu Sans,sans-serif;font-size:9px;padding-top:5px;">
+<div style="{{ $borderStyle }}color:#64748b;font-family:DejaVu Sans,sans-serif;font-size:{{ $branding->footerFontSize }}px;padding-top:5px;">
     <table width="100%" cellpadding="0" cellspacing="0">
         <tr>
             <td style="text-align:left;vertical-align:top;">

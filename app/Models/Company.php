@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Concerns\AuditableWithContext;
+use App\Support\PublicStorageUrl;
 use Database\Factories\CompanyFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -99,7 +100,7 @@ class Company extends Model implements Auditable
         }
 
         if (Storage::disk('public')->exists($this->logo)) {
-            return Storage::disk('public')->url($this->logo);
+            return PublicStorageUrl::url($this->logo);
         }
 
         return null;

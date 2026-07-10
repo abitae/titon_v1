@@ -2,10 +2,10 @@
 
 namespace App\Models;
 
+use App\Support\PublicStorageUrl;
 use Database\Factories\ApplicationSettingFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Storage;
 
 class ApplicationSetting extends Model
 {
@@ -39,6 +39,6 @@ class ApplicationSetting extends Model
             return null;
         }
 
-        return Storage::disk('public')->url($this->logo_path);
+        return PublicStorageUrl::url($this->logo_path);
     }
 }

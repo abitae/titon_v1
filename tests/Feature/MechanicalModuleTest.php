@@ -5,12 +5,17 @@ use App\Enums\FleetEquipmentOperationalStatus;
 use App\Enums\FleetSparePartMovementDirection;
 use App\Enums\FleetWorkOrderStatus;
 use App\Enums\FleetWorkOrderType;
+use App\Livewire\Mechanics\ManageFleetCorrectiveMaintenances;
 use App\Livewire\Mechanics\ManageFleetEquipments;
 use App\Livewire\Mechanics\ManageFleetEquipmentTypes;
+use App\Livewire\Mechanics\ManageFleetPreventiveMaintenances;
 use App\Livewire\Mechanics\ManageFleetSpareParts;
+use App\Livewire\Mechanics\ManageFleetWorkOrders;
 use App\Models\CatalogItem;
 use App\Models\Company;
+use App\Models\FleetCorrectiveMaintenance;
 use App\Models\FleetEquipment;
+use App\Models\FleetPreventiveMaintenance;
 use App\Models\FleetSparePart;
 use App\Models\FleetTechnicalInspection;
 use App\Models\FleetWorkOrder;
@@ -212,6 +217,123 @@ test('equipment detail shows technical inspection history', function () {
         ->assertSee('Historial de revisiones tecnicas')
         ->assertSee('15/01/2024')
         ->assertSee('Centro A');
+});
+
+test('equipment rows expose maintenance and work order shortcuts', function () {
+    $equipment = FleetEquipment::withoutGlobalScopes()->create([
+        'company_id' => $this->company->id,
+        'internal_code' => 'EQ-ACT',
+        'equipment_type_id' => $this->equipmentType->id,
+        'equipment_type' => $this->equipmentType->name,
+        'name' => 'Equipo con acciones',
+        'operational_status' => FleetEquipmentOperationalStatus::Operational->value(),
+    ]);
+
+    Livewire::test(ManageFleetEquipments::class)
+        ->assertSee('Ver historial', false)
+        ->assertSee(e(route('mechanics.preventive', ['create' => 1, 'equipment' => $equipment->id])), false)
+        ->assertSee(e(route('mechanics.corrective', ['create' => 1, 'equipment' => $equipment->id])), false)
+        ->assertSee(e(route('mechanics.work-orders', ['create' => 1, 'equipment' => $equipment->id, 'type' => FleetWorkOrderType::Preventive->value()])), false);
+});
+
+test('equipment history modal shows maintenance and work order history', function () {
+    $equipment = FleetEquipment::withoutGlobalScopes()->create([
+        'company_id' => $this->company->id,
+        'internal_code' => 'EQ-FULL',
+        'equipment_type_id' => $this->equipmentType->id,
+        'equipment_type' => $this->equipmentType->name,
+        'name' => 'Equipo historial completo',
+        'operational_status' => FleetEquipmentOperationalStatus::Operational->value(),
+    ]);
+
+    FleetPreventiveMaintenance::withoutGlobalScopes()->create([
+        'company_id' => $this->company->id,
+        'fleet_equipment_id' => $equipment->id,
+        'code' => 'MP-001',
+        'maintenance_type' => 'Cambio de aceite',
+        'scheduled_date' => '2026-02-10',
+        'priority' => 'media',
+        'status' => 'programado',
+    ]);
+
+    FleetCorrectiveMaintenance::withoutGlobalScopes()->create([
+        'company_id' => $this->company->id,
+        'fleet_equipment_id' => $equipment->id,
+        'code' => 'MC-001',
+        'failure_at' => '2026-02-11 08:00:00',
+        'failure_description' => 'Fuga hidraulica',
+        'status' => 'reportado',
+    ]);
+
+    FleetWorkOrder::withoutGlobalScopes()->create([
+        'company_id' => $this->company->id,
+        'fleet_equipment_id' => $equipment->id,
+        'code' => 'OT-001',
+        'type' => FleetWorkOrderType::Corrective->value(),
+        'issued_at' => '2026-02-11',
+        'scheduled_date' => '2026-02-12',
+        'priority' => 'media',
+        'status' => FleetWorkOrderStatus::Generated->value(),
+        'work_description' => 'Reparar fuga',
+        'labor_cost' => 100,
+        'spare_parts_cost' => 25,
+    ]);
+
+    Livewire::test(ManageFleetEquipments::class)
+        ->call('openDetailModal', $equipment->id)
+        ->assertSee('Historial del equipo EQ-FULL')
+        ->assertSee('Mantenimientos preventivos')
+        ->assertSee('Cambio de aceite')
+        ->assertSee('Mantenimientos correctivos')
+        ->assertSee('Fuga hidraulica')
+        ->assertSee('Ordenes de trabajo')
+        ->assertSee('OT-001');
+});
+
+test('maintenance and work order creation can be prefilled from equipment shortcuts', function () {
+    $equipment = FleetEquipment::withoutGlobalScopes()->create([
+        'company_id' => $this->company->id,
+        'responsible_user_id' => $this->user->id,
+        'internal_code' => 'EQ-PREF',
+        'equipment_type_id' => $this->equipmentType->id,
+        'equipment_type' => $this->equipmentType->name,
+        'name' => 'Equipo prellenado',
+        'operational_status' => FleetEquipmentOperationalStatus::Operational->value(),
+    ]);
+
+    Livewire::withQueryParams(['create' => 1, 'equipment' => $equipment->id])
+        ->test(ManageFleetPreventiveMaintenances::class)
+        ->assertSet('showFormModal', true)
+        ->assertSet('fleet_equipment_id', $equipment->id);
+
+    Livewire::withQueryParams(['create' => 1, 'equipment' => $equipment->id])
+        ->test(ManageFleetCorrectiveMaintenances::class)
+        ->assertSet('showFormModal', true)
+        ->assertSet('fleet_equipment_id', $equipment->id);
+
+    Livewire::withQueryParams(['create' => 1, 'equipment' => $equipment->id, 'type' => FleetWorkOrderType::Corrective->value()])
+        ->test(ManageFleetWorkOrders::class)
+        ->assertSet('showFormModal', true)
+        ->assertSet('fleet_equipment_id', $equipment->id)
+        ->assertSet('type', FleetWorkOrderType::Corrective->value())
+        ->assertSet('responsible_user_id', $this->user->id);
+});
+
+test('equipment history pdf can be previewed inline', function () {
+    $equipment = FleetEquipment::withoutGlobalScopes()->create([
+        'company_id' => $this->company->id,
+        'internal_code' => 'EQ-PDF',
+        'equipment_type_id' => $this->equipmentType->id,
+        'equipment_type' => $this->equipmentType->name,
+        'name' => 'Equipo PDF',
+        'operational_status' => FleetEquipmentOperationalStatus::Operational->value(),
+    ]);
+
+    $response = $this->get(route('mechanics.equipments.history.pdf', ['fleetEquipment' => $equipment, 'preview' => 1]));
+
+    $response->assertSuccessful();
+    $response->assertHeader('content-type', 'application/pdf');
+    expect(str_starts_with($response->getContent(), '%PDF'))->toBeTrue();
 });
 
 test('equipment type can be managed via mechanics catalog crud', function () {

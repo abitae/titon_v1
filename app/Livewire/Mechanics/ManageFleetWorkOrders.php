@@ -10,6 +10,7 @@ use App\Enums\CorrelativeSubject;
 use App\Enums\DocumentPriority;
 use App\Enums\FleetWorkOrderStatus;
 use App\Enums\FleetWorkOrderType;
+use App\Models\Company;
 use App\Models\FleetCorrectiveMaintenance;
 use App\Models\FleetEquipment;
 use App\Models\FleetPreventiveMaintenance;
@@ -157,12 +158,34 @@ class ManageFleetWorkOrders extends Component
         $this->filter_scheduled_to = $range['to'];
         $this->filter_closed_from = $range['from'];
         $this->filter_closed_to = $range['to'];
+
+        if (request()->boolean('create')) {
+            abort_unless(auth()->user()?->can('mantenimientos.crear'), 403);
+            $company = app(ResolveCurrentCompany::class)->handle(auth()->user());
+            abort_if($company === null, 403);
+            $this->prepareCreateForm(
+                $company,
+                request()->integer('equipment') ?: null,
+                is_string(request('type')) ? request('type') : null,
+            );
+        }
     }
 
     public function updatedSearch(): void
     {
         $this->resetPage();
         $this->selectedIds = [];
+    }
+
+    public function updated($name): void
+    {
+        if ($this->viewTab !== 'graficos') {
+            return;
+        }
+
+        if ($name === 'search' || str_starts_with((string) $name, 'filter_')) {
+            $this->dispatch('charts-refresh');
+        }
     }
 
     public function updatedFilterProjectId(): void
@@ -249,6 +272,10 @@ class ManageFleetWorkOrders extends Component
 
         $this->viewTab = $tab;
         $this->resetPage();
+
+        if ($tab === 'graficos') {
+            $this->dispatch('charts-refresh');
+        }
     }
 
     public function sortBy(string $column): void
@@ -650,22 +677,7 @@ class ManageFleetWorkOrders extends Component
         abort_unless(auth()->user()?->can('mantenimientos.crear'), 403);
         $company = $resolveCurrentCompany->handle(auth()->user());
         abort_if($company === null, 403);
-        $this->resetForm();
-        $this->fleet_equipment_id = FleetEquipment::query()->orderBy('internal_code')->value('id');
-        if ($this->fleet_equipment_id === null) {
-            $this->dangerToast('Registre primero un equipo.');
-
-            return;
-        }
-
-        $this->code = app(IssueCompanyCorrelativeCode::class)->peek($company, CorrelativeSubject::FleetWorkOrder);
-        $this->issued_at = DefaultDate::today();
-        $this->syncFleetEquipmentSearch();
-        if ($this->calendarPrefillDate !== '') {
-            $this->scheduled_date = $this->calendarPrefillDate;
-            $this->calendarPrefillDate = '';
-        }
-        $this->showFormModal = true;
+        $this->prepareCreateForm($company);
     }
 
     public function openEdit(int $id): void
@@ -911,6 +923,32 @@ class ManageFleetWorkOrders extends Component
         $this->scheduled_date = DefaultDate::today();
         $this->resetFleetEquipmentSearch();
         $this->showFormModal = false;
+    }
+
+    protected function prepareCreateForm(Company $company, ?int $equipmentId = null, ?string $type = null): void
+    {
+        $this->resetForm();
+
+        $equipment = $equipmentId !== null
+            ? FleetEquipment::query()->where('company_id', $company->id)->find($equipmentId)
+            : FleetEquipment::query()->where('company_id', $company->id)->orderBy('internal_code')->first();
+
+        if ($equipment === null) {
+            $this->dangerToast('Registre primero un equipo.');
+
+            return;
+        }
+
+        $this->fleet_equipment_id = $equipment->id;
+        $this->work_project_id = $equipment->work_project_id;
+        $this->responsible_user_id = $equipment->responsible_user_id;
+        $this->type = in_array($type, FleetWorkOrderType::values(), true) ? $type : FleetWorkOrderType::Preventive->value();
+        $this->code = app(IssueCompanyCorrelativeCode::class)->peek($company, CorrelativeSubject::FleetWorkOrder);
+        $this->issued_at = DefaultDate::today();
+        $this->scheduled_date = $this->calendarPrefillDate !== '' ? $this->calendarPrefillDate : DefaultDate::today();
+        $this->calendarPrefillDate = '';
+        $this->syncFleetEquipmentSearch();
+        $this->showFormModal = true;
     }
 
     protected function responsibleUsers(): Collection

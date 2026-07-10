@@ -43,9 +43,9 @@ test('login screen displays application icon instead of company logo', function 
     $response = $this->get(route('login'));
 
     $response->assertOk();
-    $response->assertSee(Storage::disk('public')->url($applicationLogoPath), false);
+    $response->assertSee('/storage/'.$applicationLogoPath, false);
     $response->assertSee('Titon ERP', false);
-    $response->assertDontSee(Storage::disk('public')->url($companyLogoPath), false);
+    $response->assertDontSee('/storage/'.$companyLogoPath, false);
     $response->assertDontSee('Titon Infraestructura', false);
 });
 
@@ -72,8 +72,8 @@ test('platform branding uses application settings only', function () {
     $branding = app(PlatformBranding::class);
 
     expect($branding->name())->toBe('Aplicacion Global')
-        ->and($branding->logoUrl())->toBe(Storage::disk('public')->url($applicationLogoPath))
-        ->and($branding->faviconUrl())->toBe(Storage::disk('public')->url($applicationLogoPath));
+        ->and($branding->logoUrl())->toBe('/storage/'.$applicationLogoPath)
+        ->and($branding->faviconUrl())->toBe('/storage/'.$applicationLogoPath);
 });
 
 test('authorized users can upload company logo through empresa form', function () {

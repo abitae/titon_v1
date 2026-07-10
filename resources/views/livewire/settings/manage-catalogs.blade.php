@@ -20,9 +20,9 @@
                 <div class="flex items-start gap-3">
                     <div class="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-950">
                         @if ($application_logo)
-                            <img src="{{ $application_logo->temporaryUrl() }}" alt="Vista previa del icono" class="size-full object-cover" />
+                            <img src="{{ $application_logo->temporaryUrl() }}" alt="Vista previa del icono" class="size-full object-contain p-1" />
                         @elseif ($currentApplicationLogoUrl)
-                            <img src="{{ $currentApplicationLogoUrl }}" alt="{{ $application_name }}" class="size-full object-cover" />
+                            <img src="{{ $currentApplicationLogoUrl }}" alt="{{ $application_name }}" class="size-full object-contain p-1" />
                         @else
                             <x-app-logo-icon class="size-8 fill-current text-slate-700 dark:text-slate-100" />
                         @endif

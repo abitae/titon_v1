@@ -12,6 +12,7 @@ use App\Models\FleetPreventiveMaintenance;
 use App\Models\FleetSparePartMovement;
 use App\Models\FleetTechnicalInspection;
 use App\Models\FleetWorkOrder;
+use App\Reports\Mechanics\FleetEquipmentHistoryPdfReport;
 use App\Reports\Mechanics\FleetEquipmentsPdfReport;
 use App\Reports\Mechanics\GenericMechanicsPdfReport;
 use App\Services\Audit\UserAuditLogger;
@@ -48,6 +49,20 @@ class MechanicsReportDownloadController extends Controller
         $this->logMechanicsExport($userAuditLogger, 'equipos_excel', 'Excel listado de equipos.');
 
         return Excel::download(new FleetEquipmentsExport($rows), $this->stampedExportFilename('equipos-maquinarias.xlsx'));
+    }
+
+    public function equipmentHistoryPdf(
+        Request $request,
+        FleetEquipment $fleetEquipment,
+        UserAuditLogger $userAuditLogger,
+        FleetEquipmentHistoryPdfReport $fleetEquipmentHistoryPdfReport,
+    ): StreamedResponse|Response {
+        $this->authorizeMechanicsExport();
+
+        $pdf = $fleetEquipmentHistoryPdfReport->build(auth()->user(), $fleetEquipment);
+        $filename = 'historial-equipo-'.$fleetEquipment->internal_code.'.pdf';
+
+        return $this->deliverPdf($request, $pdf, $filename, $userAuditLogger, 'equipo_historial_pdf', 'PDF historial de equipo.');
     }
 
     public function machineryStatusPdf(Request $request, UserAuditLogger $userAuditLogger, GenericMechanicsPdfReport $genericMechanicsPdfReport): StreamedResponse|Response

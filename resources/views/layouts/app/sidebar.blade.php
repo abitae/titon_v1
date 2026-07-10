@@ -7,7 +7,9 @@
     </head>
     <body class="min-h-screen min-h-[100dvh] bg-slate-50 antialiased dark:bg-slate-950">
         @php
-            $navigation = app(\App\Services\Navigation\AppNavigation::class)->sidebarGroups();
+            $navigationService = app(\App\Services\Navigation\AppNavigation::class);
+            $primaryNavigation = $navigationService->sidebarPrimaryItems();
+            $navigation = $navigationService->sidebarGroups();
         @endphp
 
         <flux:sidebar
@@ -23,6 +25,18 @@
 
             <div class="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-y-contain [-ms-overflow-style:none] [scrollbar-gutter:stable] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-300/80 dark:[&::-webkit-scrollbar-thumb]:bg-slate-600/80">
                 <flux:sidebar.nav class="gap-1.5 py-3">
+                    @foreach ($primaryNavigation as $item)
+                        <flux:sidebar.item
+                            :icon="$item['icon']"
+                            :href="$item['href']"
+                            :current="$item['current']"
+                            class="min-w-0 rounded-xl"
+                            wire:navigate
+                        >
+                            <span class="truncate text-sm font-medium">{{ $item['label'] }}</span>
+                        </flux:sidebar.item>
+                    @endforeach
+
                     @foreach ($navigation as $group)
                         @php
                             $groupExpanded = collect($group['items'])->contains(
@@ -53,21 +67,25 @@
             </div>
 
             <flux:sidebar.nav class="shrink-0 border-t border-slate-200/60 bg-gradient-to-t from-slate-50/90 to-transparent pt-2 dark:border-slate-700/60 dark:from-slate-950/90">
-                <div class="rounded-xl border border-slate-200/80 bg-white/80 px-2 py-1.5 text-xs text-slate-600 backdrop-blur dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-400">
-                    <p class="font-medium text-slate-800 dark:text-slate-200">Atajos</p>
-                    <a
-                        href="{{ route('settings.catalogs') }}"
-                        wire:navigate
-                        class="mt-2 inline-flex items-center gap-1.5 text-[11px] font-medium text-cyan-700 hover:text-cyan-600 hover:underline dark:text-cyan-400 dark:hover:text-cyan-300"
-                    >
-                        <flux:icon.squares-plus variant="outline" class="size-3.5 shrink-0 opacity-90" />
-                        Catalogos maestros
-                    </a>
-                </div>
+                @can('catalogs.ver')
+                    <div class="rounded-xl border border-slate-200/80 bg-white/80 px-2 py-1.5 text-xs text-slate-600 backdrop-blur dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-400">
+                        <p class="font-medium text-slate-800 dark:text-slate-200">Atajos</p>
+                        <a
+                            href="{{ route('settings.catalogs') }}"
+                            wire:navigate
+                            class="mt-2 inline-flex items-center gap-1.5 text-[11px] font-medium text-cyan-700 hover:text-cyan-600 hover:underline dark:text-cyan-400 dark:hover:text-cyan-300"
+                        >
+                            <flux:icon.squares-plus variant="outline" class="size-3.5 shrink-0 opacity-90" />
+                            Catalogos maestros
+                        </a>
+                    </div>
+                @endcan
             </flux:sidebar.nav>
         </flux:sidebar>
 
         {{ $slot }}
+
+        <x-platform.user-manual-button />
 
         @php($sessionToasts = session('toasts', []))
 

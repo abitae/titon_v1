@@ -6,7 +6,11 @@
     'height' => '300',
 ])
 
-<div class="space-y-4">
+@php
+    $configHash = md5(json_encode($config, JSON_THROW_ON_ERROR));
+@endphp
+
+<div class="space-y-4" wire:key="chart-panel-{{ $id }}-{{ $configHash }}">
     @if ($title || $subtitle)
         <div class="flex items-start justify-between gap-3">
             <div>
@@ -27,6 +31,7 @@
         data-chart-config='@json($config)'
         style="height: {{ is_numeric($height) ? $height.'px' : $height }}"
         class="relative min-h-[240px] rounded-2xl bg-slate-50/70 p-3 dark:bg-slate-950/40"
+        x-init="$nextTick(() => window.scheduleChartsInit?.())"
     >
         <canvas class="h-full w-full"></canvas>
     </div>

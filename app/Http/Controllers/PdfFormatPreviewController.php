@@ -16,6 +16,8 @@ class PdfFormatPreviewController extends Controller
         return response($pdf, 200, [
             'Content-Type' => 'application/pdf',
             'Content-Disposition' => 'inline; filename="vista-previa-formato-pdf.pdf"',
+            'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
+            'Pragma' => 'no-cache',
         ]);
     }
 }

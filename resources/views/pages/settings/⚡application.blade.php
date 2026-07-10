@@ -85,7 +85,7 @@ new #[Title('Application settings')] class extends Component {
                         @if ($logo)
                             <img src="{{ $logo->temporaryUrl() }}" alt="{{ __('Temporary logo preview') }}" class="size-full object-cover" />
                         @elseif ($currentLogoUrl)
-                            <img src="{{ $currentLogoUrl }}" alt="{{ $application_name }}" class="size-full object-cover" />
+                            <img src="{{ $currentLogoUrl }}" alt="{{ $application_name }}" class="size-full object-contain p-1.5" />
                         @else
                             <x-app-logo-icon class="size-10 fill-current text-slate-700 dark:text-slate-100" />
                         @endif

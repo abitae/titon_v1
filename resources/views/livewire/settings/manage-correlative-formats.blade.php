@@ -58,13 +58,23 @@
                 </td>
                 <td class="px-2.5 py-1.5">
                     @can ('catalogs.editar')
-                        <button
-                            type="button"
-                            wire:click="saveRow({{ $format->id }})"
-                            class="rounded-xl bg-slate-950 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-800 dark:bg-cyan-500 dark:text-slate-950 dark:hover:bg-cyan-400"
-                        >
-                            Guardar
-                        </button>
+                        <div class="flex flex-wrap gap-2">
+                            <button
+                                type="button"
+                                wire:click="saveRow({{ $format->id }})"
+                                class="rounded-xl bg-slate-950 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-800 dark:bg-cyan-500 dark:text-slate-950 dark:hover:bg-cyan-400"
+                            >
+                                Guardar
+                            </button>
+                            <button
+                                type="button"
+                                wire:click="resetRow({{ $format->id }})"
+                                wire:confirm="¿Restablecer la configuracion por defecto de este modulo?"
+                                class="rounded-xl border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-900"
+                            >
+                                Restablecer
+                            </button>
+                        </div>
                     @endcan
                 </td>
             </tr>

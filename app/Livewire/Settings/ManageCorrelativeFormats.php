@@ -43,7 +43,7 @@ class ManageCorrelativeFormats extends Component
             );
         }
 
-        $this->hydrateDraft($company->id);
+        $this->loadDraft($company->id);
     }
 
     public function render(ResolveCurrentCompany $resolveCurrentCompany): View
@@ -93,11 +93,37 @@ class ManageCorrelativeFormats extends Component
             'pad_length' => $draft['pad_length'],
         ]);
 
-        $this->hydrateDraft($company->id);
+        $this->loadDraft($company->id);
         $this->successToast('Formato guardado.');
     }
 
-    protected function hydrateDraft(int $companyId): void
+    public function resetRow(int $formatId, ResolveCurrentCompany $resolveCurrentCompany): void
+    {
+        abort_unless(auth()->user()?->can('catalogs.editar'), 403);
+
+        $company = $resolveCurrentCompany->handle(auth()->user());
+        abort_if($company === null, 403);
+
+        /** @var CompanyCorrelativeFormat $row */
+        $row = CompanyCorrelativeFormat::query()
+            ->where('company_id', $company->id)
+            ->whereKey($formatId)
+            ->firstOrFail();
+
+        $defaults = $row->subjectEnum()->defaultFormat();
+
+        $row->update([
+            'suffix' => $defaults['suffix'],
+            'template' => $defaults['template'],
+            'pad_length' => $defaults['pad_length'],
+            'is_active' => true,
+        ]);
+
+        $this->loadDraft($company->id);
+        $this->successToast('Configuracion restablecida a los valores por defecto.');
+    }
+
+    protected function loadDraft(int $companyId): void
     {
         $this->draft = CompanyCorrelativeFormat::query()
             ->where('company_id', $companyId)

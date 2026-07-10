@@ -40,6 +40,8 @@ use App\Livewire\Purchases\ManageSupplierQuotations;
 use App\Livewire\Purchases\SelectWinningQuotation;
 use App\Livewire\Purchases\ShowQuotationComparison;
 use App\Livewire\Requirements\SendRequirementToSuppliers;
+use App\Livewire\Security\ManagePermissions;
+use App\Livewire\Security\ManageRoles;
 use App\Livewire\Settings\ManageCatalogs;
 use App\Livewire\Settings\ManageCorrelativeFormats;
 use App\Livewire\Settings\ManageCostTypes;
@@ -61,13 +63,21 @@ Route::middleware(['auth', 'verified', 'active.company.context'])->group(functio
     Route::resource('users', UserController::class)->except('show');
 
     Route::middleware('active.company')->group(function () {
-        Route::get('dashboard', ShowDashboard::class)->name('dashboard');
+        Route::get('dashboard', ShowDashboard::class)
+            ->middleware('permission:dashboard.ver')
+            ->name('dashboard');
         Route::get('dashboard/executive-report.pdf', [ReportDownloadController::class, 'dashboard'])
             ->middleware('permission:dashboard.ver')
             ->name('reports.dashboard.pdf');
         Route::get('auditoria/usuarios', ManageUserAudits::class)
             ->middleware('permission:audits.ver')
             ->name('audits.users');
+        Route::get('seguridad/roles', ManageRoles::class)
+            ->middleware('permission:roles.ver')
+            ->name('security.roles');
+        Route::get('seguridad/permisos', ManagePermissions::class)
+            ->middleware('permission:permissions.ver')
+            ->name('security.permissions');
         Route::get('settings/catalogs', ManageCatalogs::class)
             ->middleware('permission:catalogs.ver')
             ->name('settings.catalogs');
@@ -174,6 +184,8 @@ Route::middleware(['auth', 'verified', 'active.company.context'])->group(functio
             Route::get('/', ShowMechanicalDashboard::class)->middleware('permission:mecanica.ver')->name('modules.mechanics');
             Route::get('/reportes', ShowMechanicalReports::class)->middleware('permission:mecanica.ver')->name('mechanics.reports');
             Route::get('/equipos', ManageFleetEquipments::class)->middleware('permission:equipos.ver')->name('mechanics.equipments');
+            Route::get('/equipos/{fleetEquipment}/historial.pdf', [MechanicsReportDownloadController::class, 'equipmentHistoryPdf'])
+                ->middleware('permission:mecanica.exportar')->name('mechanics.equipments.history.pdf');
             Route::get('/tipos-equipo', ManageFleetEquipmentTypes::class)->middleware('permission:equipos.ver')->name('mechanics.equipment-types');
             Route::get('/revisiones', ManageFleetTechnicalInspections::class)->middleware('permission:revisiones.ver')->name('mechanics.inspections');
             Route::get('/preventivo', ManageFleetPreventiveMaintenances::class)->middleware('permission:mantenimientos.ver')->name('mechanics.preventive');

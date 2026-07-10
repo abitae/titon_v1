@@ -2,8 +2,9 @@
 
 namespace Database\Seeders;
 
+use App\Models\Permission;
+use App\Services\Security\PermissionCatalog;
 use Illuminate\Database\Seeder;
-use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
 
@@ -16,10 +17,14 @@ class PermissionSeeder extends Seeder
     {
         app(PermissionRegistrar::class)->forgetCachedPermissions();
 
+        $catalog = app(PermissionCatalog::class);
+
         $modules = [
             'dashboard',
             'companies',
             'users',
+            'roles',
+            'permissions',
             'catalogs',
             'documents',
             'purchases',
@@ -37,11 +42,11 @@ class PermissionSeeder extends Seeder
 
         foreach ($modules as $module) {
             foreach ($actions as $action) {
-                Permission::findOrCreate($module.'.'.$action, 'web');
+                $this->upsertPermission($module.'.'.$action, $catalog);
             }
         }
 
-        $mechanicalGranular = [
+        $granular = [
             'equipos.ver',
             'equipos.crear',
             'equipos.editar',
@@ -52,13 +57,6 @@ class PermissionSeeder extends Seeder
             'revisiones.ver',
             'revisiones.crear',
             'revisiones.exportar',
-        ];
-
-        foreach ($mechanicalGranular as $permissionName) {
-            Permission::findOrCreate($permissionName, 'web');
-        }
-
-        $procurementGranular = [
             'requerimientos.ver',
             'requerimientos.crear',
             'requerimientos.editar',
@@ -78,30 +76,16 @@ class PermissionSeeder extends Seeder
             'cuentas_pagar.subir_documentos',
             'cuentas_pagar.pagar',
             'cuentas_pagar.exportar',
-        ];
-
-        foreach ($procurementGranular as $permissionName) {
-            Permission::findOrCreate($permissionName, 'web');
-        }
-
-        $warehouseGranular = [
             'almacen.ver',
             'almacen.mover',
             'almacen.transferir',
             'almacen.exportar',
-        ];
-
-        foreach ($warehouseGranular as $permissionName) {
-            Permission::findOrCreate($permissionName, 'web');
-        }
-
-        $pdfFormatGranular = [
             'pdf-formats.ver',
             'pdf-formats.editar',
         ];
 
-        foreach ($pdfFormatGranular as $permissionName) {
-            Permission::findOrCreate($permissionName, 'web');
+        foreach ($granular as $permissionName) {
+            $this->upsertPermission($permissionName, $catalog);
         }
 
         $roles = [
@@ -110,6 +94,8 @@ class PermissionSeeder extends Seeder
                 'dashboard.ver',
                 'companies.ver',
                 'users.ver',
+                'roles.ver',
+                'permissions.ver',
                 'documents.ver',
                 'documents.aprobar',
                 'documents.exportar',
@@ -145,6 +131,9 @@ class PermissionSeeder extends Seeder
                 'users.crear',
                 'users.editar',
                 'users.eliminar',
+                'roles.ver',
+                'roles.editar',
+                'permissions.ver',
                 'catalogs.ver',
                 'catalogs.crear',
                 'catalogs.editar',
@@ -298,5 +287,13 @@ class PermissionSeeder extends Seeder
             $role = Role::findOrCreate($roleName, 'web');
             $role->syncPermissions($permissions);
         }
+    }
+
+    protected function upsertPermission(string $name, PermissionCatalog $catalog): void
+    {
+        Permission::query()->updateOrCreate(
+            ['name' => $name, 'guard_name' => 'web'],
+            ['description' => $catalog->describe($name)],
+        );
     }
 }

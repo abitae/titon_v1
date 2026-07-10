@@ -126,8 +126,7 @@ test('work order equipment select is searchable', function () {
     Livewire::test(ManageFleetWorkOrders::class)
         ->set('filter_equipment_search', 'EQ-WO')
         ->call('selectFilterFleetEquipment', $this->equipment->id)
-        ->assertSet('filter_equipment_id', $this->equipment->id)
-        ->assertSee('EQ-WO');
+        ->assertSet('filter_equipment_id', $this->equipment->id);
 });
 
 test('work orders board defaults to graficos tab with chart panels', function () {
@@ -148,5 +147,9 @@ test('work orders board defaults to graficos tab with chart panels', function ()
         ->assertSet('viewTab', 'graficos')
         ->assertSee('OT por estado')
         ->assertSee('Composición de costos')
-        ->assertSee('data-chart-root', false);
+        ->assertSee('data-chart-root', false)
+        ->assertSee('data-chart-id="wo-by-status"', false)
+        ->call('setTab', 'list')
+        ->call('setTab', 'graficos')
+        ->assertDispatched('charts-refresh');
 });

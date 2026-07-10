@@ -1,14 +1,17 @@
 <?php
 
 use App\Livewire\Frontend\ManageSiteContent;
+use App\Models\ApplicationSetting;
 use App\Models\Company;
 use App\Models\SiteSetting;
 use App\Models\User;
+use App\Services\Application\ApplicationSettingsManager;
 use App\Services\Companies\CompanyContext;
 use App\Services\Frontend\SiteContentService;
 use Database\Seeders\PermissionSeeder;
 use Database\Seeders\SiteContentSeeder;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Role;
@@ -92,6 +95,15 @@ test('admin panel displays site brand logo', function () {
 
     Storage::disk('public')->put('site/brand/logo.png', 'fake-logo');
 
+    ApplicationSetting::query()->updateOrCreate(
+        ['id' => 1],
+        [
+            'application_name' => 'Titon Admin',
+            'logo_path' => 'site/brand/logo.png',
+        ],
+    );
+
+    Cache::forget(ApplicationSettingsManager::CACHE_KEY);
     app(SiteContentService::class)->forgetSection('brand');
 
     $this->actingAs($user)
@@ -99,7 +111,7 @@ test('admin panel displays site brand logo', function () {
         ->get(route('dashboard'))
         ->assertOk()
         ->assertSee('Titon Admin')
-        ->assertSee(Storage::disk('public')->url('site/brand/logo.png'), false);
+        ->assertSee('/storage/site/brand/logo.png', false);
 });
 
 test('frontend uses site brand name and favicon', function () {
@@ -121,7 +133,7 @@ test('frontend uses site brand name and favicon', function () {
 
     $response->assertOk();
     $response->assertSee('Marca Titon');
-    $response->assertSee(Storage::disk('public')->url('site/brand/favicon.png'), false);
+    $response->assertSee('/storage/site/brand/favicon.png', false);
 });
 
 test('home page displays card section images', function () {
@@ -135,5 +147,5 @@ test('home page displays card section images', function () {
 
     $this->get(route('home'))
         ->assertOk()
-        ->assertSee(Storage::disk('public')->url('site/card-nosotros.jpg'), false);
+        ->assertSee('/storage/site/card-nosotros.jpg', false);
 });

@@ -2,10 +2,10 @@
 
 namespace App\Models;
 
+use App\Support\PublicStorageUrl;
 use Database\Factories\SiteSettingFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Storage;
 
 class SiteSetting extends Model
 {
@@ -45,7 +45,7 @@ class SiteSetting extends Model
             return null;
         }
 
-        return Storage::disk('public')->url($this->image_path);
+        return PublicStorageUrl::url($this->image_path);
     }
 
     public function faviconUrl(): ?string
@@ -54,7 +54,7 @@ class SiteSetting extends Model
             return null;
         }
 
-        return Storage::disk('public')->url($this->favicon_path);
+        return PublicStorageUrl::url($this->favicon_path);
     }
 
     public function displayName(): string

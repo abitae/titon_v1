@@ -1,97 +1,62 @@
 @php
     /** @var \App\Services\Pdf\PdfBrandingData $branding */
+    $baseHeaderStyle = 'font-family: DejaVu Sans, sans-serif; color: #0f172a; font-size: 10px;';
+    $logoStyle = "height: {$branding->logoHeight}mm; max-height: {$branding->logoHeight}mm; max-width: {$branding->logoWidth}mm; width: {$branding->logoWidth}mm;";
+    $titleStyle = "font-size: {$branding->titleFontSize}px; font-weight: bold; margin: 0; line-height: 1.2;";
+    $metaStyle = "font-size: {$branding->metaFontSize}px; line-height: 1.35; margin: 2px 0 0;";
 @endphp
-<style>
-    .pdf-header-classic,
-    .pdf-header-banner {
-        font-family: DejaVu Sans, sans-serif;
-        color: #0f172a;
-        font-size: 10px;
-    }
-
-    .pdf-header-banner {
-        background: {{ $branding->primaryColor }};
-        color: #f8fafc;
-        padding: 8px 10px;
-        border-radius: 8px;
-    }
-
-    .pdf-header-banner .pdf-title {
-        color: #f8fafc;
-    }
-
-    .pdf-header-banner .pdf-meta {
-        color: #e2e8f0;
-    }
-
-    .pdf-header-classic .pdf-accent {
-        color: {{ $branding->secondaryColor }};
-    }
-
-    .pdf-logo {
-        max-height: 42px;
-        max-width: 120px;
-    }
-
-    .pdf-title {
-        font-size: 13px;
-        font-weight: bold;
-        margin: 0;
-        line-height: 1.2;
-    }
-
-    .pdf-meta {
-        color: #64748b;
-        font-size: 9px;
-        line-height: 1.35;
-        margin: 2px 0 0;
-    }
-
-    .pdf-header-rule {
-        border-bottom: 2px solid {{ $branding->secondaryColor }};
-        margin-top: 6px;
-    }
-</style>
 
 @if ($branding->headerLayout === \App\Enums\PdfHeaderLayout::Banner)
-    <div class="pdf-header-banner">
+    <div style="{{ $baseHeaderStyle }} background: {{ $branding->primaryColor }}; color: #f8fafc; padding: {{ $branding->headerPadding }}px 10px; border-radius: 8px;">
         <table width="100%" cellpadding="0" cellspacing="0">
             <tr>
-                @if ($branding->showLogo && $branding->logoFilesystemPath)
-                    <td width="130" style="vertical-align: middle;">
-                        <img src="{{ $branding->logoFilesystemPath }}" class="pdf-logo" alt="Logo" />
+                @if ($branding->showLogo && $branding->logoFilesystemPath && $branding->logoPosition === 'left')
+                    <td style="vertical-align: {{ $branding->logoVerticalAlignCss() }}; text-align: left; width: {{ $branding->logoCellWidth() }}mm;">
+                        <img src="{{ $branding->logoFilesystemPath }}" style="{{ $logoStyle }}" alt="Logo" />
                     </td>
                 @endif
-                <td style="vertical-align: middle;">
+                <td style="vertical-align: middle; text-align: {{ $branding->headerTextAlignCss() }};">
                     @if ($branding->showCompanyName || $branding->showBusinessName)
-                        <p class="pdf-title">{{ $branding->displayTitle() }}</p>
+                        <p style="{{ $titleStyle }} color: #f8fafc;">{{ $branding->displayTitle() }}</p>
                     @endif
                     @foreach ($branding->metaLines() as $line)
-                        <p class="pdf-meta">{{ $line }}</p>
+                        <p style="{{ $metaStyle }} color: #e2e8f0;">{{ $line }}</p>
                     @endforeach
                 </td>
+                @if ($branding->showLogo && $branding->logoFilesystemPath && $branding->logoPosition === 'right')
+                    <td style="vertical-align: {{ $branding->logoVerticalAlignCss() }}; text-align: right; width: {{ $branding->logoCellWidth() }}mm;">
+                        <img src="{{ $branding->logoFilesystemPath }}" style="{{ $logoStyle }}" alt="Logo" />
+                    </td>
+                @endif
             </tr>
         </table>
     </div>
 @else
-    <div class="pdf-header-classic">
+    <div style="{{ $baseHeaderStyle }} padding-top: {{ max($branding->headerPadding - 6, 0) }}px;">
         <table width="100%" cellpadding="0" cellspacing="0">
             <tr>
-                @if ($branding->showLogo && $branding->logoFilesystemPath)
-                    <td width="130" style="vertical-align: top;">
-                        <img src="{{ $branding->logoFilesystemPath }}" class="pdf-logo" alt="Logo" />
+                @if ($branding->showLogo && $branding->logoFilesystemPath && $branding->logoPosition === 'left')
+                    <td style="vertical-align: {{ $branding->logoVerticalAlignCss() }}; text-align: left; width: {{ $branding->logoCellWidth() }}mm;">
+                        <img src="{{ $branding->logoFilesystemPath }}" style="{{ $logoStyle }}" alt="Logo" />
                     </td>
                 @endif
-                <td style="vertical-align: top;">
+                <td style="vertical-align: top; text-align: {{ $branding->headerTextAlignCss() }};">
                     @if ($branding->showCompanyName || $branding->showBusinessName)
-                        <p class="pdf-title pdf-accent">{{ $branding->displayTitle() }}</p>
+                        <p style="{{ $titleStyle }} color: {{ $branding->secondaryColor }};">{{ $branding->displayTitle() }}</p>
                     @endif
                     @foreach ($branding->metaLines() as $line)
-                        <p class="pdf-meta">{{ $line }}</p>
+                        <p style="{{ $metaStyle }} color: #64748b;">{{ $line }}</p>
                     @endforeach
                 </td>
+                @if ($branding->showLogo && $branding->logoFilesystemPath && $branding->logoPosition === 'right')
+                    <td style="vertical-align: {{ $branding->logoVerticalAlignCss() }}; text-align: right; width: {{ $branding->logoCellWidth() }}mm;">
+                        <img src="{{ $branding->logoFilesystemPath }}" style="{{ $logoStyle }}" alt="Logo" />
+                    </td>
+                @endif
             </tr>
         </table>
-        <div class="pdf-header-rule"></div>
+        @if ($branding->showHeaderRule)
+            <div style="border-bottom: {{ $branding->headerRuleThickness }}px solid {{ $branding->secondaryColor }}; margin-top: 6px;"></div>
+        @endif
     </div>
 @endif

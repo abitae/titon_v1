@@ -81,7 +81,7 @@ test('frontend pages display header section images', function (string $routeName
 
     $this->get(route($routeName))
         ->assertOk()
-        ->assertSee(Storage::disk('public')->url($imagePath), false);
+        ->assertSee('/storage/'.$imagePath, false);
 })->with([
     'about' => ['frontend.about', 'about.header', 'site/about-header.jpg'],
     'projects' => ['frontend.projects', 'projects.header', 'site/projects-header.jpg'],

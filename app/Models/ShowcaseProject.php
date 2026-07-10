@@ -2,11 +2,11 @@
 
 namespace App\Models;
 
+use App\Support\PublicStorageUrl;
 use Database\Factories\ShowcaseProjectFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Storage;
 
 class ShowcaseProject extends Model
 {
@@ -49,7 +49,7 @@ class ShowcaseProject extends Model
             return null;
         }
 
-        return Storage::disk('public')->url($this->image_path);
+        return PublicStorageUrl::url($this->image_path);
     }
 
     /**

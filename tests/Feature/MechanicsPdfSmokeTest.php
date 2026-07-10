@@ -6,12 +6,15 @@ use Livewire\Livewire;
 test('mechanics dashboard renders graphical kpis and charts', function () {
     authenticateWithCompany();
 
-    $this->get(route('modules.mechanics'))
+    $response = $this->get(route('modules.mechanics'))
         ->assertOk()
         ->assertSee('Panel de mecánica')
         ->assertSee('Equipos por estado')
         ->assertSee('Órdenes de trabajo por estado')
         ->assertSee('data-chart-root', false);
+
+    expect($response->getContent())->toContain('"type":"doughnut"')
+        ->and($response->getContent())->toContain('data-chart-id="mech-equipment-status"');
 });
 
 test('mechanical reports page opens pdf preview in modal', function () {

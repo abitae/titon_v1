@@ -56,11 +56,32 @@
                 </td>
                 <td class="whitespace-nowrap tabular-nums">{{ number_format((float) ($equipment->odometer_km ?? 0)) }} km · {{ number_format((float) ($equipment->hour_meter ?? 0), 1) }} h</td>
                 <td class="!px-1.5 !py-1">
-                    <x-mechanics.row-actions
-                        :edit="auth()->user()->can('equipos.editar') ? 'openEditModal('.$equipment->id.')' : null"
-                        :delete="auth()->user()->can('equipos.eliminar') ? 'deleteEquipment('.$equipment->id.')' : null"
-                        delete-confirm="Eliminar equipo?"
-                    />
+                    <div class="flex items-center justify-end gap-0">
+                        <flux:tooltip content="Historial">
+                            <flux:button type="button" variant="ghost" size="sm" icon="document-text" wire:click="openDetailModal({{ $equipment->id }})" class="!size-7 !min-h-0 !p-0" aria-label="Ver historial" />
+                        </flux:tooltip>
+                        @can('mantenimientos.crear')
+                            <flux:tooltip content="Preventivo">
+                                <flux:button variant="ghost" size="sm" icon="calendar-days" href="{{ $this->preventiveCreateUrl($equipment->id) }}" wire:navigate class="!size-7 !min-h-0 !p-0" aria-label="Enviar a mantenimiento preventivo" />
+                            </flux:tooltip>
+                            <flux:tooltip content="Correctivo">
+                                <flux:button variant="ghost" size="sm" icon="wrench-screwdriver" href="{{ $this->correctiveCreateUrl($equipment->id) }}" wire:navigate class="!size-7 !min-h-0 !p-0" aria-label="Enviar a mantenimiento correctivo" />
+                            </flux:tooltip>
+                            <flux:tooltip content="Crear OT">
+                                <flux:button variant="ghost" size="sm" icon="clipboard-document-list" href="{{ $this->workOrderCreateUrl($equipment->id) }}" wire:navigate class="!size-7 !min-h-0 !p-0" aria-label="Crear orden de trabajo" />
+                            </flux:tooltip>
+                        @endcan
+                        @can('equipos.editar')
+                            <flux:tooltip content="Editar">
+                                <flux:button type="button" variant="ghost" size="sm" icon="pencil-square" wire:click="openEditModal({{ $equipment->id }})" class="!size-7 !min-h-0 !p-0" aria-label="Editar" />
+                            </flux:tooltip>
+                        @endcan
+                        @can('equipos.eliminar')
+                            <flux:tooltip content="Eliminar">
+                                <flux:button type="button" variant="ghost" size="sm" icon="trash" wire:click="deleteEquipment({{ $equipment->id }})" wire:confirm="Eliminar equipo?" class="!size-7 !min-h-0 !p-0 !text-rose-600 hover:!text-rose-700 dark:!text-rose-400 dark:hover:!text-rose-300" aria-label="Eliminar" />
+                            </flux:tooltip>
+                        @endcan
+                    </div>
                 </td>
             </tr>
         @empty
@@ -205,14 +226,19 @@
         </div>
     </x-platform.modal>
 
-    <x-platform.modal compact :show="$showDetailModal" max-width="max-w-4xl">
+    <x-platform.modal compact :show="$showDetailModal" max-width="max-w-6xl">
         @if ($selectedEquipment)
             <div class="flex items-center justify-between gap-3">
                 <div>
-                    <h2 class="text-base font-semibold text-slate-950 dark:text-white">{{ $selectedEquipment->internal_code }}</h2>
+                    <h2 class="text-base font-semibold text-slate-950 dark:text-white">Historial del equipo {{ $selectedEquipment->internal_code }}</h2>
                     <p class="text-xs text-slate-500">{{ $selectedEquipment->name }} · {{ $selectedEquipment->typeLabel() }}</p>
                 </div>
-                <flux:button variant="ghost" size="sm" wire:click="closeModals">Cerrar</flux:button>
+                <div class="flex shrink-0 items-center gap-1">
+                    @can('mecanica.exportar')
+                        <flux:button variant="outline" size="sm" icon="document-text" wire:click="openEquipmentHistoryPdf({{ $selectedEquipment->id }})">PDF</flux:button>
+                    @endcan
+                    <flux:button variant="ghost" size="sm" wire:click="closeModals">Cerrar</flux:button>
+                </div>
             </div>
             <dl class="mt-4 grid gap-2 text-xs text-slate-700 dark:text-slate-300 md:grid-cols-2">
                 <div><dt class="text-[10px] uppercase text-slate-500">Tipo</dt><dd class="font-medium">{{ $selectedEquipment->typeLabel() }}</dd></div>
@@ -220,6 +246,14 @@
                 <div><dt class="text-[10px] uppercase text-slate-500">Obra actual</dt><dd class="font-medium">{{ $selectedEquipment->workProject ? $selectedEquipment->workProject->code.' · '.$selectedEquipment->workProject->name : 'Sin obra asignada' }}</dd></div>
                 <div><dt class="text-[10px] uppercase text-slate-500">Responsable</dt><dd class="font-medium">{{ $selectedEquipment->responsibleUser?->name ?? '—' }}</dd></div>
             </dl>
+
+            @can('mantenimientos.crear')
+                <div class="mt-4 flex flex-wrap gap-2 rounded-xl border border-cyan-200 bg-cyan-50 p-2 dark:border-cyan-900/60 dark:bg-cyan-950/30">
+                    <flux:button variant="outline" size="sm" icon="calendar-days" href="{{ $this->preventiveCreateUrl($selectedEquipment->id) }}" wire:navigate>Enviar a preventivo</flux:button>
+                    <flux:button variant="outline" size="sm" icon="wrench-screwdriver" href="{{ $this->correctiveCreateUrl($selectedEquipment->id) }}" wire:navigate>Enviar a correctivo</flux:button>
+                    <flux:button variant="primary" size="sm" icon="clipboard-document-list" href="{{ $this->workOrderCreateUrl($selectedEquipment->id) }}" wire:navigate>Crear OT</flux:button>
+                </div>
+            @endcan
 
             <div class="mt-5">
                 <div class="mb-2 flex items-center justify-between gap-2">
@@ -240,6 +274,66 @@
                     @empty
                         <tr>
                             <td colspan="5" class="!py-5 text-center text-[11px] text-slate-500">Sin revisiones registradas para este equipo.</td>
+                        </tr>
+                    @endforelse
+                </x-platform.compact-table>
+            </div>
+
+            <div class="mt-5">
+                <h3 class="mb-2 text-sm font-semibold text-slate-950 dark:text-white">Mantenimientos preventivos</h3>
+                <x-platform.compact-table dense :headers="['Codigo', 'Tipo', 'Programado', 'Prioridad', 'Costo', 'Estado']">
+                    @forelse ($selectedEquipment->preventiveMaintenances as $maintenance)
+                        <tr wire:key="eq-prev-{{ $maintenance->id }}">
+                            <td class="whitespace-nowrap font-medium">{{ $maintenance->code }}</td>
+                            <td class="max-w-[12rem] truncate">{{ $maintenance->maintenance_type }}</td>
+                            <td class="whitespace-nowrap tabular-nums">{{ $maintenance->scheduled_date?->format('d/m/Y') ?? 'â€”' }}</td>
+                            <td class="whitespace-nowrap"><x-platform.status-badge :value="$maintenance->priority" size="xs" /></td>
+                            <td class="whitespace-nowrap tabular-nums">S/ {{ number_format((float) ($maintenance->cost ?? 0), 2) }}</td>
+                            <td class="whitespace-nowrap"><x-platform.status-badge :value="$maintenance->status" size="xs" /></td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="6" class="!py-5 text-center text-[11px] text-slate-500">Sin preventivos registrados.</td>
+                        </tr>
+                    @endforelse
+                </x-platform.compact-table>
+            </div>
+
+            <div class="mt-5">
+                <h3 class="mb-2 text-sm font-semibold text-slate-950 dark:text-white">Mantenimientos correctivos</h3>
+                <x-platform.compact-table dense :headers="['Codigo', 'Falla', 'Taller', 'Costo real', 'Responsable', 'Estado']">
+                    @forelse ($selectedEquipment->correctiveMaintenances as $maintenance)
+                        <tr wire:key="eq-corr-{{ $maintenance->id }}">
+                            <td class="whitespace-nowrap font-medium">{{ $maintenance->code }}</td>
+                            <td class="max-w-[14rem] truncate">{{ $maintenance->failure_description }}</td>
+                            <td class="max-w-[10rem] truncate">{{ $maintenance->supplier_workshop ?? 'â€”' }}</td>
+                            <td class="whitespace-nowrap tabular-nums">S/ {{ number_format((float) ($maintenance->real_cost ?? 0), 2) }}</td>
+                            <td class="max-w-[10rem] truncate">{{ $maintenance->responsibleUser?->name ?? 'â€”' }}</td>
+                            <td class="whitespace-nowrap"><x-platform.status-badge :value="$maintenance->status" size="xs" /></td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="6" class="!py-5 text-center text-[11px] text-slate-500">Sin correctivos registrados.</td>
+                        </tr>
+                    @endforelse
+                </x-platform.compact-table>
+            </div>
+
+            <div class="mt-5">
+                <h3 class="mb-2 text-sm font-semibold text-slate-950 dark:text-white">Ordenes de trabajo</h3>
+                <x-platform.compact-table dense :headers="['OT', 'Tipo', 'Programado', 'Trabajo', 'Costo', 'Estado']">
+                    @forelse ($selectedEquipment->workOrders as $workOrder)
+                        <tr wire:key="eq-wo-{{ $workOrder->id }}">
+                            <td class="whitespace-nowrap font-medium">{{ $workOrder->code }}</td>
+                            <td class="whitespace-nowrap"><x-platform.status-badge :value="$workOrder->type" size="xs" /></td>
+                            <td class="whitespace-nowrap tabular-nums">{{ $workOrder->scheduled_date?->format('d/m/Y') ?? 'â€”' }}</td>
+                            <td class="max-w-[14rem] truncate">{{ $workOrder->work_description ?: 'Sin descripcion' }}</td>
+                            <td class="whitespace-nowrap tabular-nums">S/ {{ number_format((float) ($workOrder->total_cost ?? 0), 2) }}</td>
+                            <td class="whitespace-nowrap"><x-platform.status-badge :value="$workOrder->status" size="xs" /></td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="6" class="!py-5 text-center text-[11px] text-slate-500">Sin ordenes de trabajo registradas.</td>
                         </tr>
                     @endforelse
                 </x-platform.compact-table>

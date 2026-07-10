@@ -100,6 +100,21 @@ enum PlatformModule
         };
     }
 
+    public function viewPermission(): string
+    {
+        return match ($this) {
+            self::Dashboard => 'dashboard.ver',
+            self::Documents => 'documents.ver',
+            self::Projects => 'projects.ver',
+            self::Suppliers => 'suppliers.ver',
+            self::Contracts => 'contracts.ver',
+            self::Payments => 'payments.ver',
+            self::Banks => 'bancos.ver',
+            self::Warehouse => 'almacen.ver',
+            self::Mechanics => 'mecanica.ver',
+        };
+    }
+
     /**
      * @return array<int, self>
      */
@@ -110,6 +125,7 @@ enum PlatformModule
             self::Projects,
             self::Suppliers,
             self::Contracts,
+            self::Payments,
             self::Banks,
             self::Warehouse,
         ];

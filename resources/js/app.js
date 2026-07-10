@@ -1,4 +1,5 @@
 import {
+    ArcElement,
     BarController,
     BarElement,
     CategoryScale,
@@ -14,6 +15,7 @@ import {
 } from 'chart.js';
 
 Chart.register(
+    ArcElement,
     BarController,
     BarElement,
     CategoryScale,
@@ -96,6 +98,15 @@ const buildOptions = (type) => {
     };
 };
 
+const purgeDisconnectedCharts = () => {
+    for (const [chartId, chart] of charts.entries()) {
+        if (! chart.canvas?.isConnected) {
+            chart.destroy();
+            charts.delete(chartId);
+        }
+    }
+};
+
 const renderChart = (element) => {
     const canvas = element.querySelector('canvas');
 
@@ -106,30 +117,37 @@ const renderChart = (element) => {
     const rawConfig = element.dataset.chartConfig || '{}';
     const chartId = element.dataset.chartId || (window.crypto?.randomUUID?.() || `chart-${Math.random().toString(36).slice(2)}`);
 
-    if (element.dataset.chartRenderedConfig === rawConfig && charts.has(chartId)) {
+    if (element.dataset.chartRenderedConfig === rawConfig && charts.has(chartId) && charts.get(chartId)?.canvas?.isConnected) {
         return;
     }
 
-    const config = JSON.parse(rawConfig);
+    try {
+        const config = JSON.parse(rawConfig);
 
-    if (charts.has(chartId)) {
-        charts.get(chartId)?.destroy();
+        if (charts.has(chartId)) {
+            charts.get(chartId)?.destroy();
+            charts.delete(chartId);
+        }
+
+        const chart = new Chart(canvas, {
+            type: config.type || 'bar',
+            data: config.data || { labels: [], datasets: [] },
+            options: {
+                ...buildOptions(config.type || 'bar'),
+                ...(config.options || {}),
+            },
+        });
+
+        charts.set(chartId, chart);
+        element.dataset.chartRenderedConfig = rawConfig;
+        chart.resize();
+    } catch (error) {
+        console.error(`No se pudo renderizar el grafico ${chartId}.`, error);
     }
-
-    const chart = new Chart(canvas, {
-        type: config.type || 'bar',
-        data: config.data || { labels: [], datasets: [] },
-        options: {
-            ...buildOptions(config.type || 'bar'),
-            ...(config.options || {}),
-        },
-    });
-
-    charts.set(chartId, chart);
-    element.dataset.chartRenderedConfig = rawConfig;
 };
 
 const initCharts = () => {
+    purgeDisconnectedCharts();
     document.querySelectorAll('[data-chart-root]').forEach(renderChart);
 };
 
@@ -141,12 +159,25 @@ const scheduleChartsInit = () => {
     queuedFrame = requestAnimationFrame(() => {
         initCharts();
         queuedFrame = null;
+
+        requestAnimationFrame(() => {
+            initCharts();
+        });
     });
 };
+
+window.scheduleChartsInit = scheduleChartsInit;
 
 document.addEventListener('DOMContentLoaded', scheduleChartsInit);
 document.addEventListener('livewire:navigated', scheduleChartsInit);
 document.addEventListener('livewire:update', scheduleChartsInit);
+document.addEventListener('charts:refresh', scheduleChartsInit);
+
+document.addEventListener('livewire:init', () => {
+    Livewire.on('charts-refresh', () => {
+        scheduleChartsInit();
+    });
+});
 
 const observer = new MutationObserver(() => {
     scheduleChartsInit();

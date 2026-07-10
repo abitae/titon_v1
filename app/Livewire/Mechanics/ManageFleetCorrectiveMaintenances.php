@@ -61,6 +61,11 @@ class ManageFleetCorrectiveMaintenances extends Component
     {
         abort_unless(auth()->user()?->can('mantenimientos.ver'), 403);
         $this->status = FleetCorrectiveMaintenanceStatus::Reported->value();
+
+        if (request()->boolean('create')) {
+            abort_unless(auth()->user()?->can('mantenimientos.crear'), 403);
+            $this->prepareCreateForm(request()->integer('equipment') ?: null);
+        }
     }
 
     public function updatingSearch(): void
@@ -97,17 +102,7 @@ class ManageFleetCorrectiveMaintenances extends Component
     public function openCreate(): void
     {
         abort_unless(auth()->user()?->can('mantenimientos.crear'), 403);
-        $this->resetForm();
-        $this->fleet_equipment_id = FleetEquipment::query()->orderBy('internal_code')->value('id');
-        if ($this->fleet_equipment_id === null) {
-            $this->dangerToast('Registre primero un equipo.');
-
-            return;
-        }
-
-        $this->failure_at = DefaultDate::nowDateTimeLocal();
-        $this->syncFleetEquipmentSearch();
-        $this->showFormModal = true;
+        $this->prepareCreateForm();
     }
 
     public function openEdit(int $id): void
@@ -225,6 +220,24 @@ class ManageFleetCorrectiveMaintenances extends Component
         $this->failure_at = DefaultDate::nowDateTimeLocal();
         $this->resetFleetEquipmentSearch();
         $this->showFormModal = false;
+    }
+
+    protected function prepareCreateForm(?int $equipmentId = null): void
+    {
+        $this->resetForm();
+        $this->fleet_equipment_id = $equipmentId !== null
+            ? FleetEquipment::query()->whereKey($equipmentId)->value('id')
+            : FleetEquipment::query()->orderBy('internal_code')->value('id');
+
+        if ($this->fleet_equipment_id === null) {
+            $this->dangerToast('Registre primero un equipo.');
+
+            return;
+        }
+
+        $this->failure_at = DefaultDate::nowDateTimeLocal();
+        $this->syncFleetEquipmentSearch();
+        $this->showFormModal = true;
     }
 
     protected function responsibleUsers(): Collection

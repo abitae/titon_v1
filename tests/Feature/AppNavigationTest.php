@@ -1,6 +1,21 @@
 <?php
 
 use App\Services\Navigation\AppNavigation;
+use Tests\Support\AuthenticatesWithCompany;
+
+uses(AuthenticatesWithCompany::class);
+
+beforeEach(function () {
+    $this->authenticateWithCompany('Super Admin');
+});
+
+test('sidebar exposes dashboard as primary item outside groups', function () {
+    $primaryItems = app(AppNavigation::class)->sidebarPrimaryItems();
+    $groups = app(AppNavigation::class)->sidebarGroups();
+
+    expect(collect($primaryItems)->pluck('label')->all())->toBe(['Dashboard'])
+        ->and(collect($groups)->pluck('heading')->all())->not->toContain('Plataforma');
+});
 
 test('sidebar exposes procurement flow in order', function () {
     $groups = app(AppNavigation::class)->sidebarGroups();
@@ -21,7 +36,8 @@ test('sidebar keeps accounts payable out of general operation modules', function
     $operacion = collect($groups)->firstWhere('heading', 'Operacion');
 
     expect(collect($operacion['items'])->pluck('label')->all())->not->toContain('Cuentas por pagar')
-        ->and(collect($operacion['items'])->pluck('label')->all())->not->toContain('Mecanica');
+        ->and(collect($operacion['items'])->pluck('label')->all())->not->toContain('Mecanica')
+        ->and(collect($operacion['items'])->pluck('label')->all())->toContain('Pagos a proveedores');
 });
 
 test('sidebar exposes mechanics module with submenus in order', function () {
@@ -57,4 +73,12 @@ test('sidebar exposes pdf formats under configuration', function () {
     $config = collect($groups)->firstWhere('heading', 'Configuracion');
 
     expect(collect($config['items'])->pluck('label')->all())->toContain('Formatos PDF');
+});
+
+test('sidebar exposes roles and permissions under security', function () {
+    $groups = app(AppNavigation::class)->sidebarGroups();
+
+    $seguridad = collect($groups)->firstWhere('heading', 'Seguridad');
+
+    expect(collect($seguridad['items'])->pluck('label')->all())->toContain('Roles', 'Permisos');
 });

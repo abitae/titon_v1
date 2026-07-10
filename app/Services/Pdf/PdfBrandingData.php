@@ -17,7 +17,17 @@ readonly class PdfBrandingData
         public string $primaryColor,
         public string $secondaryColor,
         public bool $showLogo,
+        public int $logoWidth,
+        public int $logoHeight,
+        public string $logoPosition,
+        public string $logoVerticalAlign,
         public PdfHeaderLayout $headerLayout,
+        public string $headerTextAlign,
+        public int $headerPadding,
+        public int $titleFontSize,
+        public int $metaFontSize,
+        public bool $showHeaderRule,
+        public int $headerRuleThickness,
         public bool $showCompanyName,
         public bool $showBusinessName,
         public bool $showRuc,
@@ -25,6 +35,8 @@ readonly class PdfBrandingData
         public bool $showPhone,
         public bool $showEmail,
         public ?string $footerText,
+        public bool $showFooterBorder,
+        public int $footerFontSize,
         public int $marginTop,
         public int $marginBottom,
         public int $marginLeft,
@@ -39,6 +51,29 @@ readonly class PdfBrandingData
             || ($this->showCompanyName && $this->companyName !== '')
             || ($this->showBusinessName && filled($this->businessName))
             || ($this->showRuc && filled($this->ruc));
+    }
+
+    public function logoCellWidth(): int
+    {
+        return max($this->logoWidth + 8, 34);
+    }
+
+    public function logoVerticalAlignCss(): string
+    {
+        return match ($this->logoVerticalAlign) {
+            'middle' => 'middle',
+            'bottom' => 'bottom',
+            default => 'top',
+        };
+    }
+
+    public function headerTextAlignCss(): string
+    {
+        return match ($this->headerTextAlign) {
+            'center' => 'center',
+            'right' => 'right',
+            default => 'left',
+        };
     }
 
     public function displayTitle(): string
