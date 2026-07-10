@@ -45,6 +45,7 @@ use App\Livewire\Security\ManageRoles;
 use App\Livewire\Settings\ManageCatalogs;
 use App\Livewire\Settings\ManageCorrelativeFormats;
 use App\Livewire\Settings\ManageCostTypes;
+use App\Livewire\Settings\ManageDeploymentMode;
 use App\Livewire\Settings\ManagePdfFormats;
 use App\Livewire\Suppliers\ManageSuppliers;
 use App\Livewire\Warehouse\ManageWarehouse;
@@ -93,6 +94,9 @@ Route::middleware(['auth', 'verified', 'active.company.context'])->group(functio
         Route::get('settings/cost-types', ManageCostTypes::class)
             ->middleware('permission:catalogs.ver')
             ->name('settings.cost-types');
+        Route::get('settings/deployment-mode', ManageDeploymentMode::class)
+            ->middleware('permission:deployment.ver')
+            ->name('settings.deployment-mode');
 
         Route::get('projects', ManageProjects::class)
             ->middleware('permission:projects.ver')

@@ -32,6 +32,7 @@ class PermissionCatalog
         'ordenes' => 'Ordenes de compra',
         'cuentas_pagar' => 'Cuentas por pagar',
         'pdf-formats' => 'Formatos PDF',
+        'deployment' => 'Produccion',
     ];
 
     /**

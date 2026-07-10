@@ -44,14 +44,14 @@ class CatalogSeeder extends Seeder
         Company::query()->each(function (Company $company) use ($catalogs): void {
             foreach ($catalogs as $type => $items) {
                 foreach ($items as $item) {
-                    CatalogItem::query()->firstOrCreate(
+                    CatalogItem::withoutGlobalScopes()->firstOrCreate(
                         [
                             'company_id' => $company->id,
                             'type' => $type,
-                            'code' => $item['code'],
+                            'name' => $item['name'],
                         ],
                         [
-                            'name' => $item['name'],
+                            'code' => $item['code'],
                             'is_active' => true,
                         ],
                     );

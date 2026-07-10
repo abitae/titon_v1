@@ -82,6 +82,8 @@ class PermissionSeeder extends Seeder
             'almacen.exportar',
             'pdf-formats.ver',
             'pdf-formats.editar',
+            'deployment.ver',
+            'deployment.editar',
         ];
 
         foreach ($granular as $permissionName) {

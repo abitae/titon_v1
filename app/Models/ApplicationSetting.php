@@ -18,6 +18,7 @@ class ApplicationSetting extends Model
     protected $fillable = [
         'application_name',
         'logo_path',
+        'deployment_mode',
     ];
 
     /**

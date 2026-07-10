@@ -49,7 +49,7 @@ class ApplicationSettingsManager
     }
 
     /**
-     * @param  array{application_name: string, logo_path?: string|null}  $attributes
+     * @param  array{application_name?: string, logo_path?: string|null, deployment_mode?: string}  $attributes
      */
     public function update(array $attributes): ApplicationSetting
     {
@@ -82,20 +82,24 @@ class ApplicationSettingsManager
     {
         return ApplicationSetting::query()->firstOrCreate(
             ['id' => 1],
-            ['application_name' => config('app.name', 'Titon')],
+            [
+                'application_name' => config('app.name', 'Titon'),
+                'deployment_mode' => 'development',
+            ],
         );
     }
 
     /**
-     * @return array{id: int, application_name: string, logo_path: ?string, created_at: mixed, updated_at: mixed}
+     * @return array{id: int, application_name: string, logo_path: ?string, deployment_mode: string, created_at: mixed, updated_at: mixed}
      */
     protected function cacheableAttributes(ApplicationSetting $settings): array
     {
-        /** @var array{id: int, application_name: string, logo_path: ?string, created_at: mixed, updated_at: mixed} */
+        /** @var array{id: int, application_name: string, logo_path: ?string, deployment_mode: string, created_at: mixed, updated_at: mixed} */
         return $settings->only([
             'id',
             'application_name',
             'logo_path',
+            'deployment_mode',
             'created_at',
             'updated_at',
         ]);

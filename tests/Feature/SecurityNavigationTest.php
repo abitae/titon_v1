@@ -15,9 +15,12 @@ test('permissions are seeded with short descriptions', function () {
     $this->seed(PermissionSeeder::class);
 
     $permission = Permission::query()->where('name', 'users.ver')->first();
+    $deploymentPermission = Permission::query()->where('name', 'deployment.ver')->first();
 
     expect($permission)->not->toBeNull()
-        ->and($permission->description)->toBe('Ver en Usuarios');
+        ->and($permission->description)->toBe('Ver en Usuarios')
+        ->and($deploymentPermission)->not->toBeNull()
+        ->and($deploymentPermission->description)->toBe('Ver en Produccion');
 });
 
 test('sidebar exposes roles and permissions under security for authorized users', function () {

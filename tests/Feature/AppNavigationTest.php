@@ -75,6 +75,14 @@ test('sidebar exposes pdf formats under configuration', function () {
     expect(collect($config['items'])->pluck('label')->all())->toContain('Formatos PDF');
 });
 
+test('sidebar exposes deployment mode under configuration', function () {
+    $groups = app(AppNavigation::class)->sidebarGroups();
+
+    $config = collect($groups)->firstWhere('heading', 'Configuracion');
+
+    expect(collect($config['items'])->pluck('label')->all())->toContain('Produccion');
+});
+
 test('sidebar exposes roles and permissions under security', function () {
     $groups = app(AppNavigation::class)->sidebarGroups();
 

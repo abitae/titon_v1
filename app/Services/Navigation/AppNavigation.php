@@ -118,6 +118,14 @@ class AppNavigation
                         current: request()->routeIs('settings.cost-types'),
                         permission: 'catalogs.ver',
                     ),
+                    $this->navItem(
+                        label: 'Produccion',
+                        description: 'Limpieza de datos demo y modo del sistema.',
+                        icon: 'rocket-launch',
+                        route: 'settings.deployment-mode',
+                        current: request()->routeIs('settings.deployment-mode'),
+                        permission: 'deployment.ver',
+                    ),
                 ],
             ],
         ];

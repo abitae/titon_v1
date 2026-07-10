@@ -20,11 +20,13 @@ class UserSeeder extends Seeder
         $roles = Role::query()->whereNull('company_id')->get()->keyBy('name');
         $syncUserCompanies = app(SyncUserCompanies::class);
 
-        $admin = User::query()->create([
-            'name' => 'Admin Titon',
-            'email' => 'admin@open9.dev',
-            'password' => Hash::make('password'),
-        ]);
+        $admin = User::query()->firstOrCreate(
+            ['email' => 'admin@open9.dev'],
+            [
+                'name' => 'Admin Titon',
+                'password' => Hash::make('password'),
+            ],
+        );
 
         $syncUserCompanies->handle(
             $admin,
@@ -34,7 +36,15 @@ class UserSeeder extends Seeder
             $companies->first()?->id,
         );
 
-        User::factory(9)->create()->each(function (User $user, int $index) use ($companies, $roles, $syncUserCompanies): void {
+        collect(range(1, 9))->each(function (int $number, int $index) use ($companies, $roles, $syncUserCompanies): void {
+            $user = User::query()->firstOrCreate(
+                ['email' => 'demo'.$number.'@open9.dev'],
+                [
+                    'name' => 'Usuario Demo '.$number,
+                    'password' => Hash::make('password'),
+                ],
+            );
+
             $maxCompanies = max(1, $companies->count());
             $assignedCompanies = $companies->shuffle()->take(random_int(1, $maxCompanies))->values();
             $roleNames = ['Gerencia', 'Administrador', 'Compras', 'Finanzas', 'Responsable de Obra', 'Consulta'];

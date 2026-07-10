@@ -14,7 +14,10 @@ class ApplicationSettingSeeder extends Seeder
     {
         ApplicationSetting::query()->firstOrCreate(
             ['id' => 1],
-            ['application_name' => config('app.name', 'Titon')],
+            [
+                'application_name' => config('app.name', 'Titon'),
+                'deployment_mode' => 'development',
+            ],
         );
     }
 }
