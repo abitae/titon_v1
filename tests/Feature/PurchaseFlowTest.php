@@ -730,7 +730,11 @@ test('purchase pages and comparison pdf routes render for authorized users', fun
         'order_generated_at' => now(),
     ]);
 
-    $this->get(route('modules.purchases'))->assertOk()->assertSee('Requerimientos');
+    $this->get(route('modules.purchases'))
+        ->assertOk()
+        ->assertSee('Requerimientos')
+        ->assertSee(route('purchases.quotations', $purchaseRequest), false)
+        ->assertSee('aria-label="Cotizaciones"', false);
     $this->get(route('purchases.quotations', $purchaseRequest))->assertOk();
     $this->get(route('purchases.comparison', $purchaseRequest))->assertOk();
     $this->get(route('purchases.winner', $purchaseRequest))

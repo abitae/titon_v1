@@ -1,4 +1,9 @@
 @props([
+    'navHref' => null,
+    'navTooltip' => 'Ver',
+    'navIcon' => 'eye',
+    'navAriaLabel' => null,
+    'navNavigate' => true,
     'edit' => null,
     'editHref' => null,
     'editNavigate' => true,
@@ -8,6 +13,31 @@
 ])
 
 <div {{ $attributes->merge(['class' => 'flex items-center justify-end gap-0']) }}>
+    @if ($navHref)
+        <flux:tooltip content="{{ $navTooltip }}">
+            @if ($navNavigate)
+                <flux:button
+                    variant="ghost"
+                    size="sm"
+                    icon="{{ $navIcon }}"
+                    href="{{ $navHref }}"
+                    wire:navigate
+                    class="!size-7 !min-h-0 !p-0"
+                    aria-label="{{ $navAriaLabel ?? $navTooltip }}"
+                ></flux:button>
+            @else
+                <flux:button
+                    variant="ghost"
+                    size="sm"
+                    icon="{{ $navIcon }}"
+                    href="{{ $navHref }}"
+                    class="!size-7 !min-h-0 !p-0"
+                    aria-label="{{ $navAriaLabel ?? $navTooltip }}"
+                ></flux:button>
+            @endif
+        </flux:tooltip>
+    @endif
+
     @if ($edit || $editHref)
         <flux:tooltip content="Editar">
             @if ($editHref)

@@ -42,7 +42,7 @@
         </div>
     </div>
 
-    <x-platform.compact-table dense :headers="['Requerimiento', 'Obra / Solicitante', 'Estado', 'It.', 'Cot.', '']">
+    <x-platform.compact-table dense :headers="['Requerimiento', 'Obra / Solicitante', 'Estado', 'It.', 'Cot.', 'Acciones.']">
         @forelse ($purchaseRequests as $purchaseRequest)
             <tr class="text-xs text-slate-700 dark:text-slate-200" wire:key="purchase-request-{{ $purchaseRequest->id }}">
                 <td class="whitespace-nowrap px-2.5 py-1.5">
@@ -66,6 +66,10 @@
                 <td class="px-2.5 py-1.5 text-center tabular-nums">{{ $purchaseRequest->quotations_count }}</td>
                 <td class="whitespace-nowrap px-1.5 py-1">
                     <x-platform.action-buttons
+                        :nav-href="route('purchases.quotations', $purchaseRequest)"
+                        nav-tooltip="Cotizaciones"
+                        nav-icon="document-text"
+                        nav-aria-label="Cotizaciones"
                         :edit="'openEditModal('.$purchaseRequest->id.')'"
                         :delete="'deletePurchaseRequest('.$purchaseRequest->id.')'"
                         delete-confirm="¿Eliminar esta solicitud?"
