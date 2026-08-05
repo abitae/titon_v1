@@ -63,6 +63,10 @@ Route::middleware(['auth', 'verified', 'active.company.context'])->group(functio
     Route::resource('companies', CompanyController::class)->except('show');
     Route::resource('users', UserController::class)->except('show');
 
+    Route::get('settings/deployment-mode', ManageDeploymentMode::class)
+        ->middleware('permission:deployment.ver')
+        ->name('settings.deployment-mode');
+
     Route::middleware('active.company')->group(function () {
         Route::get('dashboard', ShowDashboard::class)
             ->middleware('permission:dashboard.ver')
@@ -94,9 +98,6 @@ Route::middleware(['auth', 'verified', 'active.company.context'])->group(functio
         Route::get('settings/cost-types', ManageCostTypes::class)
             ->middleware('permission:catalogs.ver')
             ->name('settings.cost-types');
-        Route::get('settings/deployment-mode', ManageDeploymentMode::class)
-            ->middleware('permission:deployment.ver')
-            ->name('settings.deployment-mode');
 
         Route::get('projects', ManageProjects::class)
             ->middleware('permission:projects.ver')

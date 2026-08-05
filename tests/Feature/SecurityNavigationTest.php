@@ -94,7 +94,8 @@ test('roles page is protected and accessible for administrators', function () {
 
     $this->get(route('security.roles'))
         ->assertOk()
-        ->assertSee('Roles del sistema');
+        ->assertSee('Roles del sistema')
+        ->assertSee('aria-label="Editar"', false);
 
     $viewer = User::factory()->create();
     $viewerRole = Role::findByName('Compras', 'web');

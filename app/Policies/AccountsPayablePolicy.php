@@ -19,16 +19,16 @@ class AccountsPayablePolicy
 
     public function uploadDocuments(User $user, AccountsPayable $accountsPayable): bool
     {
-        return $user->can('cuentas_pagar.subir_documentos');
+        return $user->can('cuentas_pagar.subir_documentos') || $user->can('payments.crear');
     }
 
     public function pay(User $user, AccountsPayable $accountsPayable): bool
     {
-        return $user->can('cuentas_pagar.pagar');
+        return $user->can('cuentas_pagar.pagar') || $user->can('payments.crear');
     }
 
     public function export(User $user, AccountsPayable $accountsPayable): bool
     {
-        return $user->can('cuentas_pagar.exportar');
+        return $user->can('cuentas_pagar.exportar') || $user->can('payments.exportar');
     }
 }

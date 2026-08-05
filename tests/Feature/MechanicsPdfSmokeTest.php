@@ -17,10 +17,16 @@ test('mechanics dashboard renders graphical kpis and charts', function () {
         ->and($response->getContent())->toContain('data-chart-id="mech-equipment-status"');
 });
 
-test('mechanical reports page opens pdf preview in modal', function () {
+test('mechanical reports page renders tables and export actions', function () {
     authenticateWithCompany();
 
-    $this->get(route('mechanics.reports'))->assertOk();
+    $this->get(route('mechanics.reports'))
+        ->assertOk()
+        ->assertSee('Exportar PDF')
+        ->assertSee('Exportar Excel')
+        ->assertSee('Equipos')
+        ->assertSee('Detalle de OT')
+        ->assertDontSee('Ver PDF');
 
     $previewRoutes = [
         'mechanics.report.equipments.pdf',
@@ -41,7 +47,8 @@ test('mechanical reports page opens pdf preview in modal', function () {
     }
 
     Livewire::test(ShowMechanicalReports::class)
-        ->call('openMechanicsReportPdf', 'mechanics.report.work-orders.pdf', 'Ordenes de trabajo')
-        ->assertSet('showPdfModal', true)
-        ->assertSeeHtml('iframe');
+        ->assertSee('Categoria')
+        ->assertSee('Tipo de OT')
+        ->assertSee('Exportar PDF')
+        ->assertSee('Exportar Excel');
 });

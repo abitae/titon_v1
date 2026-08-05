@@ -1,76 +1,75 @@
-<div class="space-y-4">
-    <x-mechanics.page-header :title="$title" description="Exportaciones PDF y Excel por empresa activa." />
-
-    @php
-        $sections = [
-            'Equipos y maquinaria' => [
-                ['Equipos', 'mechanics.report.equipments.pdf', 'mechanics.report.equipments.excel', 'mecanica.exportar'],
-                ['Estado de maquinaria', 'mechanics.report.machinery-status.pdf', 'mechanics.report.machinery-status.excel', 'mecanica.exportar'],
-                ['Equipos por obra', 'mechanics.report.equipment-by-project.pdf', 'mechanics.report.equipment-by-project.excel', 'mecanica.exportar'],
-            ],
-            'Revisiones y mantenimiento' => [
-                ['Revisiones tecnicas', 'mechanics.report.inspections.pdf', 'mechanics.report.inspections.excel', 'revisiones.exportar'],
-                ['Mantenimiento preventivo', 'mechanics.report.preventive.pdf', 'mechanics.report.preventive.excel', 'mecanica.exportar'],
-                ['Mantenimiento correctivo', 'mechanics.report.corrective.pdf', 'mechanics.report.corrective.excel', 'mecanica.exportar'],
-                ['Costos de mantenimiento', 'mechanics.report.maintenance-costs.pdf', 'mechanics.report.maintenance-costs.excel', 'mecanica.exportar'],
-            ],
-            'Ordenes de trabajo' => [
-                ['Detalle de OT', 'mechanics.report.work-orders.pdf', 'mechanics.report.work-orders.excel', 'mecanica.exportar'],
-                ['OT por tecnico', 'mechanics.report.work-orders.by-technician.pdf', 'mechanics.report.work-orders.by-technician.excel', 'mecanica.exportar'],
-                ['OT por obra', 'mechanics.report.work-orders.by-project.pdf', 'mechanics.report.work-orders.by-project.excel', 'mecanica.exportar'],
-                ['OT por equipo', 'mechanics.report.work-orders.by-equipment.pdf', 'mechanics.report.work-orders.by-equipment.excel', 'mecanica.exportar'],
-                ['OT vencidas', 'mechanics.report.work-orders.overdue.pdf', 'mechanics.report.work-orders.overdue.excel', 'mecanica.exportar'],
-                ['OT por tipo', 'mechanics.report.work-orders.types.pdf', 'mechanics.report.work-orders.types.excel', 'mecanica.exportar'],
-                ['Costos de OT', 'mechanics.report.work-orders.costs.pdf', 'mechanics.report.work-orders.costs.excel', 'mecanica.exportar'],
-            ],
-            'Repuestos' => [
-                ['Repuestos consumidos', 'mechanics.report.consumed-spares.pdf', 'mechanics.report.consumed-spares.excel', 'mecanica.exportar'],
-            ],
-        ];
-    @endphp
-
-    @foreach ($sections as $heading => $reports)
-        @php
-            $visibleReports = collect($reports)->filter(
-                fn (array $report): bool => auth()->user()->can($report[3]),
-            );
-        @endphp
-
-        @if ($visibleReports->isNotEmpty())
-            <section class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-                <h2 class="text-sm font-semibold text-slate-950 dark:text-white">{{ $heading }}</h2>
-                <x-platform.compact-table dense :headers="['Reporte', 'PDF', 'Excel']" class="mt-3">
-                    @foreach ($visibleReports as [$label, $routePdf, $routeXlsx, $perm])
-                        <tr wire:key="mech-report-{{ $routePdf }}">
-                            <td class="font-medium text-slate-950 dark:text-white">{{ $label }}</td>
-                            <td class="!px-1.5 !py-1">
-                                <flux:button type="button" variant="outline" size="xs" icon="document-text" wire:click="openMechanicsReportPdf('{{ $routePdf }}', @js($label))">
-                                    Ver PDF
-                                </flux:button>
-                            </td>
-                            <td class="!px-1.5 !py-1">
-                                <flux:button variant="outline" size="xs" icon="table-cells" href="{{ route($routeXlsx) }}">
-                                    Descargar
-                                </flux:button>
-                            </td>
-                        </tr>
-                    @endforeach
-                </x-platform.compact-table>
-            </section>
-        @endif
-    @endforeach
-
-    @if (! auth()->user()->can('mecanica.exportar') && ! auth()->user()->can('revisiones.exportar'))
-        <div class="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900/50">
-            No tiene permisos para exportar reportes de mecanica.
-        </div>
-    @endif
-
-    <x-platform.pdf-viewer-modal
-        :show="$showPdfModal"
-        :url="$pdfViewerUrl"
-        :title="$pdfViewerTitle"
-        :subtitle="$pdfViewerSubtitle"
-        :allowExternalOpen="false"
+<div class="space-y-6">
+    <x-mechanics.page-header
+        :title="$title"
+        description="Consulte los reportes en pantalla y expórtelos a PDF o Excel cuando lo necesite."
     />
+
+    @forelse ($sections as $heading => $reports)
+        <section class="space-y-4">
+            <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ $heading }}</h2>
+
+            @foreach ($reports as $report)
+                <article
+                    wire:key="mech-report-{{ $report['key'] }}"
+                    class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900"
+                >
+                    <div class="flex flex-col gap-3 border-b border-slate-200 px-4 py-3 dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <h3 class="text-base font-semibold text-slate-950 dark:text-white">{{ $report['label'] }}</h3>
+                            @if (($report['summary'] ?? []) !== [])
+                                <div class="mt-1 flex flex-wrap gap-2">
+                                    @foreach ($report['summary'] as $line)
+                                        <span class="inline-flex rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                                            {{ $line }}
+                                        </span>
+                                    @endforeach
+                                </div>
+                            @endif
+                        </div>
+
+                        <div class="flex flex-wrap items-center gap-2">
+                            <flux:button
+                                variant="outline"
+                                size="sm"
+                                icon="document-arrow-down"
+                                href="{{ route($report['pdf_route']) }}"
+                            >
+                                Exportar PDF
+                            </flux:button>
+                            <flux:button
+                                variant="outline"
+                                size="sm"
+                                icon="table-cells"
+                                href="{{ route($report['excel_route']) }}"
+                            >
+                                Exportar Excel
+                            </flux:button>
+                        </div>
+                    </div>
+
+                    <div class="p-3">
+                        @if ($report['rows']->isEmpty())
+                            <p class="rounded-lg border border-dashed border-slate-200 px-4 py-6 text-center text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
+                                No hay registros para mostrar en este reporte.
+                            </p>
+                        @else
+                            <x-platform.compact-table dense :headers="$report['headings']">
+                                @foreach ($report['rows'] as $row)
+                                    <tr wire:key="mech-report-{{ $report['key'] }}-row-{{ $loop->index }}">
+                                        @foreach ($row as $cell)
+                                            <td>{{ $cell }}</td>
+                                        @endforeach
+                                    </tr>
+                                @endforeach
+                            </x-platform.compact-table>
+                        @endif
+                    </div>
+                </article>
+            @endforeach
+        </section>
+    @empty
+        <div class="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900/50">
+            No tiene permisos para ver reportes de mecanica.
+        </div>
+    @endforelse
 </div>

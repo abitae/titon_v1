@@ -18,7 +18,7 @@
         </div>
     </section>
 
-    <x-platform.compact-table :headers="['Rol', 'Permisos', 'Acciones']">
+    <x-platform.compact-table :headers="['Rol', 'Permisos', 'Acciones.']">
         @forelse ($roles as $role)
             <tr wire:key="role-{{ $role->id }}" class="align-top">
                 <td>
@@ -27,13 +27,13 @@
                 <td class="text-slate-600 dark:text-slate-300">
                     {{ $role->permissions_count }} permisos
                 </td>
-                <td>
-                    @if ($canEdit && $role->name !== 'Super Admin')
-                        <flux:button wire:click="editRole({{ $role->id }})" variant="ghost" size="sm">
-                            Editar permisos
-                        </flux:button>
-                    @else
-                        <span class="text-xs text-slate-400">Solo lectura</span>
+                <td class="!px-1.5 !py-1">
+                    @if ($role->name === 'Super Admin')
+                        <span class="inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                            Protegido
+                        </span>
+                    @elseif ($canEdit)
+                        <x-platform.action-buttons :edit="'editRole('.$role->id.')'" />
                     @endif
                 </td>
             </tr>
@@ -53,7 +53,7 @@
                     @foreach ($permissionGroups as $module => $permissions)
                         <div wire:key="module-{{ $module }}" class="rounded-2xl border border-slate-200 p-4 dark:border-slate-700">
                             <p class="mb-3 text-sm font-semibold text-slate-900 dark:text-white">
-                                {{ str($module)->replace(['-', '_'], ' ')->title() }}
+                                {{ $moduleLabels[$module] ?? str($module)->replace(['-', '_'], ' ')->title() }}
                             </p>
 
                             <div class="grid gap-2 sm:grid-cols-2">

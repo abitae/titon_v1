@@ -10,8 +10,10 @@ use App\Models\Project;
 use App\Models\Supplier;
 use App\Models\User;
 use App\Services\Companies\CompanyContext;
+use Database\Seeders\CompanySeeder;
 use Database\Seeders\DatabaseSeeder;
 use Database\Seeders\PermissionSeeder;
+use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Role;
 
@@ -99,4 +101,48 @@ test('development mode reinserts existing demo seeder data', function () {
         ->and(Project::query()->count())->toBeGreaterThan(0)
         ->and(Supplier::query()->count())->toBeGreaterThan(0)
         ->and(FleetEquipment::query()->count())->toBeGreaterThan(0);
+});
+
+test('reset system mode preserves super admin assigned only through company pivot', function () {
+    $this->seed(PermissionSeeder::class);
+    $this->seed(CompanySeeder::class);
+
+    $company = Company::query()->firstOrFail();
+    $superAdminRole = Role::query()->where('name', 'Super Admin')->firstOrFail();
+
+    $superAdmin = User::factory()->create([
+        'email' => 'pivot-super-admin@open9.dev',
+    ]);
+
+    $superAdmin->companies()->attach($company->id, [
+        'role_id' => $superAdminRole->id,
+        'active' => true,
+        'default_company' => true,
+    ]);
+
+    DB::table(config('permission.table_names.model_has_roles'))
+        ->where('model_type', User::class)
+        ->where('model_id', $superAdmin->id)
+        ->delete();
+
+    test()->actingAs($superAdmin);
+
+    app(ResetSystemMode::class)->handle(ResetSystemMode::Development);
+
+    expect(User::query()->whereKey($superAdmin->id)->exists())->toBeTrue()
+        ->and(ApplicationSetting::query()->first()?->deployment_mode)->toBe(ResetSystemMode::Development)
+        ->and(User::query()->count())->toBeGreaterThan(1);
+});
+
+test('deployment mode page is reachable without active company context', function () {
+    $this->seed(PermissionSeeder::class);
+
+    ['user' => $superAdmin] = authenticateWithCompany('Super Admin');
+
+    session()->forget(CompanyContext::SESSION_KEY);
+
+    $this->actingAs($superAdmin)
+        ->get(route('settings.deployment-mode'))
+        ->assertOk()
+        ->assertSee('Produccion');
 });

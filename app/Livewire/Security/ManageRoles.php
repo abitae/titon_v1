@@ -4,6 +4,7 @@ namespace App\Livewire\Security;
 
 use App\Concerns\InteractsWithToast;
 use App\Models\Permission;
+use App\Services\Security\PermissionCatalog;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
 use Livewire\Component;
@@ -31,6 +32,7 @@ class ManageRoles extends Component
         return view('livewire.security.manage-roles', [
             'roles' => $this->roles(),
             'permissionGroups' => $this->permissionGroups(),
+            'moduleLabels' => app(PermissionCatalog::class)->moduleLabels(),
             'canEdit' => auth()->user()->can('roles.editar'),
         ])->layout('layouts.app', ['title' => $this->title]);
     }

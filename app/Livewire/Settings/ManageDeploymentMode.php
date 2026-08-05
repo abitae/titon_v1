@@ -31,7 +31,7 @@ class ManageDeploymentMode extends Component
 
     public function mount(ApplicationSettingsManager $applicationSettings, ResetSystemMode $resetSystemMode): void
     {
-        abort_unless(Auth::user()?->hasRole('Super Admin'), 403);
+        abort_unless(auth()->user()?->can('deployment.ver'), 403);
 
         $this->deploymentMode = $applicationSettings->current()->deployment_mode ?? ResetSystemMode::Development;
         $this->summary = $resetSystemMode->summary();
@@ -114,7 +114,6 @@ class ManageDeploymentMode extends Component
 
     protected function authorizeDeploymentEdit(): void
     {
-        abort_unless(Auth::user()?->hasRole('Super Admin'), 403);
         abort_unless(Auth::user()?->can('deployment.editar'), 403);
     }
 }

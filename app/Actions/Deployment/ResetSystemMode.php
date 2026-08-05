@@ -3,7 +3,10 @@
 namespace App\Actions\Deployment;
 
 use App\Models\ApplicationSetting;
+use App\Models\Company;
 use App\Models\User;
+use App\Services\Application\ApplicationSettingsManager;
+use App\Services\Companies\CompanyContext;
 use Database\Seeders\ApplicationSettingSeeder;
 use Database\Seeders\CatalogSeeder;
 use Database\Seeders\CompanySeeder;
@@ -73,7 +76,10 @@ class ResetSystemMode
                 $this->settings()->forceFill(['deployment_mode' => $mode])->save();
 
                 Cache::forget('application-settings.current');
+                Cache::forget(ApplicationSettingsManager::CACHE_KEY);
                 app(PermissionRegistrar::class)->forgetCachedPermissions();
+
+                $this->refreshAuthenticatedUserContext();
 
                 return [
                     ...$before,
@@ -223,17 +229,105 @@ class ResetSystemMode
             ->first();
 
         if ($role === null) {
-            return [];
+            return $this->authenticatedSuperAdminIds();
         }
 
-        return DB::table(config('permission.table_names.model_has_roles'))
+        $idsFromRoles = DB::table(config('permission.table_names.model_has_roles'))
             ->where('role_id', $role->id)
             ->where('model_type', User::class)
-            ->pluck('model_id')
+            ->pluck('model_id');
+
+        $idsFromCompanies = DB::table('company_user')
+            ->where('role_id', $role->id)
+            ->pluck('user_id');
+
+        return collect($idsFromRoles)
+            ->merge($idsFromCompanies)
+            ->merge($this->authenticatedSuperAdminIds())
             ->map(fn ($id): int => (int) $id)
             ->unique()
             ->values()
             ->all();
+    }
+
+    /**
+     * @return list<int>
+     */
+    protected function authenticatedSuperAdminIds(): array
+    {
+        $user = Auth::user();
+
+        if (! $user instanceof User) {
+            return [];
+        }
+
+        $superAdminRole = Role::query()
+            ->where('name', 'Super Admin')
+            ->where('guard_name', 'web')
+            ->first();
+
+        if ($superAdminRole !== null) {
+            $hasPivotSuperAdmin = $user->companies()
+                ->wherePivot('role_id', $superAdminRole->id)
+                ->exists();
+
+            if ($hasPivotSuperAdmin) {
+                return [(int) $user->getKey()];
+            }
+        }
+
+        $registrar = app(PermissionRegistrar::class);
+        $previousTeamId = getPermissionsTeamId();
+        $companyIds = $user->companies()->pluck('companies.id');
+
+        foreach ($companyIds as $companyId) {
+            setPermissionsTeamId($companyId);
+            $registrar->setPermissionsTeamId($companyId);
+            $user->unsetRelation('roles')->unsetRelation('permissions');
+
+            if ($user->hasRole('Super Admin')) {
+                setPermissionsTeamId($previousTeamId);
+                $registrar->setPermissionsTeamId($previousTeamId);
+                $user->unsetRelation('roles')->unsetRelation('permissions');
+
+                return [(int) $user->getKey()];
+            }
+        }
+
+        setPermissionsTeamId($previousTeamId);
+        $registrar->setPermissionsTeamId($previousTeamId);
+        $user->unsetRelation('roles')->unsetRelation('permissions');
+
+        if ($user->hasRole('Super Admin')) {
+            return [(int) $user->getKey()];
+        }
+
+        return [];
+    }
+
+    protected function refreshAuthenticatedUserContext(): void
+    {
+        $user = Auth::user();
+
+        if (! $user instanceof User) {
+            return;
+        }
+
+        $user->unsetRelation('roles')->unsetRelation('permissions')->unsetRelation('companies');
+
+        $freshUser = $user->fresh();
+
+        if (! $freshUser instanceof User) {
+            return;
+        }
+
+        Auth::setUser($freshUser);
+
+        $company = app(CompanyContext::class)->resolveFor($freshUser);
+
+        if ($company instanceof Company) {
+            app(CompanyContext::class)->remember($company);
+        }
     }
 
     /**
