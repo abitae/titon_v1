@@ -206,10 +206,12 @@ test('orders and contracts pages plus pdf routes render for authorized users', f
     expect($orderPdfHtml)->toContain('Material A');
 
     Livewire::test(ManagePurchaseOrders::class)
+        ->assertSeeHtml('aria-label="Ver orden"')
         ->call('openPdfModal', $purchaseOrder->id)
         ->assertSet('showPdfModal', true)
         ->assertSet('pdfViewerUrl', route('purchases.orders.pdf.preview', $purchaseOrder, absolute: false))
-        ->assertSeeHtml('iframe');
+        ->assertSeeHtml('iframe')
+        ->assertSee('Vista previa de la orden de compra');
 
     $this->get(route('purchases.orders.pdf', $purchaseOrder))->assertOk()->assertHeader('content-type', 'application/pdf');
     $this->get(route('contracts.pdf', $contract))->assertOk()->assertHeader('content-type', 'application/pdf');

@@ -6,11 +6,15 @@ use Illuminate\Database\Seeder;
 
 class OperationalSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        //
+        $this->call([
+            CostTypeSeeder::class,
+            ProjectSeeder::class,
+            SupplierSeeder::class,
+            RequirementSeeder::class,
+            QuotationSeeder::class,
+            PurchaseOrderSeeder::class,
+        ]);
     }
 }

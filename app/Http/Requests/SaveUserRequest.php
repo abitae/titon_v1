@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\User;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
@@ -59,11 +60,25 @@ class SaveUserRequest extends FormRequest
                     $validator->errors()->add('active_company_ids', 'Debes activar al menos una empresa para el usuario.');
                 }
 
+                $superAdminRoleId = User::superAdminRoleId();
+                $targetUser = $this->route('user');
+                $targetIsSuperAdmin = $targetUser instanceof User && $targetUser->isSuperAdmin();
+
                 foreach ($companyIds as $companyId) {
                     $roleId = $roleIds->get($companyId);
 
                     if ($roleId === null || ! Role::query()->whereKey($roleId)->exists()) {
                         $validator->errors()->add("role_ids.$companyId", 'Cada empresa asignada debe tener un rol valido.');
+
+                        continue;
+                    }
+
+                    if ($superAdminRoleId !== null && (int) $roleId === $superAdminRoleId && ! $targetIsSuperAdmin) {
+                        $validator->errors()->add("role_ids.$companyId", 'El rol Super Admin no puede asignarse.');
+                    }
+
+                    if ($targetIsSuperAdmin && $superAdminRoleId !== null && (int) $roleId !== $superAdminRoleId) {
+                        $validator->errors()->add("role_ids.$companyId", 'El rol Super Admin no puede modificarse.');
                     }
                 }
 

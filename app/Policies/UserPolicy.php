@@ -13,7 +13,7 @@ class UserPolicy
 
     public function view(User $user, User $model): bool
     {
-        return $user->can('users.ver');
+        return $user->can('users.ver') && ! $model->isSuperAdmin();
     }
 
     public function create(User $user): bool
@@ -23,11 +23,11 @@ class UserPolicy
 
     public function update(User $user, User $model): bool
     {
-        return $user->can('users.editar');
+        return $user->can('users.editar') && ! $model->isSuperAdmin();
     }
 
     public function delete(User $user, User $model): bool
     {
-        return $user->can('users.eliminar') && $user->isNot($model);
+        return $user->can('users.eliminar') && $user->isNot($model) && ! $model->isSuperAdmin();
     }
 }

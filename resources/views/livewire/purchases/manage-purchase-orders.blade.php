@@ -43,7 +43,11 @@
                     <x-platform.status-badge :value="$order->status" size="xs" />
                 </td>
                 <td class="whitespace-nowrap px-1.5 py-1">
-                    <x-platform.action-buttons :edit="'openDetailModal('.$order->id.')'" />
+                    <x-platform.action-buttons
+                        :view="'openPdfModal('.$order->id.')'"
+                        view-tooltip="Ver orden"
+                        :edit="'openDetailModal('.$order->id.')'"
+                    />
                 </td>
             </tr>
         @empty
@@ -71,9 +75,22 @@
                         · {{ $selectedOrder->currency }} {{ number_format((float) $selectedOrder->total, 2) }}
                     </p>
                 </div>
-                <flux:tooltip content="Cerrar">
-                    <flux:button type="button" variant="ghost" size="sm" icon="x-mark" wire:click="closeModal" class="!size-7 !min-h-0 !p-0" aria-label="Cerrar" />
-                </flux:tooltip>
+                <div class="flex shrink-0 items-center gap-1">
+                    <flux:tooltip content="Ver orden">
+                        <flux:button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            icon="eye"
+                            wire:click="openPdfModal({{ $selectedOrder->id }})"
+                            class="!size-7 !min-h-0 !p-0"
+                            aria-label="Ver orden"
+                        />
+                    </flux:tooltip>
+                    <flux:tooltip content="Cerrar">
+                        <flux:button type="button" variant="ghost" size="sm" icon="x-mark" wire:click="closeModal" class="!size-7 !min-h-0 !p-0" aria-label="Cerrar" />
+                    </flux:tooltip>
+                </div>
             </div>
 
             <div class="mt-2 flex flex-wrap gap-1 rounded-lg border border-slate-200 bg-slate-50 p-0.5 dark:border-slate-800 dark:bg-slate-950/40">

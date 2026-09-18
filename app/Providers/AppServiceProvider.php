@@ -8,6 +8,7 @@ use App\Models\AccountsPayable;
 use App\Models\Order;
 use App\Models\PurchaseRequest;
 use App\Models\SupplierContract;
+use App\Models\User;
 use App\Policies\AccountsPayablePolicy;
 use App\Policies\OrderPolicy;
 use App\Policies\RequirementPolicy;
@@ -86,8 +87,18 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(AccountsPayable::class, AccountsPayablePolicy::class);
         Gate::policy(SupplierContract::class, SupplierContractPolicy::class);
 
-        Gate::before(function ($user, string $ability): ?bool {
-            return $user->hasRole('Super Admin') ? true : null;
+        Gate::before(function ($user, string $ability, mixed $arguments = []): ?bool {
+            if (! $user instanceof User || ! $user->isSuperAdmin()) {
+                return null;
+            }
+
+            $model = is_array($arguments) ? ($arguments[0] ?? null) : $arguments;
+
+            if ($model instanceof User && $model->isSuperAdmin() && in_array($ability, ['update', 'delete'], true)) {
+                return false;
+            }
+
+            return true;
         });
 
         $permissionAliases = [

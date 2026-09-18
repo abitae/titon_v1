@@ -43,7 +43,7 @@ class CatalogSeeder extends Seeder
 
         Company::query()->each(function (Company $company) use ($catalogs): void {
             foreach ($catalogs as $type => $items) {
-                foreach ($items as $item) {
+                foreach (array_values($items) as $index => $item) {
                     CatalogItem::withoutGlobalScopes()->firstOrCreate(
                         [
                             'company_id' => $company->id,
@@ -52,7 +52,9 @@ class CatalogSeeder extends Seeder
                         ],
                         [
                             'code' => $item['code'],
+                            'description' => $item['name'].' del catalogo '.$type,
                             'is_active' => true,
+                            'sort_order' => $index + 1,
                         ],
                     );
                 }

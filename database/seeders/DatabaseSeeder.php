@@ -18,7 +18,13 @@ class DatabaseSeeder extends Seeder
             CompanySeeder::class,
             UserSeeder::class,
             CatalogSeeder::class,
+            CostTypeSeeder::class,
             DemoOperationalSeeder::class,
+            ProjectSeeder::class,
+            SupplierSeeder::class,
+            RequirementSeeder::class,
+            QuotationSeeder::class,
+            PurchaseOrderSeeder::class,
             MechanicsSeeder::class,
         ]);
     }

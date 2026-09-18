@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Actions\AccountsPayable\RegisterAccountsPayablePayment;
 use App\Actions\Banks\RecordBankMovement;
 use App\Actions\Orders\RecordOrderConformity;
+use App\Actions\Purchases\ApprovePurchaseOrder;
 use App\Actions\Purchases\GeneratePurchaseOrder;
 use App\Actions\Purchases\SyncPurchaseRequestItems;
 use App\Actions\Purchases\SyncSupplierQuotationItems;
@@ -17,14 +18,15 @@ use App\Enums\CatalogType;
 use App\Enums\ConformityResult;
 use App\Enums\CorrelativeSubject;
 use App\Enums\InvitationStatus;
-use App\Enums\OrderStatus;
 use App\Enums\ProjectStatus;
+use App\Enums\QuotationCaptureMode;
 use App\Enums\QuotationStatus;
 use App\Enums\RequirementStatus;
 use App\Models\AccountsPayable;
 use App\Models\BankAccount;
 use App\Models\CatalogItem;
 use App\Models\Company;
+use App\Models\CostType;
 use App\Models\PayableDocument;
 use App\Models\Project;
 use App\Models\QuotationScoreParameter;
@@ -54,31 +56,58 @@ class DemoOperationalSeeder extends Seeder
                 return;
             }
 
+            $materialCostType = CostType::query()
+                ->where('company_id', $company->id)
+                ->where('code', 'MAT')
+                ->first();
+            $serviceCostType = CostType::query()
+                ->where('company_id', $company->id)
+                ->where('code', 'SER')
+                ->first();
+
             $project = Project::query()->create([
                 'company_id' => $company->id,
                 'code' => sprintf('OBR%03d', $company->id),
                 'name' => 'Obra demo '.$company->name,
                 'city' => 'Lima',
-                'address' => 'Av. Demo 100',
-                'client_name' => 'Cliente demo',
+                'address' => 'Av. Demo 100, Santiago de Surco',
+                'client_name' => 'Cliente demo '.$company->name,
                 'responsible_user_id' => $responsible->id,
                 'start_date' => now()->subMonths(2)->toDateString(),
                 'estimated_end_date' => now()->addMonths(6)->toDateString(),
                 'estimated_budget' => 500000,
                 'status' => ProjectStatus::InProgress->value(),
-                'description' => 'Obra de demostración para flujo de compras.',
+                'description' => 'Obra de demostración para flujo de compras, almacén y cuentas por pagar.',
             ]);
 
             $suppliers = collect([
-                ['business_name' => 'Proveedor Alpha '.$company->id, 'suffix' => 1],
-                ['business_name' => 'Proveedor Beta '.$company->id, 'suffix' => 2],
+                [
+                    'business_name' => 'Proveedor Alpha '.$company->id,
+                    'commercial_name' => 'Alpha Electric',
+                    'suffix' => 1,
+                    'contact_name' => 'Carlos Rivas',
+                    'bank_name' => 'BCP',
+                ],
+                [
+                    'business_name' => 'Proveedor Beta '.$company->id,
+                    'commercial_name' => 'Beta Materiales',
+                    'suffix' => 2,
+                    'contact_name' => 'Ana Torres',
+                    'bank_name' => 'Interbank',
+                ],
             ])->map(fn (array $data): Supplier => Supplier::query()->create([
                 'company_id' => $company->id,
                 'business_name' => $data['business_name'],
+                'commercial_name' => $data['commercial_name'],
                 'ruc' => sprintf('20%02d%07d', $company->id, $data['suffix']),
-                'contact_name' => 'Contacto demo',
-                'phone' => '999888777',
+                'contact_name' => $data['contact_name'],
+                'phone' => '99988877'.$data['suffix'],
                 'email' => 'proveedor'.$company->id.'-'.$data['suffix'].'@demo.test',
+                'address' => 'Av. Industrial '.$data['suffix'].'20, Ate',
+                'city' => 'Lima',
+                'bank_name' => $data['bank_name'],
+                'bank_account' => sprintf('191-%08d-0-1%d', $company->id, $data['suffix']),
+                'cci' => sprintf('00219100%08d1%d', $company->id, $data['suffix']),
                 'status' => 'active',
             ]));
 
@@ -102,20 +131,26 @@ class DemoOperationalSeeder extends Seeder
                 'code' => $codeGenerator->generate($company, $project, CorrelativeSubject::Requirement),
                 'title' => 'Requerimiento borrador demo',
                 'requirement_type' => 'material',
+                'cost_type_id' => $materialCostType?->id,
                 'priority' => 'media',
+                'requested_by_name' => $responsible->name,
                 'request_date' => now()->toDateString(),
                 'needed_date' => now()->addDays(15)->toDateString(),
                 'description' => 'Requerimiento en borrador para pruebas.',
+                'observation' => 'Pendiente de validar cantidades con el residente de obra.',
                 'status' => RequirementStatus::Draft->value(),
             ]);
 
             $syncRequirementItems->handle($requirementDraft, [
                 [
                     'item_type' => 'material',
+                    'cost_center_ua' => 'UA-CIV-01',
                     'description' => 'Cemento Portland',
                     'unit' => 'bolsa',
                     'quantity' => '100',
-                    'technical_specification' => 'Tipo I',
+                    'technical_specification' => 'Tipo I, 42.5 kg',
+                    'estimated_unit_price' => '28.50',
+                    'observation' => 'Almacenar en zona seca.',
                 ],
             ]);
 
@@ -127,26 +162,36 @@ class DemoOperationalSeeder extends Seeder
                 'code' => $codeGenerator->generate($company, $project, CorrelativeSubject::Requirement),
                 'title' => 'Suministro eléctrico obra demo',
                 'requirement_type' => 'material',
+                'cost_type_id' => $materialCostType?->id,
                 'priority' => 'alta',
+                'requested_by_name' => $responsible->name,
                 'request_date' => now()->subDays(5)->toDateString(),
                 'needed_date' => now()->addDays(10)->toDateString(),
                 'description' => 'Cableado y tableros para etapa 1.',
+                'observation' => 'Urgente para energizar el campamento de obra.',
                 'status' => RequirementStatus::Created->value(),
             ]);
 
             $syncRequirementItems->handle($requirement, [
                 [
                     'item_type' => 'material',
+                    'cost_center_ua' => 'UA-ELE-01',
                     'description' => 'Cable THW 10 AWG',
                     'unit' => 'rollo',
                     'quantity' => '20',
-                    'technical_specification' => 'Norma técnica nacional',
+                    'technical_specification' => 'Norma técnica nacional, 100 m por rollo',
+                    'estimated_unit_price' => '580',
+                    'observation' => 'Color negro, aislamiento 600 V.',
                 ],
                 [
                     'item_type' => 'material',
+                    'cost_center_ua' => 'UA-ELE-02',
                     'description' => 'Tablero general 24 circuitos',
                     'unit' => 'und',
                     'quantity' => '2',
+                    'technical_specification' => 'Gabinete metálico IP54 con barra de tierra',
+                    'estimated_unit_price' => '2850',
+                    'observation' => 'Incluye breaker principal de 100 A.',
                 ],
             ]);
 
@@ -184,8 +229,12 @@ class DemoOperationalSeeder extends Seeder
                     'tax' => $tax,
                     'total' => $subtotal + $tax,
                     'delivery_time_days' => $index === 0 ? 5 : 8,
-                    'payment_conditions' => '30 días',
-                    'warranty' => '12 meses',
+                    'payment_conditions' => 'Pago a 30 días calendario. Entrega en almacén de obra, incluye flete.',
+                    'warranty' => '12 meses contra defectos de fabricación',
+                    'observation' => $index === 0
+                        ? 'Stock inmediato para cable. Tableros en 5 días útiles.'
+                        : 'Mejor precio. Entrega en 8 días por programación de planta.',
+                    'capture_mode' => QuotationCaptureMode::Form->value(),
                     'status' => QuotationStatus::Registered->value(),
                 ]);
 
@@ -231,7 +280,25 @@ class DemoOperationalSeeder extends Seeder
             );
 
             $order = app(GeneratePurchaseOrder::class)->handle($requirement);
-            $order->update(['status' => OrderStatus::Attended->value()]);
+
+            app(ApprovePurchaseOrder::class)->handle(
+                $order,
+                $responsible,
+                'Aprobación demo de gerencia. Coordinar descarga con almacén de obra.',
+            );
+
+            $order->update([
+                'conditions' => 'Pago a 30 días calendario. Entrega en almacén de obra, incluye flete e IGV.',
+                'observation' => 'Priorizar tableros generales. Verificar certificación de aislamiento del cable.',
+            ]);
+
+            $order->items->each(function ($item, int $index): void {
+                $item->update([
+                    'observation' => $index === 0
+                        ? 'Color negro, 100 m por rollo, norma NTP.'
+                        : 'Gabinete IP54 con breaker principal de 100 A.',
+                ]);
+            });
 
             app(RecordOrderConformity::class)->handle(
                 $order,
@@ -265,6 +332,7 @@ class DemoOperationalSeeder extends Seeder
                 ],
                 [
                     'currency' => 'PEN',
+                    'account_number' => 'CAJA-'.$company->id,
                     'balance' => 0,
                     'is_active' => true,
                 ],
@@ -303,7 +371,7 @@ class DemoOperationalSeeder extends Seeder
                 );
             }
 
-            Requirement::query()->create([
+            $serviceRequirement = Requirement::query()->create([
                 'company_id' => $company->id,
                 'work_project_id' => $project->id,
                 'responsible_user_id' => $responsible->id,
@@ -311,10 +379,27 @@ class DemoOperationalSeeder extends Seeder
                 'code' => $codeGenerator->generate($company, $project, CorrelativeSubject::Requirement),
                 'title' => 'Servicio de instalación',
                 'requirement_type' => 'servicio',
+                'cost_type_id' => $serviceCostType?->id,
                 'priority' => 'media',
+                'requested_by_name' => $responsible->name,
                 'request_date' => now()->toDateString(),
+                'needed_date' => now()->addDays(20)->toDateString(),
                 'status' => RequirementStatus::InProcess->value(),
                 'description' => 'Orden de servicio pendiente de cierre.',
+                'observation' => 'Coordinar ventana de corte eléctrico con el residente.',
+            ]);
+
+            $syncRequirementItems->handle($serviceRequirement, [
+                [
+                    'item_type' => 'servicio',
+                    'cost_center_ua' => 'UA-SER-01',
+                    'description' => 'Instalación y conexionado de tableros',
+                    'unit' => 'glb',
+                    'quantity' => '1',
+                    'technical_specification' => 'Incluye pruebas de aislamiento y protocolo de energización',
+                    'estimated_unit_price' => '4500',
+                    'observation' => 'Mano de obra calificada y EPP obligatorio.',
+                ],
             ]);
         });
     }

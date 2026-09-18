@@ -41,6 +41,14 @@ class SyncUserCompanies
             ->unique()
             ->values();
 
+        $superAdminRoleId = User::superAdminRoleId();
+
+        if ($user->isSuperAdmin() && $superAdminRoleId !== null) {
+            foreach ($selectedCompanyIds as $companyId) {
+                $roleIds[$companyId] = $superAdminRoleId;
+            }
+        }
+
         $activeIds = collect($activeCompanyIds)
             ->map(fn (int|string $companyId): int => (int) $companyId)
             ->intersect($selectedCompanyIds)

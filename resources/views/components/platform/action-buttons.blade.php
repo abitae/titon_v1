@@ -4,6 +4,8 @@
     'navIcon' => 'eye',
     'navAriaLabel' => null,
     'navNavigate' => true,
+    'view' => null,
+    'viewTooltip' => 'Ver',
     'edit' => null,
     'editHref' => null,
     'editNavigate' => true,
@@ -13,6 +15,20 @@
 ])
 
 <div {{ $attributes->merge(['class' => 'flex items-center justify-end gap-0']) }}>
+    @if ($view)
+        <flux:tooltip content="{{ $viewTooltip }}">
+            <flux:button
+                type="button"
+                variant="ghost"
+                size="sm"
+                icon="eye"
+                wire:click="{{ $view }}"
+                class="!size-7 !min-h-0 !p-0"
+                aria-label="{{ $viewTooltip }}"
+            />
+        </flux:tooltip>
+    @endif
+
     @if ($navHref)
         <flux:tooltip content="{{ $navTooltip }}">
             @if ($navNavigate)

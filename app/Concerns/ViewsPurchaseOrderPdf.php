@@ -14,6 +14,8 @@ trait ViewsPurchaseOrderPdf
 
     public function openPdfModal(int $purchaseOrderId): void
     {
+        abort_unless(auth()->user()?->can('purchases.ver'), 403);
+
         $order = PurchaseOrder::query()
             ->with(['supplier', 'project'])
             ->findOrFail($purchaseOrderId);

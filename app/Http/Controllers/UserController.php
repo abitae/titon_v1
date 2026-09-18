@@ -32,6 +32,7 @@ class UserController extends Controller implements HasMiddleware
 
         return view('users.index', [
             'users' => User::query()
+                ->withoutSuperAdmins()
                 ->with(['companies' => fn ($query) => $query->orderBy('companies.name')])
                 ->orderBy('name')
                 ->paginate(10),
@@ -126,7 +127,11 @@ class UserController extends Controller implements HasMiddleware
     {
         return [
             'companies' => Company::query()->orderBy('name')->get(),
-            'roles' => Role::query()->whereNull('company_id')->orderBy('name')->get(),
+            'roles' => Role::query()
+                ->whereNull('company_id')
+                ->where('name', '!=', User::SUPER_ADMIN_ROLE)
+                ->orderBy('name')
+                ->get(),
         ];
     }
 }
