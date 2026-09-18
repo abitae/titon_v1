@@ -76,6 +76,23 @@ test('platform branding uses application settings only', function () {
         ->and($branding->faviconUrl())->toBe('/storage/'.$applicationLogoPath);
 });
 
+test('default branding uses titon logos and name instead of laravel', function () {
+    Cache::forget(ApplicationSettingsManager::CACHE_KEY);
+
+    $branding = app(PlatformBranding::class);
+
+    expect($branding->name())->toBe(PlatformBranding::DEFAULT_NAME)
+        ->and(urldecode($branding->shortLogoUrl()))->toContain('/'.PlatformBranding::SHORT_LOGO_PATH)
+        ->and(urldecode($branding->longLogoUrl()))->toContain('/'.PlatformBranding::LONG_LOGO_PATH)
+        ->and(urldecode($branding->faviconUrl()))->toContain('/'.PlatformBranding::FAVICON_PATH);
+
+    $this->get(route('login'))
+        ->assertOk()
+        ->assertSee(PlatformBranding::DEFAULT_NAME, false)
+        ->assertSee('/img/logo', false)
+        ->assertDontSee('/favicon.svg', false);
+});
+
 test('authorized users can upload company logo through empresa form', function () {
     $this->seed(PermissionSeeder::class);
 

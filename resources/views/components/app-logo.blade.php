@@ -5,27 +5,19 @@
 @php
     $branding = app(\App\Services\Branding\PlatformBranding::class);
     $applicationName = $branding->name();
-    $applicationLogo = $branding->logoUrl();
+    $shortLogo = $branding->shortLogoUrl();
+    $longLogo = $branding->longLogoUrl();
 @endphp
 
 @if($sidebar)
     <flux:sidebar.brand name="{{ $applicationName }}" {{ $attributes }}>
-        <x-slot name="logo" class="flex aspect-square size-8 items-center justify-center overflow-hidden rounded-md bg-accent-content text-accent-foreground">
-            @if ($applicationLogo)
-                <img src="{{ $applicationLogo }}" alt="{{ $applicationName }}" class="size-full object-cover" />
-            @else
-                <x-app-logo-icon class="size-5 fill-current text-white dark:text-black" />
-            @endif
+        <x-slot name="logo" class="flex aspect-square size-8 items-center justify-center overflow-hidden rounded-md bg-white">
+            <img src="{{ $shortLogo }}" alt="{{ $applicationName }}" class="size-full object-contain p-0.5" />
         </x-slot>
     </flux:sidebar.brand>
 @else
-    <flux:brand name="{{ $applicationName }}" {{ $attributes }}>
-        <x-slot name="logo" class="flex aspect-square size-8 items-center justify-center overflow-hidden rounded-md bg-accent-content text-accent-foreground">
-            @if ($applicationLogo)
-                <img src="{{ $applicationLogo }}" alt="{{ $applicationName }}" class="size-full object-cover" />
-            @else
-                <x-app-logo-icon class="size-5 fill-current text-white dark:text-black" />
-            @endif
-        </x-slot>
-    </flux:brand>
+    <a href="{{ $attributes->get('href', route('dashboard')) }}" {{ $attributes->except('href')->class('flex min-w-0 items-center gap-2') }}>
+        <img src="{{ $longLogo }}" alt="{{ $applicationName }}" class="h-8 w-auto max-w-[11rem] object-contain sm:h-9" />
+        <span class="truncate text-sm font-semibold tracking-tight text-slate-900 dark:text-white">{{ $applicationName }}</span>
+    </a>
 @endif

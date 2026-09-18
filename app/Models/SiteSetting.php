@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\Branding\PlatformBranding;
 use App\Support\PublicStorageUrl;
 use Database\Factories\SiteSettingFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -59,6 +60,6 @@ class SiteSetting extends Model
 
     public function displayName(): string
     {
-        return filled($this->title) ? $this->title : config('app.name', 'Titon');
+        return filled($this->title) ? $this->title : config('app.name', PlatformBranding::DEFAULT_NAME);
     }
 }

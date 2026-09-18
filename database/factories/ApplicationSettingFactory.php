@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\ApplicationSetting;
+use App\Services\Branding\PlatformBranding;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -18,7 +19,7 @@ class ApplicationSettingFactory extends Factory
     public function definition(): array
     {
         return [
-            'application_name' => 'Titon',
+            'application_name' => PlatformBranding::DEFAULT_NAME,
             'logo_path' => null,
         ];
     }

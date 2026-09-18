@@ -14,6 +14,8 @@ test('home page displays seeded hero content', function () {
     $response = $this->get(route('home'));
 
     $response->assertOk();
+    $response->assertSee('TITON EIRL');
+    $response->assertSee('/img/logo', false);
     $response->assertSee('Construimos infraestructura que impulsa el desarrollo del Perú');
     $response->assertSee('Nosotros');
     $response->assertSee('Proyectos');

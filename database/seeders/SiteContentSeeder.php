@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\ShowcaseProject;
 use App\Models\SiteSetting;
+use App\Services\Branding\PlatformBranding;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 
@@ -17,7 +18,7 @@ class SiteContentSeeder extends Seeder
         $sections = [
             [
                 'key' => 'brand',
-                'title' => config('app.name', 'Titon'),
+                'title' => config('app.name', PlatformBranding::DEFAULT_NAME),
                 'subtitle' => null,
                 'body' => null,
                 'sort_order' => 0,

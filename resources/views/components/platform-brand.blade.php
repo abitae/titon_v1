@@ -6,18 +6,12 @@
 @php
     $branding = app(\App\Services\Branding\PlatformBranding::class);
     $name = $branding->name();
-    $logoUrl = $branding->logoUrl();
+    $longLogo = $branding->longLogoUrl();
 
-    $containerClasses = match ($size) {
-        'sm' => 'size-10',
-        'lg' => 'size-20',
-        default => 'size-14',
-    };
-
-    $iconClasses = match ($size) {
-        'sm' => 'size-6',
-        'lg' => 'size-12',
-        default => 'size-8',
+    $logoHeight = match ($size) {
+        'sm' => 'h-10',
+        'lg' => 'h-16',
+        default => 'h-12',
     };
 @endphp
 
@@ -29,15 +23,8 @@
     ]) }}
     wire:navigate
 >
-    <span @class([
-        'flex items-center justify-center overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm transition group-hover:border-zinc-300 dark:border-zinc-700 dark:bg-zinc-900 dark:group-hover:border-zinc-600',
-        $containerClasses,
-    ])>
-        @if ($logoUrl)
-            <img src="{{ $logoUrl }}" alt="{{ $name }}" class="size-full object-contain p-1.5" />
-        @else
-            <x-app-logo-icon @class([$iconClasses, 'fill-current text-zinc-900 dark:text-white']) />
-        @endif
+    <span class="flex items-center justify-center overflow-hidden rounded-2xl border border-zinc-200 bg-white px-3 py-2 shadow-sm transition group-hover:border-zinc-300 dark:border-zinc-700 dark:bg-white dark:group-hover:border-zinc-500">
+        <img src="{{ $longLogo }}" alt="{{ $name }}" @class([$logoHeight, 'w-auto max-w-[14rem] object-contain']) />
     </span>
 
     @if ($showName)

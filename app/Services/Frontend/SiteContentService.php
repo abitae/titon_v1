@@ -4,6 +4,7 @@ namespace App\Services\Frontend;
 
 use App\Models\ShowcaseProject;
 use App\Models\SiteSetting;
+use App\Services\Branding\PlatformBranding;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Cache;
 
@@ -16,17 +17,17 @@ class SiteContentService
 
     public function brandName(): string
     {
-        return $this->brand()?->displayName() ?? config('app.name', 'Titon');
+        return $this->brand()?->displayName() ?? app(PlatformBranding::class)->name();
     }
 
     public function brandLogoUrl(): ?string
     {
-        return $this->brand()?->imageUrl();
+        return $this->brand()?->imageUrl() ?: app(PlatformBranding::class)->longLogoUrl();
     }
 
     public function brandFaviconUrl(): ?string
     {
-        return $this->brand()?->faviconUrl();
+        return $this->brand()?->faviconUrl() ?: app(PlatformBranding::class)->faviconUrl();
     }
 
     public function section(string $key): ?SiteSetting

@@ -3,6 +3,7 @@
 namespace App\Services\Application;
 
 use App\Models\ApplicationSetting;
+use App\Services\Branding\PlatformBranding;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 
@@ -35,7 +36,7 @@ class ApplicationSettingsManager
 
     public function appName(): string
     {
-        return $this->current()->application_name ?: config('app.name', 'Titon');
+        return $this->current()->application_name ?: config('app.name', PlatformBranding::DEFAULT_NAME);
     }
 
     public function logoUrl(): ?string
@@ -83,7 +84,7 @@ class ApplicationSettingsManager
         return ApplicationSetting::query()->firstOrCreate(
             ['id' => 1],
             [
-                'application_name' => config('app.name', 'Titon'),
+                'application_name' => config('app.name', PlatformBranding::DEFAULT_NAME),
                 'deployment_mode' => 'development',
             ],
         );

@@ -6,6 +6,7 @@ use App\Models\ApplicationSetting;
 use App\Models\Company;
 use App\Models\User;
 use App\Services\Application\ApplicationSettingsManager;
+use App\Services\Branding\PlatformBranding;
 use App\Services\Companies\CompanyContext;
 use Database\Seeders\ApplicationSettingSeeder;
 use Database\Seeders\CatalogSeeder;
@@ -349,7 +350,7 @@ class ResetSystemMode
         return ApplicationSetting::query()->firstOrCreate(
             ['id' => 1],
             [
-                'application_name' => config('app.name', 'Titon'),
+                'application_name' => config('app.name', PlatformBranding::DEFAULT_NAME),
                 'deployment_mode' => self::Development,
             ],
         );

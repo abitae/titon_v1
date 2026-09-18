@@ -22,15 +22,9 @@
             class="sticky top-0 z-50 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur-md"
         >
             <div class="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
-                <a href="{{ route('home') }}" class="flex items-center gap-3" wire:navigate>
-                    <span class="flex size-10 items-center justify-center overflow-hidden rounded-lg bg-slate-900">
-                        @if ($applicationLogo)
-                            <img src="{{ $applicationLogo }}" alt="{{ $applicationName }}" class="size-full object-cover" />
-                        @else
-                            <x-app-logo-icon class="size-6 fill-current text-white" />
-                        @endif
-                    </span>
-                    <span class="text-lg font-semibold tracking-tight text-slate-900">{{ $applicationName }}</span>
+                <a href="{{ route('home') }}" class="flex min-w-0 items-center gap-3" wire:navigate>
+                    <img src="{{ $applicationLogo }}" alt="{{ $applicationName }}" class="h-10 w-auto max-w-[11rem] object-contain" />
+                    <span class="truncate text-lg font-semibold tracking-tight text-slate-900">{{ $applicationName }}</span>
                 </a>
 
                 <nav class="hidden items-center gap-8 md:flex">

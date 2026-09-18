@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\SiteSetting;
+use App\Services\Branding\PlatformBranding;
 use App\Services\Frontend\SiteContentService;
 use Database\Seeders\SiteContentSeeder;
 use Illuminate\Support\Facades\Cache;
@@ -36,7 +37,7 @@ test('brand helpers return seeded brand data', function () {
     $content = app(SiteContentService::class);
 
     expect($content->brand())->toBeInstanceOf(SiteSetting::class)
-        ->and($content->brandName())->toBe(config('app.name', 'Titon'));
+        ->and($content->brandName())->toBe(config('app.name', PlatformBranding::DEFAULT_NAME));
 });
 
 test('sections by prefix returns site setting models from cache', function () {

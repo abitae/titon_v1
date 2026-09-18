@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\ApplicationSetting;
+use App\Services\Branding\PlatformBranding;
 use Illuminate\Database\Seeder;
 
 class ApplicationSettingSeeder extends Seeder
@@ -15,7 +16,7 @@ class ApplicationSettingSeeder extends Seeder
         ApplicationSetting::query()->firstOrCreate(
             ['id' => 1],
             [
-                'application_name' => config('app.name', 'Titon'),
+                'application_name' => config('app.name', PlatformBranding::DEFAULT_NAME),
                 'deployment_mode' => 'development',
             ],
         );
